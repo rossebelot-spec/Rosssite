@@ -1,11 +1,6 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 
-const allowedEmails = (process.env.ALLOWED_ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
-
 export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
     Google({
@@ -15,9 +10,16 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async signIn({ user }) {
-      if (allowedEmails.length === 0) return false;
-      return allowedEmails.includes((user.email ?? "").toLowerCase());
+      // Read fresh on each invocation — avoids module-load-time evaluation issues
+      const allowed = (process.env.ALLOWED_ADMIN_EMAILS ?? "")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+      if (allowed.length === 0) return false;
+      return allowed.includes((user.email ?? "").toLowerCase());
     },
+    // authorized() is invoked by middleware.ts for every /admin/* request.
+    // Returns false → NextAuth redirects to sign-in automatically.
     authorized({ auth: session }) {
       return !!session?.user;
     },

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth, signOut } from "@/lib/auth";
 import Link from "next/link";
 
 const adminLinks = [
@@ -17,8 +17,12 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Defense-in-depth check — middleware handles the primary redirect,
+  // but this catches any edge cases that slip through.
   const session = await auth();
-  if (!session?.user) redirect("/api/auth/signin");
+  if (!session?.user) {
+    redirect("/api/auth/signin?callbackUrl=%2Fadmin");
+  }
 
   return (
     <div className="flex min-h-full">
@@ -39,12 +43,20 @@ export default async function AdminLayout({
           ))}
         </nav>
         <div className="mt-auto">
-          <Link
-            href="/api/auth/signout"
-            className="text-xs tracking-widest uppercase text-muted-foreground hover:text-destructive transition-colors"
+          {/* Sign-out requires a POST — cannot use a plain <Link> */}
+          <form
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/" });
+            }}
           >
-            Sign out
-          </Link>
+            <button
+              type="submit"
+              className="text-xs tracking-widest uppercase text-muted-foreground hover:text-destructive transition-colors"
+            >
+              Sign out
+            </button>
+          </form>
         </div>
       </aside>
 
