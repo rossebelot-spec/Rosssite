@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { getDb } from "@/db";
 import { essays, bookReviews } from "@/db/schema";
-
-export const dynamic = "force-dynamic";
 import { eq, desc } from "drizzle-orm";
 import { opEds } from "@/data/op-eds";
+import { Hero } from "@/components/hero";
+
+export const dynamic = "force-dynamic";
+
+// ── Replace with your Vercel Blob portrait URL once uploaded ──────────────
+const PORTRAIT_URL = "";
 
 export default async function HomePage() {
   const db = getDb();
@@ -28,17 +32,10 @@ export default async function HomePage() {
     .slice(0, 3);
 
   return (
-    <main className="mx-auto w-full max-w-screen-xl px-6 py-24">
-      {/* Hero */}
-      <section className="mb-24 border-b border-border pb-16">
-        <h1 className="font-heading text-6xl md:text-8xl tracking-wide">
-          Ross Belot
-        </h1>
-        <p className="mt-4 text-muted-foreground text-sm tracking-widest uppercase">
-          Poet &middot; Journalist &middot; Environmental Writer
-        </p>
-      </section>
+    <>
+      <Hero portraitUrl={PORTRAIT_URL} />
 
+      <main className="mx-auto w-full max-w-screen-xl px-6 py-24">
       {/* Recent work grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
 
@@ -138,5 +135,6 @@ export default async function HomePage() {
         </section>
       </div>
     </main>
+    </>
   );
 }
