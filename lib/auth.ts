@@ -1,18 +1,22 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 
+const allowedEmails = (process.env.ALLOWED_ADMIN_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
 export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
     Google({
-      clientId: process.env.AUTH_GOOGLE_ID!,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
   callbacks: {
     async signIn({ user }) {
-      const allowedEmail = process.env.ALLOWED_EMAIL;
-      if (!allowedEmail) return false;
-      return user.email === allowedEmail;
+      if (allowedEmails.length === 0) return false;
+      return allowedEmails.includes((user.email ?? "").toLowerCase());
     },
     authorized({ auth: session }) {
       return !!session?.user;
