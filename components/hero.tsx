@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { blobImageUrl } from "@/lib/blob";
 
 interface HeroProps {
   portraitUrl: string;
@@ -12,7 +13,7 @@ export function Hero({ portraitUrl }: HeroProps) {
       <div className="relative w-full md:w-1/2 h-1/2 md:h-full overflow-hidden">
         {portraitUrl ? (
           <Image
-            src={portraitUrl}
+            src={blobImageUrl(portraitUrl)}
             alt="Ross Belot"
             fill
             priority

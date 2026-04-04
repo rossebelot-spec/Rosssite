@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Photo } from "@/db/schema";
+import { blobImageUrl } from "@/lib/blob";
 
 interface PhotoGridProps {
   photos: Photo[];
@@ -17,7 +18,7 @@ export function PhotoGrid({ photos }: PhotoGridProps) {
       {photos.map((photo) => (
         <figure key={photo.id} className="relative aspect-square overflow-hidden bg-surface group">
           <Image
-            src={photo.blobUrl}
+            src={blobImageUrl(photo.blobUrl)}
             alt={photo.alt || photo.caption || ""}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
