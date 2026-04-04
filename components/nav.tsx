@@ -21,6 +21,15 @@ export function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  const navLinkClass = (href: string) =>
+    `text-xs tracking-widest uppercase transition-colors ${
+      pathname.startsWith(href)
+        ? "text-warm-accent"
+        : "text-muted-foreground hover:text-foreground"
+    }`;
+
+  const allLinks = [...links, { href: "/admin", label: "Admin" }];
+
   return (
     <header className="border-b border-border bg-surface">
       <div className="mx-auto flex max-w-screen-xl items-center justify-between px-6 py-4">
@@ -33,16 +42,8 @@ export function Nav() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-8">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`text-xs tracking-widest uppercase transition-colors ${
-                pathname.startsWith(link.href)
-                  ? "text-warm-accent"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
+          {allLinks.map((link) => (
+            <Link key={link.href} href={link.href} className={navLinkClass(link.href)}>
               {link.label}
             </Link>
           ))}
@@ -62,16 +63,12 @@ export function Nav() {
           </SheetTrigger>
           <SheetContent side="right" className="bg-surface border-border w-64">
             <nav className="flex flex-col gap-6 mt-10">
-              {links.map((link) => (
+              {allLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setOpen(false)}
-                  className={`text-xs tracking-widest uppercase transition-colors ${
-                    pathname.startsWith(link.href)
-                      ? "text-warm-accent"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={navLinkClass(link.href)}
                 >
                   {link.label}
                 </Link>

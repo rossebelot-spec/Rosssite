@@ -37,10 +37,10 @@ export default function RootLayout({
       className={`${cormorant.variable} ${jetbrainsMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-          <Nav />
-          <div className="flex-1">{children}</div>
-          <Footer />
-        </body>
+        <Nav />
+        <div className="flex-1">{children}</div>
+        <Footer />
+      </body>
     </html>
   );
 }
