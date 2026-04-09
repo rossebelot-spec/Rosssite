@@ -1,18 +1,15 @@
 import Link from "next/link";
 import { getDb } from "@/db";
-import { essays, bookReviews } from "@/db/schema";
+import { essays, bookReviews, photos } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { opEds } from "@/data/op-eds";
 import { Hero } from "@/components/hero";
 
 export const dynamic = "force-dynamic";
 
-// ── Replace with your Vercel Blob portrait URL once uploaded ──────────────
-const PORTRAIT_URL = "";
-
 export default async function HomePage() {
   const db = getDb();
-  const [recentEssays, recentReviews] = await Promise.all([
+  const [recentEssays, recentReviews, heroPhotos] = await Promise.all([
     db
       .select({ id: essays.id, title: essays.title, slug: essays.slug, publishedAt: essays.publishedAt })
       .from(essays)
@@ -25,7 +22,10 @@ export default async function HomePage() {
       .where(eq(bookReviews.published, true))
       .orderBy(desc(bookReviews.publishedAt))
       .limit(3),
+    db.select({ blobUrl: photos.blobUrl }).from(photos).where(eq(photos.isHero, true)).limit(1),
   ]);
+
+  const portraitUrl = heroPhotos[0]?.blobUrl ?? "";
 
   const recentOpEds = [...opEds]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -33,10 +33,16 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero portraitUrl={PORTRAIT_URL} />
+      <Hero portraitUrl={portraitUrl} />
 
-      <main className="mx-auto w-full max-w-screen-xl px-6 py-24">
-      {/* Recent work grid */}
+      {/* Spacer: one viewport of scroll while the fixed hero stays behind */}
+      <div className="min-h-screen h-dvh shrink-0" aria-hidden="true" />
+
+      {/* Dark content slides up over the fixed photo (curtain) */}
+      <main className="relative z-10 bg-background hero-main-overlap">
+        <div className="mx-auto w-full max-w-screen-xl px-6 lg:px-16 pt-8 pb-24">
+
+          {/* ── Recent work grid ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
 
         {/* Essays */}
@@ -133,8 +139,9 @@ export default async function HomePage() {
             All reviews &rarr;
           </Link>
         </section>
-      </div>
-    </main>
+      </div>{/* end grid */}
+        </div>{/* end inner container */}
+      </main>
     </>
   );
 }

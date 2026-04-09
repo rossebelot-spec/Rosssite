@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import { essays, bookReviews, photos } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, ne } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { del } from "@vercel/blob";
 
@@ -136,6 +136,16 @@ export async function updatePhoto(
   await requireAdmin();
   const db = getDb();
   await db.update(photos).set(data).where(eq(photos.id, id));
+  revalidatePath("/photography");
+}
+
+export async function setHeroPhoto(id: number) {
+  await requireAdmin();
+  const db = getDb();
+  // Clear any existing hero, then set the new one
+  await db.update(photos).set({ isHero: false }).where(ne(photos.id, id));
+  await db.update(photos).set({ isHero: true }).where(eq(photos.id, id));
+  revalidatePath("/");
   revalidatePath("/photography");
 }
 

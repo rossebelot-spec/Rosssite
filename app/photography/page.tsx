@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getDb } from "@/db";
 import { photos } from "@/db/schema";
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { PhotoGrid } from "@/components/photo-grid";
 import { SectionHeader } from "@/components/section-header";
 
@@ -13,6 +13,7 @@ export default async function PhotographyPage() {
   const allPhotos = await db
     .select()
     .from(photos)
+    .where(eq(photos.isHero, false))
     .orderBy(asc(photos.displayOrder), asc(photos.createdAt));
 
   return (

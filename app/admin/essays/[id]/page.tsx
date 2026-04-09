@@ -193,6 +193,8 @@ export default function AdminEssayEditor() {
             Body
           </label>
           <TiptapEditor
+            key={id}
+            readingTheme
             content={data.bodyHtml}
             onChange={(html) => set("bodyHtml", html)}
           />

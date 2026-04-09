@@ -80,6 +80,28 @@
   --font-serif-stack: var(--font-cormorant), Georgia, serif;
 }
 
+/* ─── Reading piece theme (essays / reviews) — token values from reference UI ─ */
+:root {
+  --color-reading-bg: #f6f3ee;
+  --color-charcoal: #1a1a1a;
+  --color-stone-900: #1c1917;
+  --color-folio-paper: #fdfbf7;
+  --color-accent: #4a5f7f;
+  --color-accent-muted: #6b7c95;
+  --color-accent-border: rgba(74, 95, 127, 0.6);
+  --color-blockquote-bg: #f5f4f2;
+  --color-blockquote-border: #e5e3df;
+  --color-page-break-border: #d4d0c8;
+  --color-page-break-dots: #8a8680;
+  --color-folio-border: #d6d3d1;
+  --width-article: 43.75rem;
+  --width-folio-outer: 56rem;
+  --font-serif-reading: var(--font-lora), Georgia, serif;
+  --font-sans-reading: var(--font-inter), system-ui, sans-serif;
+  --essay-blockquote-padding: 1rem 1rem 1rem 1.5rem;
+  --essay-bio-heading-margin-bottom: 1rem;
+}
+
 /* ─── Dark palette — applied via class="dark" on <html> ─────────────────── */
 .dark {
   /* Near-black background with a faint warm cast, matching rossbelot.com */
@@ -113,6 +135,515 @@
   /* Warm sand accent — used sparingly for links and highlights */
   --warm-accent:                   oklch(0.76 0.04 75);
   --warm-accent-foreground:        oklch(0.09 0.003 345);
+}
+
+/* ─── Homepage hero (fixed photo + curtain scroll) ────────────────────────
+   All layout values are tokens — adjust here, not in components.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Sticky site header (nav row) — sticky toolbars use this as `top` so they sit below the bar */
+  --site-header-height: 4.5rem;
+  /* How much of the main column peeks above the fold (80–100px range) */
+  --hero-content-peek: clamp(5rem, 12vw, 6.25rem);
+  /* Height of the bottom gradient band on the hero image */
+  --hero-gradient-height: min(45vh, 24rem);
+  /* Same cap as Tailwind max-w-screen-xl — hero copy lines up with main content */
+  --site-content-max-width: 80rem;
+  /* Text inset from hero edges (upper-right stack) */
+  --hero-text-inset-inline: clamp(1.5rem, 5vw, 4rem);
+  /* Below fixed header (nav + gap) — keep hero title from overlapping the bar */
+  --hero-text-inset-block-start: clamp(7rem, 20vh, 12rem);
+  --hero-text-max-width: min(32rem, 85vw);
+
+  /* Essay reading layout (/essays/[slug]) — defaults; .reading-theme applies reference tokens */
+  --essay-content-padding-x: clamp(1.5rem, 5vw, 4rem);
+  --essay-content-padding-y: clamp(2.5rem, 6vh, 5rem);
+  --essay-toolbar-margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
+  --essay-header-gap: 0;
+  /* Body starts flush under the byline (no extra band below header) */
+  --essay-header-padding-bottom: 0;
+  --essay-title-margin-top: 0;
+  --essay-meta-margin-top: 0.75rem;
+  --essay-meta-gap: 0.75rem;
+  --essay-meta-line-height: 1.5;
+  --essay-body-margin-top: 0;
+  --essay-body-max-width: var(--width-article);
+  --essay-body-line-height: 1.2;
+  --essay-body-font-size: 1.125rem;
+  --essay-block-gap: 0;
+  --essay-reading-font-family: var(--font-serif-reading);
+  --essay-label-font-family: var(--font-sans-reading);
+  --essay-display-font-family: var(--font-serif-reading);
+  --essay-title-size: clamp(2.25rem, 4vw, 3rem);
+  --essay-title-line-height: 1.25;
+  --essay-kicker-tracking: 0.3em;
+  --essay-kicker-font-size: 0.75rem;
+  --essay-meta-font-size: 0.875rem;
+  --essay-bio-margin-top: 3rem;
+  --essay-bio-padding-top: 2rem;
+  --essay-bio-text-size: 0.875rem;
+  --essay-bio-line-height: 1.625;
+  --essay-bio-paragraph-gap: 1rem;
+  --essay-paragraph-flow: 0;
+  --essay-heading-margin-top: 2.25em;
+  --essay-heading-margin-bottom: 0.65em;
+  --essay-heading-line-height: 1.25;
+  --essay-subhead-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  --essay-h3-font-size: clamp(1.0625rem, 2vw, 1.1875rem);
+  --essay-list-indent: 1.25em;
+  --essay-list-item-gap: 0.5em;
+  --essay-blockquote-border-width: 4px;
+  --essay-folio-padding: clamp(2rem, 6vw, 4rem);
+  --essay-folio-shadow: 0 1.25rem 3rem color-mix(in srgb, var(--color-stone-900) 12%, transparent);
+  --essay-reading-pad-top: 6rem;
+  --essay-reading-pad-bottom: 3rem;
+}
+
+@layer components {
+  .hero-bottom-gradient {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 1;
+    height: var(--hero-gradient-height);
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--color-background)
+    );
+  }
+
+  .hero-text-block {
+    position: absolute;
+    top: calc(var(--hero-text-inset-block-start) + env(safe-area-inset-top, 0px));
+    /* Align right edge with centered content column + padding, not the viewport rim */
+    right: calc(
+      (100vw - min(100vw, var(--site-content-max-width))) / 2
+        + var(--hero-text-inset-inline) + env(safe-area-inset-right, 0px)
+    );
+    left: auto;
+    bottom: auto;
+    z-index: 2;
+    max-width: var(--hero-text-max-width);
+    text-align: right;
+    text-wrap: balance;
+  }
+
+  /* Hero tagline + nav links — readable on photos without hardcoded colors */
+  .hero-text-tagline,
+  .nav-link,
+  .nav-menu-trigger {
+    color: color-mix(in oklch, var(--foreground) 92%, var(--background));
+    text-shadow:
+      0 0.06em 0.12em color-mix(in oklch, var(--background) 72%, transparent),
+      0 0.12em 0.35em color-mix(in oklch, var(--background) 48%, transparent);
+  }
+
+  .nav-link--active {
+    color: var(--color-warm-accent);
+    text-shadow:
+      0 0.06em 0.1em color-mix(in oklch, var(--background) 58%, transparent),
+      0 0.1em 0.3em color-mix(in oklch, var(--background) 42%, transparent);
+  }
+
+  .nav-link:hover:not(.nav-link--active) {
+    color: var(--foreground);
+  }
+
+  .nav-menu-trigger:hover {
+    color: var(--foreground);
+  }
+
+  /* Pulls main content up so a band peeks into the viewport over the fixed hero */
+  .hero-main-overlap {
+    margin-top: calc(-1 * var(--hero-content-peek));
+  }
+
+  /* ─── Essay article (reading) ─────────────────────────────────────────── */
+  .essay-layout {
+    margin-inline: auto;
+    width: 100%;
+    max-width: var(--site-content-max-width);
+    padding-inline: var(--essay-content-padding-x);
+    padding-block: var(--essay-content-padding-y);
+  }
+
+  .essay-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--essay-meta-gap);
+    margin-bottom: var(--essay-toolbar-margin-bottom);
+  }
+
+  .essay-back-link {
+    font-family: var(--essay-label-font-family);
+    font-size: var(--essay-meta-font-size);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .essay-back-link:hover {
+    color: var(--color-warm-accent);
+  }
+
+  .essay-pdf-slot {
+    min-height: 0;
+    flex-shrink: 0;
+  }
+
+  .essay-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--essay-header-gap);
+    max-width: var(--essay-body-max-width);
+    margin-inline: auto;
+    padding-bottom: var(--essay-header-padding-bottom);
+  }
+
+  .essay-kicker {
+    margin: 0;
+    font-family: var(--essay-label-font-family);
+    font-size: var(--essay-kicker-font-size);
+    letter-spacing: var(--essay-kicker-tracking);
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+  }
+
+  .essay-title {
+    margin: 0;
+    margin-top: var(--essay-title-margin-top);
+    font-family: var(--essay-display-font-family);
+    font-weight: 500;
+    font-size: var(--essay-title-size);
+    line-height: var(--essay-title-line-height);
+    letter-spacing: 0.02em;
+    color: var(--color-foreground);
+  }
+
+  .essay-meta {
+    margin: 0;
+    margin-top: var(--essay-meta-margin-top);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--essay-meta-gap);
+    font-family: var(--essay-label-font-family);
+    font-size: var(--essay-meta-font-size);
+    line-height: var(--essay-meta-line-height);
+    color: var(--color-muted-foreground);
+  }
+
+  .essay-meta-sep {
+    color: inherit;
+    opacity: 1;
+  }
+
+  .essay-body {
+    margin-top: var(--essay-body-margin-top);
+    max-width: var(--essay-body-max-width);
+    margin-inline: auto;
+    font-family: var(--essay-reading-font-family);
+    font-size: var(--essay-body-font-size);
+    line-height: var(--essay-body-line-height);
+    text-align: left;
+    text-align-last: left;
+    color: var(--color-foreground);
+  }
+
+  .essay-body :where(p) {
+    text-indent: 0;
+  }
+
+  .essay-body :where(p):not(:first-child),
+  .essay-body :where(ul):not(:first-child),
+  .essay-body :where(ol):not(:first-child),
+  .essay-body :where(blockquote):not(:first-child) {
+    margin-top: var(--essay-paragraph-flow);
+  }
+
+  .essay-body :where(h2, h3, h4) {
+    font-family: var(--essay-reading-font-family);
+    font-weight: 500;
+    line-height: var(--essay-heading-line-height);
+    letter-spacing: 0.02em;
+    text-align: left;
+    color: var(--color-foreground);
+  }
+
+  .essay-body :where(h2) {
+    font-size: var(--essay-subhead-size);
+    margin-top: var(--essay-heading-margin-top);
+    margin-bottom: var(--essay-heading-margin-bottom);
+  }
+
+  .essay-body :where(h2):first-child {
+    margin-top: 0;
+  }
+
+  .essay-body :where(h3, h4) {
+    font-size: var(--essay-h3-font-size);
+    margin-top: calc(var(--essay-heading-margin-top) * 0.88);
+    margin-bottom: var(--essay-heading-margin-bottom);
+  }
+
+  .essay-body :where(h3):first-child,
+  .essay-body :where(h4):first-child {
+    margin-top: 0;
+  }
+
+  .essay-body :where(ul, ol) {
+    padding-inline-start: var(--essay-list-indent);
+  }
+
+  .essay-body :where(li + li) {
+    margin-top: var(--essay-list-item-gap);
+  }
+
+  .essay-body :where(blockquote) {
+    border-inline-start: var(--essay-blockquote-border-width) solid var(--color-border);
+    padding-inline-start: var(--essay-list-indent);
+    color: color-mix(in oklch, var(--foreground) 85%, var(--muted-foreground));
+    font-style: italic;
+  }
+
+  .essay-body :where(a) {
+    color: var(--color-warm-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .essay-body :where(a:hover) {
+    color: var(--color-foreground);
+  }
+
+  .essay-body :where(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+  }
+
+  .essay-body :where(figure) {
+    margin-block: var(--essay-heading-margin-top);
+  }
+
+  .essay-bio {
+    margin-top: var(--essay-bio-margin-top);
+    padding-top: var(--essay-bio-padding-top);
+    border-top: 1px solid var(--color-border);
+    max-width: var(--essay-body-max-width);
+    margin-inline: auto;
+  }
+
+  .essay-bio-text {
+    margin: 0;
+    font-family: var(--essay-reading-font-family);
+    font-size: var(--essay-bio-text-size);
+    line-height: var(--essay-bio-line-height);
+    text-align: left;
+    text-align-last: left;
+    color: var(--color-muted-foreground);
+  }
+
+  .essay-bio-text + .essay-bio-text {
+    margin-top: var(--essay-bio-paragraph-gap);
+  }
+
+  /* ─── Reading theme + folio (reference piece layout) ───────────────────── */
+  .reading-theme.essay-reading-shell {
+    position: relative;
+    isolation: isolate;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    padding-inline: clamp(1rem, 4vw, 1.5rem);
+    padding-top: calc(var(--essay-reading-pad-top) + env(safe-area-inset-top, 0px));
+    padding-bottom: var(--essay-reading-pad-bottom);
+    background: var(--color-reading-bg);
+    color: var(--color-charcoal);
+  }
+
+  .reading-theme.essay-reading-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .reading-theme .journal-folio-paper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: min(var(--width-folio-outer), calc(100vw - 2rem));
+    margin-inline: auto;
+    background: var(--color-folio-paper);
+    border: 1px solid var(--color-folio-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--essay-folio-shadow);
+    padding: var(--essay-folio-padding);
+    --foreground: var(--color-stone-900);
+    --muted-foreground: var(--color-accent-muted);
+    --border: var(--color-accent-border);
+    --warm-accent: var(--color-accent);
+    color: var(--color-stone-900);
+  }
+
+  .reading-theme .journal-folio-paper .essay-layout {
+    max-width: none;
+    width: 100%;
+    margin-inline: 0;
+    padding-inline: 0;
+    padding-block: 0;
+  }
+
+  .reading-theme .essay-kicker {
+    font-family: var(--font-sans-reading);
+    color: var(--color-accent);
+  }
+
+  .reading-theme .essay-title {
+    font-family: var(--font-serif-reading);
+    font-weight: 500;
+    color: var(--color-stone-900);
+  }
+
+  .reading-theme .essay-meta {
+    font-family: var(--font-sans-reading);
+    color: var(--color-accent);
+  }
+
+  .reading-theme .essay-meta-sep {
+    color: var(--color-accent);
+  }
+
+  .reading-theme .essay-back-link {
+    font-family: var(--font-sans-reading);
+    color: var(--color-accent-muted);
+    text-decoration: none;
+  }
+
+  .reading-theme .essay-back-link:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.125em;
+  }
+
+  .reading-theme .essay-body {
+    animation: essay-fade-in 0.3s ease-in-out;
+  }
+
+  @keyframes essay-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .reading-theme .essay-body > * {
+    margin-block: 0;
+  }
+
+  .reading-theme .essay-body :where(li + li) {
+    margin-top: var(--essay-list-item-gap);
+  }
+
+  .reading-theme .essay-body :where(a) {
+    color: var(--color-accent-muted);
+    text-decoration: none;
+  }
+
+  .reading-theme .essay-body :where(a:hover) {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .reading-theme .essay-body :where(h1, h2, h3, h4, h5, h6) {
+    font-family: var(--font-serif-reading);
+    font-weight: 500;
+    color: var(--color-stone-900);
+  }
+
+  .reading-theme .essay-body :where(p, li) {
+    color: var(--color-stone-900);
+  }
+
+  .reading-theme .essay-body :where(blockquote) {
+    border: none;
+    border-inline-start: var(--essay-blockquote-border-width) solid var(--color-blockquote-border);
+    background: var(--color-blockquote-bg);
+    padding: var(--essay-blockquote-padding);
+    margin: 0;
+    color: var(--color-stone-900);
+    font-style: italic;
+  }
+
+  .reading-theme .essay-body :where(p:empty) {
+    min-height: 1.5rem;
+    display: block;
+  }
+
+  /* Leading empty <p> from editors — remove from layout so flex gap doesn’t leave a hole */
+  .reading-theme .essay-body > p:first-child:empty {
+    display: none;
+  }
+
+  /*
+   * TipTap (admin) — WYSIWYG must match public essay rhythm: 1.2 line-height, no extra
+   * paragraph banding. Reading-theme empty-<p> min-height and nested li>p margins fight that.
+   */
+  .reading-theme .essay-body.tiptap-editor-root {
+    line-height: var(--essay-body-line-height);
+    font-size: var(--essay-body-font-size);
+  }
+
+  .reading-theme .essay-body.tiptap-editor-root :where(p) {
+    margin-block: 0;
+  }
+
+  .reading-theme .essay-body.tiptap-editor-root :where(li > p) {
+    margin-block: 0;
+  }
+
+  .reading-theme .essay-body.tiptap-editor-root :where(p:empty) {
+    min-height: 0;
+  }
+
+  /* TipTap often uses <p><br></p> for blank lines — avoid a fixed strut like public empty-p rule */
+  .reading-theme .essay-body.tiptap-editor-root p:has(> br:only-child) {
+    min-height: 0;
+  }
+
+  .reading-theme .essay-bio {
+    border-color: var(--color-accent-border);
+  }
+
+  .reading-theme .essay-bio-section-heading {
+    font-family: var(--font-sans-reading);
+    font-size: var(--essay-kicker-font-size);
+    letter-spacing: var(--essay-kicker-tracking);
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin: 0 0 var(--essay-bio-heading-margin-bottom);
+  }
+
+  .reading-theme .essay-bio-text {
+    font-family: var(--font-sans-reading);
+    color: var(--color-stone-900);
+    opacity: 0.85;
+  }
 }
 
 /* ─── Base styles ────────────────────────────────────────────────────────── */

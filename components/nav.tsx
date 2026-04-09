@@ -22,25 +22,24 @@ export function Nav() {
   const [open, setOpen] = useState(false);
 
   const navLinkClass = (href: string) =>
-    `text-xs tracking-widest uppercase transition-colors ${
-      pathname.startsWith(href)
-        ? "text-warm-accent"
-        : "text-muted-foreground hover:text-foreground"
+    `nav-link text-xs tracking-widest uppercase transition-colors ${
+      pathname.startsWith(href) ? "nav-link--active" : ""
     }`;
 
   const allLinks = [...links, { href: "/admin", label: "Admin" }];
 
-  return (
-    <header className="border-b border-border bg-surface">
-      <div className="mx-auto flex max-w-screen-xl items-center justify-between px-6 py-4">
-        <Link
-          href="/"
-          className="font-heading text-xl tracking-widest uppercase text-foreground hover:text-warm-accent transition-colors"
-        >
-          Ross Belot
-        </Link>
+  const isHome = pathname === "/";
 
-        {/* Desktop nav */}
+  return (
+    <header
+      className={
+        isHome
+          ? "fixed top-0 left-0 right-0 z-50 bg-transparent"
+          : "sticky top-0 z-50 border-b border-border bg-surface"
+      }
+    >
+      <div className="mx-auto flex max-w-screen-xl items-center px-6 py-4">
+        {/* Desktop: links from the left; mobile: hamburger on the right */}
         <nav className="hidden md:flex items-center gap-8">
           {allLinks.map((link) => (
             <Link key={link.href} href={link.href} className={navLinkClass(link.href)}>
@@ -49,33 +48,34 @@ export function Nav() {
           ))}
         </nav>
 
-        {/* Mobile nav */}
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger
-            render={
-              <button
-                className="md:hidden text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Open menu"
-              />
-            }
-          >
-            <Menu size={20} />
-          </SheetTrigger>
-          <SheetContent side="right" className="bg-surface border-border w-64">
-            <nav className="flex flex-col gap-6 mt-10">
-              {allLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setOpen(false)}
-                  className={navLinkClass(link.href)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </SheetContent>
-        </Sheet>
+        <div className="ml-auto md:hidden">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger
+              render={
+                <button
+                  className="nav-menu-trigger transition-colors"
+                  aria-label="Open menu"
+                />
+              }
+            >
+              <Menu size={20} />
+            </SheetTrigger>
+            <SheetContent side="right" className="bg-surface border-border w-64">
+              <nav className="flex flex-col gap-6 mt-10">
+                {allLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className={navLinkClass(link.href)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   );

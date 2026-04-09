@@ -8,6 +8,13 @@
       "when": 1775273752424,
       "tag": "0000_odd_iron_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775316220999,
+      "tag": "0001_light_joshua_kane",
+      "breakpoints": true
     }
   ]
 }

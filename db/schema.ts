@@ -41,6 +41,7 @@ export const photos = pgTable("photos", {
   alt: text("alt").notNull().default(""),
   takenAt: timestamp("taken_at"),
   displayOrder: integer("display_order").notNull().default(0),
+  isHero: boolean("is_hero").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

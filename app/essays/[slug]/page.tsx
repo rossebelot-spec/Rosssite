@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
 import { essays } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { Badge } from "@/components/ui/badge";
+import { AuthorBio, siteAuthorName } from "@/components/author-bio";
+import { formatPublishedDate } from "@/lib/format-published-date";
 
 export const dynamic = "force-dynamic";
 
@@ -32,39 +34,42 @@ export default async function EssayPage({ params }: Props) {
 
   if (!essay) notFound();
 
+  const dateLabel = formatPublishedDate(essay.publishedAt);
+  const dateIso = essay.publishedAt ? new Date(essay.publishedAt).toISOString() : undefined;
+
   return (
-    <main className="mx-auto w-full max-w-screen-sm px-6 py-16">
-      <header className="mb-10 border-b border-border pb-8">
-        <time className="text-xs tracking-widest uppercase text-muted-foreground">
-          {essay.publishedAt
-            ? new Date(essay.publishedAt).toLocaleDateString("en-CA", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })
-            : ""}
-        </time>
-        <h1 className="font-heading text-4xl mt-2">{essay.title}</h1>
-        {essay.description && (
-          <p className="mt-3 text-muted-foreground leading-relaxed">
-            {essay.description}
-          </p>
-        )}
-        {essay.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {essay.tags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs tracking-widest uppercase">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        )}
+    <main id="main" className="essay-layout">
+      <div className="essay-toolbar">
+        <Link href="/essays" className="essay-back-link">
+          Back to Essays
+        </Link>
+        <div className="essay-pdf-slot" aria-hidden="true" />
+      </div>
+
+      <header className="essay-header">
+        <p className="essay-kicker">Essay</p>
+        <h1 className="essay-title">{essay.title}</h1>
+        <p className="essay-meta">
+          <span>{siteAuthorName}</span>
+          {dateLabel ? (
+            <>
+              <span className="essay-meta-sep" aria-hidden="true">
+                &middot;
+              </span>
+              <time dateTime={dateIso}>{dateLabel}</time>
+            </>
+          ) : null}
+        </p>
       </header>
 
-      <article
-        className="prose prose-invert prose-sm max-w-none font-sans leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: essay.bodyHtml }}
-      />
+      <article className="essay-body" dangerouslySetInnerHTML={{ __html: essay.bodyHtml }} />
+
+      <section className="essay-bio" aria-labelledby="essay-bio-heading">
+        <h2 id="essay-bio-heading" className="essay-bio-section-heading">
+          Article Author Biography
+        </h2>
+        <AuthorBio />
+      </section>
     </main>
   );
 }

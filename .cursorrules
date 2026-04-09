@@ -1,0 +1,176 @@
+# Cursor Rules — Personal Site
+# Early-stage project. Rules reflect actual code, not the default README.
+# When in doubt, read the code. There is minimal markdown architecture documentation.
+
+---
+
+## Critical workflow rules
+
+- Do NOT push to GitHub or deploy to Vercel or promote to production in any form unless explicitly asked — "it's ready" or "looks good" is not permission to deploy
+- If you have presented a plan and been told to wait for confirmation, do not write any files, run any commands, or take any action until the user explicitly says to proceed
+- Test locally first (`npm run dev`), then `npm run build` before considering any task done
+- Before any Next.js-specific work, check `node_modules/next/dist/docs/` for current API — do not assume training data matches Next 16 behaviour
+
+---
+
+## Stack (do not deviate without asking)
+
+- Next.js 16 App Router, React 19, TypeScript
+- Drizzle ORM + `@neondatabase/serverless` (lazy `getDb()` in db/index.ts)
+- NextAuth v5 + Google provider (`lib/auth.ts`); `/admin/*` gated via `proxy.ts` + `authorized` callback; server actions call private `requireAdmin()` in `lib/actions.ts`
+- `@vercel/blob` for asset storage
+- Tailwind v4 with design tokens in `app/globals.css` @theme block
+- shadcn/ui (`components/ui/`) + `@base-ui/react` for primitives
+- TipTap for rich text editing (admin only)
+- `lucide-react` for icons — no other icon library
+- `sharp` — present in package.json for Next.js image optimisation pipeline; not called directly in app source
+- CVA + clsx + tailwind-merge for variant styling
+
+Do NOT introduce new libraries without asking first.
+
+---
+
+## Architecture — where things live
+
+```
+app/                    → App Router routes (public + app/admin/* + app/api/*)
+components/
+  ui/                   → shadcn-style primitives
+  admin/                → admin-only editor components
+data/*.ts               → static editorial lists (op-eds, press, events, video) — NOT DB
+db/
+  schema.ts             → Drizzle schema
+  index.ts              → lazy getDb() singleton
+lib/
+  auth.ts               → NextAuth config; exports auth(), handlers, signIn, signOut, authorized callback
+  actions.ts            → requireAdmin() (private) + all server actions ("use server")
+  blob.ts               → Vercel Blob helpers
+  utils.ts              → shared utilities
+  format-published-date.ts → canonical date formatter (see below)
+proxy.ts                → /admin/* access control (NextAuth auth wrapper)
+```
+
+### Content split — code-only, no markdown doc exists for this
+
+Two content tiers coexist:
+
+| Tier | Source | Examples |
+|------|--------|---------|
+| DB-backed | Drizzle + Neon Postgres | Essays, book reviews, photos |
+| Static | `data/*.ts` flat lists | Op-eds, press, events, video |
+
+Do not move static content to the DB or vice versa without asking. Do not add new DB tables for content that already has a static pattern.
+
+---
+
+## Naming conventions
+
+- Route segments: kebab-case (`book-reviews`, `[slug]`)
+- React components: PascalCase (`Nav`, `TiptapEditor`)
+- Drizzle tables: camelCase in TypeScript, snake_case SQL column names where mapped
+- Path alias: `@/*` maps to repo root (tsconfig.json) — use it consistently
+
+---
+
+## Access control — read carefully
+
+- **`signIn` callback** in `lib/auth.ts` enforces **`ALLOWED_ADMIN_EMAILS`** (env var) — that is how who may sign in is defined; do not hardcode email addresses. The **`authorized`** callback only checks that a session exists (`!!session?.user`) for `/admin` routes via `proxy.ts`
+- There is NO `middleware.ts` in this project — if you see comments referencing "middleware", they mean `proxy.ts`
+- `auth()` from `lib/auth.ts` is used in Route Handlers and layouts
+- `requireAdmin()` is a private function in `lib/actions.ts` — all server actions call it after `"use server"`
+- Do not look for `requireAdmin` in `lib/auth.ts` — it is not there
+- Do not add `middleware.ts` unless explicitly asked — this project uses `proxy.ts` for `/admin` access control; before adding a middleware file, confirm current Next 16 docs for how the two interact
+
+---
+
+## Data fetching patterns
+
+### Public pages
+- Async Server Components call `getDb()` + Drizzle directly
+- Use `export const dynamic = "force-dynamic"` where DB reads must not be cached
+
+### Admin editors
+- Client components `fetch('/api/admin/...')` for data loads
+- Mutations go through `lib/actions.ts` server actions after `requireAdmin()`
+- Server actions call Drizzle then `revalidatePath()` or `redirect()`
+
+### State
+- Local `useState` / `useEffect` in client admin editors
+- No global client state store — do not introduce one
+
+---
+
+## Styling
+
+- Design tokens live in `app/globals.css` under `@theme` — extend tokens there
+- Do NOT use arbitrary Tailwind values (e.g. `w-[347px]`) — add a token instead
+- Use CVA for component variants, clsx/tailwind-merge for conditional classes
+- Fonts: Cormorant, Lora, Inter, JetBrains Mono (loaded in `app/layout.tsx`) — do not add new fonts
+
+## CSS changes
+
+Any change to `app/globals.css` or `scopes.css` (if present) must be committed immediately with a message explaining why the rule exists. Uncommitted CSS is invisible to `git blame` and creates exactly the kind of "why does this exist" mystery that wastes debugging time.
+
+---
+
+## Date formatting
+
+- `lib/format-published-date.ts` is the canonical date formatter — use it
+- `app/essays/page.tsx` currently formats dates inline with `en-CA` — this is a known inconsistency, do not replicate it elsewhere; fix it to use the helper if you touch that file
+
+---
+
+## Error handling
+
+### API routes
+- Return `NextResponse.json(...)` with appropriate status (401, 404, 400, 500)
+- Wrap in `try/catch` with `console.error` for unexpected failures
+- Validate uploads and return 400 with a message on bad input
+
+### Known gap (do not worsen)
+- Client `fetch` calls in admin have no shared error helper — use consistent inline handling until a pattern is established; do not invent a new abstraction without asking
+
+---
+
+## Hooks directory
+
+- `components.json` references `@/hooks` but no `hooks/` directory exists yet
+- Do not create hooks files speculatively — only when a specific hook is needed
+
+---
+
+## Testing
+
+- No test suite exists yet — do not add test infrastructure without asking
+- Manual verification: `npm run dev` locally, then `npm run build` passes clean
+
+---
+
+## Before any push — mandatory
+
+Run `npm run build` and confirm zero errors before considering a task complete. Fix build errors before stopping — do not hand back a broken state.
+
+---
+
+## When in doubt, ask first
+
+Stop and describe your plan before proceeding if the task involves any of:
+- Changes to URL structure or slug patterns (breaks bookmarks and any external links)
+- Adding or removing emails from admin access (`ALLOWED_ADMIN_EMAILS`)
+- Moving content between DB-backed and static `data/*.ts` tiers
+- Significant layout or design changes that affect the whole site
+- Anything that requires a new environment variable
+
+---
+
+## Things agents must NEVER do silently
+
+- Push to GitHub or deploy to Vercel
+- Add a new npm dependency
+- Add arbitrary Tailwind values instead of extending tokens
+- Add `middleware.ts` without explicit user approval and checking current Next 16 docs (this project uses `proxy.ts` for `/admin`)
+- Move content between DB and static data tiers
+- Add a global state management library
+- Add new fonts
+- Replicate the inline date formatting pattern from essays/page.tsx
+- Create files in `hooks/` speculatively

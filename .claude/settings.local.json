@@ -5,7 +5,8 @@
       "Bash(npx shadcn@latest init --yes --defaults)",
       "Bash(npx shadcn@latest add sheet badge separator button input textarea --yes)",
       "Bash(npm install:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(node -e \"const n = require\\('next-auth/package.json'\\); console.log\\(n.version\\)\")"
     ]
   }
 }
