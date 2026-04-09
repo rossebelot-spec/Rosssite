@@ -351,8 +351,14 @@
     font-size: var(--essay-body-font-size);
     line-height: var(--essay-body-line-height);
     text-align: left;
-    text-align-last: left;
     color: var(--color-foreground);
+  }
+
+  /* text-align-last only on paragraphs without explicit
+     inline alignment — prevents overriding TipTap's
+     style="text-align: X" on centered/right/justified blocks */
+  .essay-body :where(p:not([style*="text-align"])) {
+    text-align-last: left;
   }
 
   .essay-body :where(p) {
