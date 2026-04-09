@@ -609,6 +609,12 @@
     font-size: var(--essay-body-font-size);
   }
 
+  /* TextAlign extension injects paragraph margins — neutralise them */
+  .reading-theme .essay-body.tiptap-editor-root .ProseMirror p,
+  .essay-body .ProseMirror p {
+    margin-block: 0;
+  }
+
   .reading-theme .essay-body.tiptap-editor-root :where(p) {
     margin-block: 0;
   }
