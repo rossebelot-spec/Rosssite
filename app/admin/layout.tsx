@@ -7,6 +7,8 @@ const adminLinks = [
   { href: "/admin/essays", label: "Essays" },
   { href: "/admin/book-reviews", label: "Book Reviews" },
   { href: "/admin/photography", label: "Photography" },
+  { href: "/admin/video-poems", label: "Video Poems" },
+  { href: "/admin/collections", label: "Collections" },
   { href: "/admin/op-eds", label: "Op-eds" },
   { href: "/admin/press", label: "Press" },
   { href: "/admin/events", label: "Events" },
