@@ -47,7 +47,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${jetbrainsMono.variable} ${lora.variable} ${inter.variable} dark h-full antialiased`}
+      className={`${cormorant.variable} ${jetbrainsMono.variable} ${lora.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Nav />

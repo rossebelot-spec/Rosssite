@@ -55,7 +55,7 @@ export default async function BookReviewPage({ params }: Props) {
       </header>
 
       <article
-        className="prose prose-invert prose-sm max-w-none font-sans leading-relaxed"
+        className="prose prose-sm max-w-none font-sans leading-relaxed"
         dangerouslySetInnerHTML={{ __html: review.bodyHtml }}
       />
     </main>

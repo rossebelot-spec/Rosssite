@@ -128,7 +128,6 @@ const BlockSpacing = Extension.create<{ types: string[] }>({
    is stripped so CSS controls rendering and toolbar stays truthful.     */
 const KEEP_STYLE_PROPS = new Set([
   "color",
-  "background-color",
   "text-align",
   "text-decoration",
 ]);

@@ -47,7 +47,7 @@
   --font-serif:   var(--font-serif-stack);
 }
 
-/* ─── Base palette: light (fallback only — site is always dark) ─────────── */
+/* ─── Base palette: light (default for the public site) ──────────────────── */
 :root {
   --background:            oklch(1 0 0);
   --foreground:            oklch(0.145 0 0);
@@ -102,7 +102,7 @@
   --essay-bio-heading-margin-bottom: 1rem;
 }
 
-/* ─── Dark palette — applied via class="dark" on <html> ─────────────────── */
+/* ─── Dark palette — applied via class="dark" on the /admin subtree ─────── */
 .dark {
   /* Near-black background with a faint warm cast, matching rossbelot.com */
   --background:            oklch(0.09 0.003 345);

@@ -27,7 +27,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-full">
+    <div className="dark flex min-h-full bg-background text-foreground">
       {/* Sidebar */}
       <aside className="w-48 shrink-0 border-r border-border bg-surface px-4 py-8 hidden md:flex flex-col gap-6">
         <p className="text-xs tracking-widest uppercase text-muted-foreground">
