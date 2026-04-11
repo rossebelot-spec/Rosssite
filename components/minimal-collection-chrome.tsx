@@ -117,24 +117,24 @@ export function MinimalCollectionChrome({
 
   return (
     <>
-      {/* Title bar — height drives --site-header-height */}
+      {/* Title bar — height drives --site-header-height; left gutter for fixed Menu */}
       <header
         ref={headerRef}
-        className="sticky top-0 z-40 border-b border-border bg-surface pr-24 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 pl-6 md:pl-6"
+        className="sticky top-0 z-40 border-b border-border bg-surface pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 pl-24 pr-6"
       >
-        <div className="mx-auto max-w-screen-xl">
+        <div className="mx-auto flex max-w-screen-xl justify-end">
           {contextLine ? (
-            <p className="text-xs tracking-widest uppercase text-muted-foreground text-balance">
+            <p className="max-w-[min(100%,42rem)] text-right text-xs tracking-widest uppercase text-muted-foreground text-balance">
               {contextLine}
             </p>
           ) : null}
         </div>
       </header>
 
-      {/* Menu control above overlay when open */}
+      {/* Menu control above overlay when open (left) */}
       <div
         className={cn(
-          "fixed top-0 right-0 flex justify-end p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))]",
+          "fixed top-0 left-0 flex justify-start p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pl-[max(1rem,env(safe-area-inset-left))]",
           menuOpen ? "z-[110]" : "z-50",
         )}
       >
