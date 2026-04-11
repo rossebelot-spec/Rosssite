@@ -6,18 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavContext } from "@/components/nav-context";
-
-const links = [
-  { href: "/", label: "Home" },
-  { href: "/essays", label: "Essays" },
-  { href: "/op-eds", label: "Op-eds" },
-  { href: "/book-reviews", label: "Books" },
-  { href: "/photography", label: "Photography" },
-  { href: "/video", label: "Video" },
-  { href: "/press", label: "Press" },
-  { href: "/events", label: "Events" },
-  { href: "/about", label: "About" },
-];
+import { siteNavLinksWithAdmin } from "@/lib/site-nav-links";
 
 export function Nav() {
   const pathname = usePathname();
@@ -33,7 +22,7 @@ export function Nav() {
       isNavActive(href) ? "nav-link--active" : ""
     }`;
 
-  const allLinks = [...links, { href: "/admin", label: "Admin" }];
+  const allLinks = [...siteNavLinksWithAdmin];
 
   const isHome = pathname === "/";
 
