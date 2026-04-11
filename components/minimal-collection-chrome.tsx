@@ -120,11 +120,11 @@ export function MinimalCollectionChrome({
       {/* Title bar — height drives --site-header-height; left gutter for fixed Menu */}
       <header
         ref={headerRef}
-        className="sticky top-0 z-40 border-b border-border bg-surface pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 pl-24 pr-6"
+        className="sticky top-0 z-40 border-b border-border bg-surface pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 pl-24 pr-24"
       >
-        <div className="mx-auto flex max-w-screen-xl justify-end">
+        <div className="mx-auto flex w-full max-w-screen-xl items-center justify-center">
           {contextLine ? (
-            <p className="max-w-[min(100%,42rem)] text-right text-xs tracking-widest uppercase text-muted-foreground text-balance">
+            <p className="max-w-[min(100%,42rem)] text-center text-xs tracking-widest uppercase text-muted-foreground text-balance">
               {contextLine}
             </p>
           ) : null}
