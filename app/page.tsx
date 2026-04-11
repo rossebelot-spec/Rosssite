@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getDb } from "@/db";
 import { content, photos } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, notInArray } from "drizzle-orm";
+import { getContentIdsLinkedToVideoPoem } from "@/lib/content-video-links";
 import { opEds } from "@/data/op-eds";
 import { Hero } from "@/components/hero";
 
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const db = getDb();
+  const videoLinkedIds = await getContentIdsLinkedToVideoPoem();
   const [recentEssays, recentReviews, heroPhotos] = await Promise.all([
     db
       .select({
@@ -18,7 +20,15 @@ export default async function HomePage() {
         publishedAt: content.publishedAt,
       })
       .from(content)
-      .where(and(eq(content.type, "essay"), eq(content.published, true)))
+      .where(
+        and(
+          eq(content.type, "essay"),
+          eq(content.published, true),
+          ...(videoLinkedIds.length > 0
+            ? [notInArray(content.id, videoLinkedIds)]
+            : [])
+        )
+      )
       .orderBy(desc(content.publishedAt))
       .limit(3),
     db

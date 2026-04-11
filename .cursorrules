@@ -75,6 +75,8 @@ Two content tiers coexist:
 
 Do not move static content to the DB or vice versa without asking. Do not add new DB tables for content that already has a static pattern.
 
+Public `/essays` and the home “Recent Essays” block omit `content` rows that have a `content_links` row with `video_poem_id` set (those pieces are edited under `/admin/content`, which shows a **Video** badge). Direct `/essays/[slug]` URLs for those rows still work.
+
 ---
 
 ## Naming conventions

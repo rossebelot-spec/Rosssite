@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getDb } from "@/db";
 import { content, type ContentType } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
+import { getContentIdsLinkedToVideoPoem } from "@/lib/content-video-links";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,7 @@ export default async function AdminContentPage({
   const activeType = isContentType(type) ? type : "all";
 
   const db = getDb();
+  const videoLinkedIds = new Set(await getContentIdsLinkedToVideoPoem());
   const rows = await (isContentType(type)
     ? db
         .select()
@@ -102,6 +104,11 @@ export default async function AdminContentPage({
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Badge variant="outline">{row.type}</Badge>
+                {videoLinkedIds.has(row.id) ? (
+                  <Badge variant="outline" className="border-warm-accent/60 text-warm-accent">
+                    Video
+                  </Badge>
+                ) : null}
                 <Badge variant={row.published ? "default" : "secondary"}>
                   {row.published ? "Published" : "Draft"}
                 </Badge>
