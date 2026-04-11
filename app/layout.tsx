@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, JetBrains_Mono, Lora, Inter } from "next/font/google";
 import { Nav } from "@/components/nav";
+import { NavProvider } from "@/components/nav-context";
 import { Footer } from "@/components/footer";
 import "./globals.css";
 
@@ -50,9 +51,11 @@ export default function RootLayout({
       className={`${cormorant.variable} ${jetbrainsMono.variable} ${lora.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Nav />
-        <div className="flex-1">{children}</div>
-        <Footer />
+        <NavProvider>
+          <Nav />
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </NavProvider>
       </body>
     </html>
   );

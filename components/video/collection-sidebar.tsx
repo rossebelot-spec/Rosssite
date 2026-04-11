@@ -29,41 +29,41 @@ export function CollectionSidebar({
 }: CollectionSidebarProps) {
   return (
     <nav aria-label={`${collectionTitle} poems`}>
-      <ul className="space-y-1">
+      <ul className="space-y-3">
         {items.map((item) => (
           <li key={item.slug}>
             <Link
               href={`?poem=${item.slug}`}
               scroll={false}
               className={cn(
-                "flex gap-3 rounded p-2 transition-colors",
+                "flex flex-col gap-2 rounded p-2 transition-colors",
                 activeSlug === item.slug
                   ? "bg-warm-accent/10"
                   : "hover:bg-surface"
               )}
             >
               {item.thumbnailUrl && (
-                <div className="relative w-20 shrink-0 aspect-video rounded overflow-hidden bg-surface">
+                <div className="relative w-full aspect-video shrink-0 overflow-hidden rounded bg-surface">
                   <Image
                     src={item.thumbnailUrl}
                     alt={item.thumbnailAlt || item.title}
                     fill
                     className="object-cover"
-                    sizes="80px"
+                    sizes="(max-width: 767px) 100vw, 272px"
                   />
                 </div>
               )}
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 w-full">
                 <p
                   className={cn(
-                    "text-sm font-medium truncate",
+                    "text-sm font-medium leading-snug text-balance",
                     activeSlug === item.slug && "text-warm-accent"
                   )}
                 >
                   {item.title}
                 </p>
                 {item.durationSeconds != null && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {formatDuration(item.durationSeconds)}
                   </p>
                 )}

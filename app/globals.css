@@ -255,6 +255,19 @@
     color: var(--foreground);
   }
 
+  /* Home hero header: name + “where we are” line match nav link contrast */
+  .nav-header--hero .nav-site-name,
+  .nav-header--hero .nav-context-line {
+    color: color-mix(in oklch, var(--foreground) 92%, var(--background));
+    text-shadow:
+      0 0.06em 0.12em color-mix(in oklch, var(--background) 72%, transparent),
+      0 0.12em 0.35em color-mix(in oklch, var(--background) 48%, transparent);
+  }
+
+  .nav-header--hero .nav-site-name:hover {
+    color: var(--foreground);
+  }
+
   /* Pulls main content up so a band peeks into the viewport over the fixed hero */
   .hero-main-overlap {
     margin-top: calc(-1 * var(--hero-content-peek));
