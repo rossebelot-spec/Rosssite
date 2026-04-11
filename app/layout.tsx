@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, JetBrains_Mono, Lora, Inter } from "next/font/google";
-import { Nav } from "@/components/nav";
 import { NavProvider } from "@/components/nav-context";
-import { Footer } from "@/components/footer";
+import { SiteShell } from "@/components/site-shell";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -52,9 +51,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <NavProvider>
-          <Nav />
-          <div className="flex-1">{children}</div>
-          <Footer />
+          <SiteShell>{children}</SiteShell>
         </NavProvider>
       </body>
     </html>

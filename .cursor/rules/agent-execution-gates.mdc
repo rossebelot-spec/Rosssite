@@ -1,0 +1,25 @@
+---
+description: Quality gates for shell/layout work and risky refactors (ROSSSITE)
+alwaysApply: true
+---
+
+# Execution gates (agent must follow)
+
+## Root shell / layout changes (`app/layout.tsx`, `SiteShell`, `Nav`, `Footer`, route chrome)
+
+Before considering the task done:
+
+1. **Prove wiring on disk** — After edits, read or `grep` the real file. The running app uses what is on disk, not a draft in chat.
+2. **Run `npm run build`** — Paste or summarize the result. A failing or skipped build means the task is not complete.
+3. **Minimal slice** — Implement only what the user asked in this turn. Do not add overlays, new packages, or refactors “while we’re here” unless requested.
+4. **No destructive git** — Do not run `git reset --hard`, `git clean -fd`, or force-push unless the user explicitly asks.
+
+## When the user describes route-specific UI (e.g. different nav on `/video/collections/*`)
+
+- Prefer **one client shell** (`SiteShell` or equivalent) chosen in **root layout** via `usePathname()`, unless the user asks for route groups.
+- Preserve **`--site-header-height`** (same `ResizeObserver` pattern as `Nav`) anywhere sticky offsets depend on it.
+- State **how to verify**: which routes should show full nav vs minimal chrome, and what DOM or behavior differs (e.g. presence of `nav-site-name`).
+
+## Summary block (end of substantive replies)
+
+When changing multiple files or behavior, end with: **files touched**, **how to verify**, **build status**.
