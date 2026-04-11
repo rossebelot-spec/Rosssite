@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getDb } from "@/db";
 import {
   collections,
@@ -146,6 +146,12 @@ export default async function CollectionPage({
   if (!result) notFound();
 
   const { collection, items } = result;
+
+  if (!poemSlug && items.length > 0) {
+    redirect(
+      `/video/collections/${encodeURIComponent(slug)}?poem=${encodeURIComponent(items[0].slug)}`
+    );
+  }
 
   return (
     <CollectionReader

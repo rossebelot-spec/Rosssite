@@ -43,13 +43,13 @@ export function VideoPoemMain({
             allowFullScreen
           />
         </div>
-        {essayTitleTrimmed ? (
-          <h2 className="font-heading text-3xl mt-8 text-balance">
-            {essayTitleTrimmed}
-          </h2>
-        ) : null}
       </div>
-      <VideoPoemEssay html={essayHtml} />
+      <div className="flex flex-col gap-6">
+        {essayTitleTrimmed ? (
+          <h2 className="font-heading text-3xl text-balance">{essayTitleTrimmed}</h2>
+        ) : null}
+        <VideoPoemEssay html={essayHtml} />
+      </div>
     </div>
   );
 }
