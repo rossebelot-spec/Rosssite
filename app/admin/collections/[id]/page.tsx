@@ -7,12 +7,12 @@ import { ImageUploader } from "@/components/admin/image-uploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronUp, ChevronDown, Plus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ChevronUp, ChevronDown, X } from "lucide-react";
 import {
   createCollection,
   updateCollection,
   deleteCollection,
-  addVideoPoemToCollection,
   removeVideoPoemFromCollection,
   reorderCollectionItems,
 } from "@/lib/actions";
@@ -32,20 +32,14 @@ interface CollectionData {
 interface CollectionItem {
   id: number;
   position: number;
-  videoPoemId: number;
+  linkedType: string;
+  linkedId: number;
   title: string;
   slug: string;
   vimeoId: string;
   thumbnailUrl: string;
   thumbnailAlt: string;
   durationSeconds: number | null;
-}
-
-interface LibraryPoem {
-  id: number;
-  title: string;
-  slug: string;
-  thumbnailUrl: string;
 }
 
 const empty: CollectionData = {
@@ -67,7 +61,6 @@ export default function AdminCollectionEditor() {
 
   const [data, setData] = useState<CollectionData>(empty);
   const [items, setItems] = useState<CollectionItem[]>([]);
-  const [allPoems, setAllPoems] = useState<LibraryPoem[]>([]);
   const [saving, setSaving] = useState(false);
 
   const fetchCollection = useCallback(async () => {
@@ -92,12 +85,6 @@ export default function AdminCollectionEditor() {
   useEffect(() => {
     if (!isNew) fetchCollection();
   }, [isNew, fetchCollection]);
-
-  useEffect(() => {
-    fetch("/api/admin/video-poems")
-      .then((r) => r.json())
-      .then(setAllPoems);
-  }, []);
 
   function set(field: keyof CollectionData, value: string | boolean) {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -136,20 +123,11 @@ export default function AdminCollectionEditor() {
     await deleteCollection(data.id);
   }
 
-  async function handleAddPoem(poemId: number) {
-    if (!data.id) return;
-    await addVideoPoemToCollection({
-      collectionId: data.id,
-      videoPoemId: poemId,
-    });
-    await fetchCollection();
-  }
-
-  async function handleRemovePoem(poemId: number) {
+  async function handleRemovePoem(linkedId: number) {
     if (!data.id) return;
     await removeVideoPoemFromCollection({
       collectionId: data.id,
-      videoPoemId: poemId,
+      videoPoemId: linkedId,
     });
     await fetchCollection();
   }
@@ -166,12 +144,9 @@ export default function AdminCollectionEditor() {
     setItems(newItems);
     await reorderCollectionItems({
       collectionId: data.id,
-      orderedVideoPoemIds: newItems.map((item) => item.videoPoemId),
+      orderedVideoPoemIds: newItems.map((item) => item.linkedId),
     });
   }
-
-  const itemPoemIds = new Set(items.map((i) => i.videoPoemId));
-  const availablePoems = allPoems.filter((p) => !itemPoemIds.has(p.id));
 
   return (
     <div className="space-y-6 max-w-screen-lg">
@@ -289,101 +264,79 @@ export default function AdminCollectionEditor() {
         </div>
       </div>
 
-      {/* ── Item Picker / Reorder ─────────────────────────────────── */}
+      {/* ── Item Reorder ─────────────────────────────────────────── */}
       {!isNew && data.id && (
         <div className="space-y-4 pt-6 border-t border-border">
           <h2 className="font-heading text-2xl">Collection Items</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Current items */}
-            <div>
-              <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3">
-                Current Order ({items.length})
+          <div>
+            <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3">
+              Current Order ({items.length})
+            </p>
+            {items.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No items yet. Add items from their individual editors.
               </p>
-              {items.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No items yet. Add poems from the library.
-                </p>
-              ) : (
-                <ul className="space-y-2">
-                  {items.map((item, index) => (
-                    <li
-                      key={item.videoPoemId}
-                      className="flex items-center gap-2 rounded border border-border bg-surface px-3 py-2"
-                    >
-                      <div className="flex flex-col">
-                        <button
-                          type="button"
-                          onClick={() => handleMove(index, "up")}
-                          disabled={index === 0}
-                          className="text-muted-foreground hover:text-foreground disabled:opacity-25 transition-colors"
-                          aria-label="Move up"
-                        >
-                          <ChevronUp className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleMove(index, "down")}
-                          disabled={index === items.length - 1}
-                          className="text-muted-foreground hover:text-foreground disabled:opacity-25 transition-colors"
-                          aria-label="Move down"
-                        >
-                          <ChevronDown className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <span className="text-xs text-muted-foreground w-5 text-center">
-                        {index + 1}
-                      </span>
-                      <span className="flex-1 text-sm truncate">
-                        {item.title}
-                      </span>
+            ) : (
+              <ul className="space-y-2">
+                {items.map((item, index) => (
+                  <li
+                    key={item.id}
+                    className="flex items-center gap-2 rounded border border-border bg-surface px-3 py-2"
+                  >
+                    <div className="flex flex-col">
                       <button
                         type="button"
-                        onClick={() => handleRemovePoem(item.videoPoemId)}
-                        className="text-muted-foreground hover:text-destructive transition-colors"
-                        aria-label="Remove"
+                        onClick={() => handleMove(index, "up")}
+                        disabled={index === 0}
+                        className="text-muted-foreground hover:text-foreground disabled:opacity-25 transition-colors"
+                        aria-label="Move up"
                       >
-                        <X className="h-4 w-4" />
+                        <ChevronUp className="h-4 w-4" />
                       </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Available poems */}
-            <div>
-              <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3">
-                Library ({availablePoems.length})
-              </p>
-              {availablePoems.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {allPoems.length === 0
-                    ? "No video poems exist yet."
-                    : "All poems are in this collection."}
-                </p>
-              ) : (
-                <ul className="space-y-2">
-                  {availablePoems.map((poem) => (
-                    <li
-                      key={poem.id}
-                      className="flex items-center gap-2 rounded border border-border px-3 py-2"
-                    >
-                      <span className="flex-1 text-sm truncate">
-                        {poem.title}
-                      </span>
                       <button
                         type="button"
-                        onClick={() => handleAddPoem(poem.id)}
-                        className="text-muted-foreground hover:text-warm-accent transition-colors"
-                        aria-label="Add to collection"
+                        onClick={() => handleMove(index, "down")}
+                        disabled={index === items.length - 1}
+                        className="text-muted-foreground hover:text-foreground disabled:opacity-25 transition-colors"
+                        aria-label="Move down"
                       >
-                        <Plus className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4" />
                       </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground w-5 text-center">
+                      {index + 1}
+                    </span>
+                    <Badge
+                      variant={
+                        item.linkedType === "video_poem" ||
+                        item.linkedType === "photo"
+                          ? "secondary"
+                          : "outline"
+                      }
+                      className="text-xs tracking-widest uppercase shrink-0"
+                    >
+                      {item.linkedType === "video_poem"
+                        ? "VIDEO POEM"
+                        : item.linkedType === "photo"
+                        ? "PHOTO"
+                        : item.linkedType}
+                    </Badge>
+                    <span className="flex-1 text-sm truncate">
+                      {item.title ??
+                        `[unresolved ${item.linkedType} #${item.linkedId}]`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePoem(item.linkedId)}
+                      className="text-muted-foreground hover:text-destructive transition-colors"
+                      aria-label="Remove"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       )}

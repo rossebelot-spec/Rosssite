@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/db";
 import { collections, collectionItems, videoPoems } from "@/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
@@ -26,7 +26,8 @@ export async function GET(
     .select({
       id: collectionItems.id,
       position: collectionItems.position,
-      videoPoemId: collectionItems.videoPoemId,
+      linkedType: collectionItems.linkedType,
+      linkedId: collectionItems.linkedId,
       title: videoPoems.title,
       slug: videoPoems.slug,
       vimeoId: videoPoems.vimeoId,
@@ -35,7 +36,13 @@ export async function GET(
       durationSeconds: videoPoems.durationSeconds,
     })
     .from(collectionItems)
-    .innerJoin(videoPoems, eq(collectionItems.videoPoemId, videoPoems.id))
+    .innerJoin(
+      videoPoems,
+      and(
+        eq(collectionItems.linkedType, "video_poem"),
+        eq(collectionItems.linkedId, videoPoems.id)
+      )
+    )
     .where(eq(collectionItems.collectionId, collection.id))
     .orderBy(asc(collectionItems.position));
 

@@ -12,7 +12,7 @@ import {
   contentLinks,
   type ContentType,
 } from "@/db/schema";
-import { eq, ne, and, asc, sql } from "drizzle-orm";
+import { eq, ne, and, asc, sql, inArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { del } from "@vercel/blob";
 
@@ -241,7 +241,12 @@ async function getCollectionSlugsContainingPoem(
     .select({ slug: collections.slug })
     .from(collectionItems)
     .innerJoin(collections, eq(collectionItems.collectionId, collections.id))
-    .where(eq(collectionItems.videoPoemId, poemId));
+    .where(
+      and(
+        eq(collectionItems.linkedType, "video_poem"),
+        eq(collectionItems.linkedId, poemId)
+      )
+    );
   return rows.map((r) => r.slug);
 }
 
@@ -290,6 +295,15 @@ export async function deleteVideoPoem(id: number) {
   await requireAdmin();
   const slugs = await getCollectionSlugsContainingPoem(id);
   const db = getDb();
+  // No FK cascade on linkedId — delete orphaned collection_items explicitly
+  await db
+    .delete(collectionItems)
+    .where(
+      and(
+        eq(collectionItems.linkedType, "video_poem"),
+        eq(collectionItems.linkedId, id)
+      )
+    );
   await db.delete(videoPoems).where(eq(videoPoems.id, id));
   revalidatePath("/video");
   for (const slug of slugs) {
@@ -382,7 +396,8 @@ export async function addVideoPoemToCollection({
     .where(eq(collectionItems.collectionId, collectionId));
   await db.insert(collectionItems).values({
     collectionId,
-    videoPoemId,
+    linkedType: "video_poem",
+    linkedId: videoPoemId,
     position: (maxRow?.maxPos ?? -1) + 1,
   });
   const [coll] = await db
@@ -408,7 +423,8 @@ export async function removeVideoPoemFromCollection({
     .where(
       and(
         eq(collectionItems.collectionId, collectionId),
-        eq(collectionItems.videoPoemId, videoPoemId)
+        eq(collectionItems.linkedType, "video_poem"),
+        eq(collectionItems.linkedId, videoPoemId)
       )
     );
   const remaining = await db
@@ -448,7 +464,8 @@ export async function reorderCollectionItems({
         .where(
           and(
             eq(collectionItems.collectionId, collectionId),
-            eq(collectionItems.videoPoemId, videoPoemId)
+            eq(collectionItems.linkedType, "video_poem"),
+            eq(collectionItems.linkedId, videoPoemId)
           )
         )
     )
@@ -460,4 +477,110 @@ export async function reorderCollectionItems({
   if (coll) {
     revalidatePath(`/video/collections/${coll.slug}`);
   }
+}
+
+export async function setVideoPoemCollections({
+  videoPoemId,
+  collectionIds,
+}: {
+  videoPoemId: number;
+  collectionIds: number[];
+}) {
+  await requireAdmin();
+  const db = getDb();
+
+  const current = await db
+    .select({ collectionId: collectionItems.collectionId })
+    .from(collectionItems)
+    .where(
+      and(
+        eq(collectionItems.linkedType, "video_poem"),
+        eq(collectionItems.linkedId, videoPoemId)
+      )
+    );
+
+  const currentIds = new Set(current.map((r) => r.collectionId));
+  const targetIds = new Set(collectionIds);
+  const toRemove = [...currentIds].filter((id) => !targetIds.has(id));
+  const toAdd = collectionIds.filter((id) => !currentIds.has(id));
+
+  for (const collectionId of toRemove) {
+    await db
+      .delete(collectionItems)
+      .where(
+        and(
+          eq(collectionItems.collectionId, collectionId),
+          eq(collectionItems.linkedType, "video_poem"),
+          eq(collectionItems.linkedId, videoPoemId)
+        )
+      );
+    const remaining = await db
+      .select({ id: collectionItems.id })
+      .from(collectionItems)
+      .where(eq(collectionItems.collectionId, collectionId))
+      .orderBy(asc(collectionItems.position));
+    for (let i = 0; i < remaining.length; i++) {
+      await db
+        .update(collectionItems)
+        .set({ position: i })
+        .where(eq(collectionItems.id, remaining[i].id));
+    }
+  }
+
+  for (const collectionId of toAdd) {
+    const [maxRow] = await db
+      .select({
+        maxPos: sql<number>`coalesce(max(${collectionItems.position}), -1)`,
+      })
+      .from(collectionItems)
+      .where(eq(collectionItems.collectionId, collectionId));
+    await db.insert(collectionItems).values({
+      collectionId,
+      linkedType: "video_poem",
+      linkedId: videoPoemId,
+      position: (maxRow?.maxPos ?? -1) + 1,
+    });
+  }
+
+  const affectedIds = [...new Set([...toRemove, ...toAdd])];
+  if (affectedIds.length > 0) {
+    const slugRows = await db
+      .select({ slug: collections.slug })
+      .from(collections)
+      .where(inArray(collections.id, affectedIds));
+    for (const { slug } of slugRows) {
+      revalidatePath(`/video/collections/${slug}`);
+    }
+  }
+  revalidatePath("/video");
+}
+
+export async function createCollectionWithFirstItem({
+  title,
+  slug,
+  linkedType,
+  linkedId,
+}: {
+  title: string;
+  slug: string;
+  linkedType: string;
+  linkedId: number;
+}): Promise<{ id: number; title: string; slug: string }> {
+  await requireAdmin();
+  const db = getDb();
+
+  const [collection] = await db
+    .insert(collections)
+    .values({ title, slug, published: false, displayOrder: 0 })
+    .returning();
+
+  await db.insert(collectionItems).values({
+    collectionId: collection.id,
+    linkedType,
+    linkedId,
+    position: 0,
+  });
+
+  revalidatePath("/video");
+  return { id: collection.id, title: collection.title, slug: collection.slug };
 }

@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/db";
-import { videoPoems, contentLinks, content } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import {
+  videoPoems,
+  contentLinks,
+  content,
+  collectionItems,
+  collections,
+} from "@/db/schema";
+import { eq, and, asc } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
@@ -34,8 +40,25 @@ export async function GET(
     .where(eq(contentLinks.videoPoemId, poemId))
     .limit(1);
 
+  const memberCollections = await db
+    .select({
+      id: collections.id,
+      title: collections.title,
+      slug: collections.slug,
+    })
+    .from(collectionItems)
+    .innerJoin(collections, eq(collectionItems.collectionId, collections.id))
+    .where(
+      and(
+        eq(collectionItems.linkedType, "video_poem"),
+        eq(collectionItems.linkedId, poemId)
+      )
+    )
+    .orderBy(asc(collections.title));
+
   return NextResponse.json({
     ...poem,
     linkedEssay: linkedEssay ?? null,
+    memberCollections,
   });
 }

@@ -43,7 +43,13 @@ async function getCollectionWithItems(slug: string) {
       durationSeconds: videoPoems.durationSeconds,
     })
     .from(collectionItems)
-    .innerJoin(videoPoems, eq(collectionItems.videoPoemId, videoPoems.id))
+    .innerJoin(
+      videoPoems,
+      and(
+        eq(collectionItems.linkedType, "video_poem"),
+        eq(collectionItems.linkedId, videoPoems.id)
+      )
+    )
     .where(eq(collectionItems.collectionId, collection.id))
     .orderBy(asc(collectionItems.position));
 

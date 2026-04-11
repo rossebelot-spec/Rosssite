@@ -61,22 +61,22 @@ export const collectionItems = pgTable(
     collectionId: integer("collection_id")
       .notNull()
       .references(() => collections.id, { onDelete: "cascade" }),
-    videoPoemId: integer("video_poem_id")
-      .notNull()
-      .references(() => videoPoems.id, { onDelete: "cascade" }),
+    linkedType: text("linked_type").notNull(),
+    linkedId: integer("linked_id").notNull(),
     position: integer("position").notNull().default(0),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex("collection_items_collection_poem_unique").on(
+    uniqueIndex("collection_items_collection_linked_unique").on(
       table.collectionId,
-      table.videoPoemId
+      table.linkedType,
+      table.linkedId
     ),
     index("collection_items_collection_position_idx").on(
       table.collectionId,
       table.position
     ),
-    index("collection_items_video_poem_id_idx").on(table.videoPoemId),
+    index("collection_items_linked_idx").on(table.linkedType, table.linkedId),
   ]
 );
 
@@ -131,20 +131,12 @@ export const collectionsRelations = relations(collections, ({ many }) => ({
   items: many(collectionItems),
 }));
 
-export const videoPoemsRelations = relations(videoPoems, ({ many }) => ({
-  items: many(collectionItems),
-}));
-
 export const collectionItemsRelations = relations(
   collectionItems,
   ({ one }) => ({
     collection: one(collections, {
       fields: [collectionItems.collectionId],
       references: [collections.id],
-    }),
-    videoPoem: one(videoPoems, {
-      fields: [collectionItems.videoPoemId],
-      references: [videoPoems.id],
     }),
   })
 );
@@ -184,3 +176,4 @@ export type ContentLink = typeof contentLinks.$inferSelect;
 export type NewContentLink = typeof contentLinks.$inferInsert;
 
 export type ContentType = "essay" | "blog" | "review" | "news" | "event";
+export type CollectionItemLinkedType = "video_poem" | "photo";

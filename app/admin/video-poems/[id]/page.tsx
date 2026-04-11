@@ -12,7 +12,12 @@ import {
   updateVideoPoem,
   deleteVideoPoem,
   removeContentLink,
+  setVideoPoemCollections,
 } from "@/lib/actions";
+import {
+  CollectionAssignment,
+  type CollectionRef,
+} from "@/components/admin/collection-assignment";
 
 interface LinkedEssay {
   linkId: number;
@@ -49,6 +54,8 @@ export default function AdminVideoPoemEditor() {
   const isNew = id === "new";
 
   const [data, setData] = useState<VideoPoemData>(empty);
+  const [memberCollections, setMemberCollections] = useState<CollectionRef[]>([]);
+  const [allCollections, setAllCollections] = useState<CollectionRef[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -66,8 +73,12 @@ export default function AdminVideoPoemEditor() {
             description: poem.description,
             linkedEssay: poem.linkedEssay ?? null,
           });
+          setMemberCollections(poem.memberCollections ?? []);
         });
     }
+    fetch("/api/admin/collections")
+      .then((r) => r.json())
+      .then((rows) => { if (Array.isArray(rows)) setAllCollections(rows); });
   }, [id, isNew]);
 
   function set<K extends keyof VideoPoemData>(field: K, value: VideoPoemData[K]) {
@@ -96,6 +107,10 @@ export default function AdminVideoPoemEditor() {
       await createVideoPoem(payload);
     } else {
       await updateVideoPoem(data.id!, { ...payload, updatedAt: new Date() });
+      await setVideoPoemCollections({
+        videoPoemId: data.id!,
+        collectionIds: memberCollections.map((c) => c.id),
+      });
       setSaving(false);
     }
   }
@@ -206,6 +221,20 @@ export default function AdminVideoPoemEditor() {
             value={data.thumbnailAlt}
             onChange={(e) => set("thumbnailAlt", e.target.value)}
             placeholder="Describe the thumbnail image"
+          />
+        </div>
+
+        <div className="space-y-3 pt-4 border-t border-border">
+          <h2 className="font-heading text-xl">Collections</h2>
+          <CollectionAssignment
+            linkedType="video_poem"
+            linkedId={isNew ? null : (data.id ?? null)}
+            value={memberCollections}
+            allCollections={allCollections}
+            onChange={setMemberCollections}
+            onCollectionCreated={(coll) =>
+              setAllCollections((prev) => [...prev, coll])
+            }
           />
         </div>
 
