@@ -30,6 +30,20 @@ Do NOT introduce new libraries without asking first.
 
 ---
 
+## Neon database
+
+The project uses `@neondatabase/serverless` with the HTTP driver. The HTTP driver does not support transactions — `db.transaction()` will throw at runtime.
+
+Never use `db.transaction()`. Instead:
+
+- Use `Promise.all()` for parallel independent updates
+- Use sequential awaited statements for dependent updates
+- If true atomicity is required, raise it with the user before writing code — it requires switching to the WebSocket driver which has different connection handling
+
+Check for `db.transaction()` in any code you write or modify before considering a task complete.
+
+---
+
 ## Architecture — where things live
 
 ```
@@ -56,7 +70,7 @@ Two content tiers coexist:
 
 | Tier | Source | Examples |
 |------|--------|---------|
-| DB-backed | Drizzle + Neon Postgres | Essays, book reviews, photos |
+| DB-backed | Drizzle + Neon Postgres | Unified `content` (+ `content_links` for prose tied to video/collections), photos, `video_poems` / `collections` / `collection_items` |
 | Static | `data/*.ts` flat lists | Op-eds, press, events, video |
 
 Do not move static content to the DB or vice versa without asking. Do not add new DB tables for content that already has a static pattern.
@@ -116,7 +130,7 @@ Any change to `app/globals.css` or `scopes.css` (if present) must be committed i
 ## Date formatting
 
 - `lib/format-published-date.ts` is the canonical date formatter — use it
-- `app/essays/page.tsx` currently formats dates inline with `en-CA` — this is a known inconsistency, do not replicate it elsewhere; fix it to use the helper if you touch that file
+- `app/essays/page.tsx` lists published `content` rows with `type = "essay"`; it currently formats dates inline with `en-CA` — this is a known inconsistency, do not replicate it elsewhere; fix it to use the helper if you touch that file
 
 ---
 

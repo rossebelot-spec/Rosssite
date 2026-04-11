@@ -1,6 +1,6 @@
 # TipTap Editor — Admin Toolbar Reference
 
-Rich text editor used in `/admin/essays/*` and `/admin/book-reviews/*`.
+Rich text editor used in `/admin/content/*` (unified essays, reviews, and other prose types) and other admin editors that embed TipTap (e.g. collection intros, static editorial pages where applicable).
 Built on TipTap v3 / ProseMirror with custom extensions for block-level formatting.
 
 ---
@@ -115,7 +115,7 @@ Alignment is a block-level attribute on paragraphs, headings, and blockquotes.
 **When to use it:**
 - After pasting content from Word, Google Docs, or any rich-text source.
 - When the toolbar says one thing but the editor renders another (e.g., toolbar says "Default" font but text renders in Calibri).
-- As a one-time cleanup on legacy essays that were originally pasted from Word.
+- As a one-time cleanup on legacy HTML (e.g. content originally pasted from Word).
 
 **Irreversible:** Clean Format replaces the document content. Use Undo immediately if the result isn't what you expected. Once you save, the cleanup is permanent.
 

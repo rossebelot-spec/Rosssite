@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
-import { bookReviews } from "@/db/schema";
+import { content } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -15,8 +15,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const db = getDb();
   const [review] = await db
     .select()
-    .from(bookReviews)
-    .where(and(eq(bookReviews.slug, slug), eq(bookReviews.published, true)));
+    .from(content)
+    .where(
+      and(
+        eq(content.slug, slug),
+        eq(content.type, "review"),
+        eq(content.published, true)
+      )
+    )
+    .limit(1);
   if (!review) return {};
   return { title: review.title, description: review.description };
 }
@@ -26,8 +33,15 @@ export default async function BookReviewPage({ params }: Props) {
   const db = getDb();
   const [review] = await db
     .select()
-    .from(bookReviews)
-    .where(and(eq(bookReviews.slug, slug), eq(bookReviews.published, true)));
+    .from(content)
+    .where(
+      and(
+        eq(content.slug, slug),
+        eq(content.type, "review"),
+        eq(content.published, true)
+      )
+    )
+    .limit(1);
 
   if (!review) notFound();
 
@@ -45,7 +59,7 @@ export default async function BookReviewPage({ params }: Props) {
         </time>
         <h1 className="font-heading text-4xl mt-2">{review.title}</h1>
         <p className="text-xs tracking-widest uppercase text-muted-foreground mt-1">
-          {review.author}
+          {"by " + review.topic}
         </p>
         {review.description && (
           <p className="mt-3 text-muted-foreground leading-relaxed">

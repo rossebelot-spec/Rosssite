@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { TiptapEditor } from "@/components/admin/tiptap-editor";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,15 @@ import {
   createVideoPoem,
   updateVideoPoem,
   deleteVideoPoem,
+  removeContentLink,
 } from "@/lib/actions";
+
+interface LinkedEssay {
+  linkId: number;
+  contentId: number;
+  title: string;
+  type: string;
+}
 
 interface VideoPoemData {
   id?: number;
@@ -20,8 +28,8 @@ interface VideoPoemData {
   vimeoId: string;
   thumbnailUrl: string;
   thumbnailAlt: string;
-  essayHtml: string;
   description: string;
+  linkedEssay: LinkedEssay | null;
 }
 
 const empty: VideoPoemData = {
@@ -30,8 +38,8 @@ const empty: VideoPoemData = {
   vimeoId: "",
   thumbnailUrl: "",
   thumbnailAlt: "",
-  essayHtml: "",
   description: "",
+  linkedEssay: null,
 };
 
 export default function AdminVideoPoemEditor() {
@@ -55,14 +63,14 @@ export default function AdminVideoPoemEditor() {
             vimeoId: poem.vimeoId,
             thumbnailUrl: poem.thumbnailUrl,
             thumbnailAlt: poem.thumbnailAlt,
-            essayHtml: poem.essayHtml,
             description: poem.description,
+            linkedEssay: poem.linkedEssay ?? null,
           });
         });
     }
   }, [id, isNew]);
 
-  function set(field: keyof VideoPoemData, value: string | boolean) {
+  function set<K extends keyof VideoPoemData>(field: K, value: VideoPoemData[K]) {
     setData((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -81,7 +89,6 @@ export default function AdminVideoPoemEditor() {
       vimeoId: data.vimeoId,
       thumbnailUrl: data.thumbnailUrl,
       thumbnailAlt: data.thumbnailAlt,
-      essayHtml: data.essayHtml,
       description: data.description,
     };
 
@@ -202,16 +209,47 @@ export default function AdminVideoPoemEditor() {
           />
         </div>
 
-        <div>
-          <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-2">
-            Essay
-          </label>
-          <TiptapEditor
-            key={`video-poem-${id}`}
-            readingTheme
-            content={data.essayHtml}
-            onChange={(html) => set("essayHtml", html)}
-          />
+        <div className="space-y-3 pt-4 border-t border-border">
+          <h2 className="font-heading text-xl">Linked Essay</h2>
+          {isNew ? (
+            <p className="text-xs text-muted-foreground">
+              Save this video poem first to link an essay.
+            </p>
+          ) : data.linkedEssay ? (
+            <div className="flex items-center justify-between gap-4 py-2">
+              <Link
+                href={`/admin/content/${data.linkedEssay.contentId}`}
+                className="font-heading text-lg hover:text-warm-accent transition-colors"
+              >
+                {data.linkedEssay.title}
+              </Link>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={async () => {
+                  if (!data.linkedEssay) return;
+                  if (!confirm("Remove link to this essay?")) return;
+                  await removeContentLink(data.linkedEssay.linkId);
+                  setData((prev) => ({ ...prev, linkedEssay: null }));
+                  router.refresh();
+                }}
+              >
+                Remove Link
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-4 py-2">
+              <p className="text-xs text-muted-foreground">
+                No essay linked yet.
+              </p>
+              <Link
+                href={`/admin/content/new?linkType=video_poem&linkId=${data.id}`}
+                className="text-xs tracking-widest uppercase px-4 py-2 border border-border hover:border-warm-accent hover:text-warm-accent transition-colors"
+              >
+                Create Linked Essay
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

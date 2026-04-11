@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
-import { essays } from "@/db/schema";
+import { content } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { AuthorBio, siteAuthorName } from "@/components/author-bio";
 import { formatPublishedDate } from "@/lib/format-published-date";
@@ -18,8 +18,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const db = getDb();
   const [essay] = await db
     .select()
-    .from(essays)
-    .where(and(eq(essays.slug, slug), eq(essays.published, true)));
+    .from(content)
+    .where(
+      and(
+        eq(content.slug, slug),
+        eq(content.type, "essay"),
+        eq(content.published, true)
+      )
+    )
+    .limit(1);
   if (!essay) return {};
   return { title: essay.title, description: essay.description };
 }
@@ -29,8 +36,15 @@ export default async function EssayPage({ params }: Props) {
   const db = getDb();
   const [essay] = await db
     .select()
-    .from(essays)
-    .where(and(eq(essays.slug, slug), eq(essays.published, true)));
+    .from(content)
+    .where(
+      and(
+        eq(content.slug, slug),
+        eq(content.type, "essay"),
+        eq(content.published, true)
+      )
+    )
+    .limit(1);
 
   if (!essay) notFound();
 

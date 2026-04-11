@@ -10,33 +10,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export const essays = pgTable("essays", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  slug: text("slug").notNull().unique(),
-  bodyHtml: text("body_html").notNull().default(""),
-  description: text("description").notNull().default(""),
-  tags: text("tags").array().notNull().default([]),
-  published: boolean("published").notNull().default(false),
-  publishedAt: timestamp("published_at"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-export const bookReviews = pgTable("book_reviews", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  slug: text("slug").notNull().unique(),
-  author: text("author").notNull(),
-  bodyHtml: text("body_html").notNull().default(""),
-  description: text("description").notNull().default(""),
-  rating: integer("rating"),
-  published: boolean("published").notNull().default(false),
-  publishedAt: timestamp("published_at"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
 export const photos = pgTable("photos", {
   id: serial("id").primaryKey(),
   blobUrl: text("blob_url").notNull(),
@@ -57,7 +30,6 @@ export const videoPoems = pgTable("video_poems", {
   vimeoId: text("vimeo_id").notNull(),
   thumbnailUrl: text("thumbnail_url").notNull().default(""),
   thumbnailAlt: text("thumbnail_alt").notNull().default(""),
-  essayHtml: text("essay_html").notNull().default(""),
   description: text("description").notNull().default(""),
   durationSeconds: integer("duration_seconds"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -108,6 +80,51 @@ export const collectionItems = pgTable(
   ]
 );
 
+// ─── Unified Content ────────────────────────────────────────────────────────
+
+export const content = pgTable(
+  "content",
+  {
+    id: serial("id").primaryKey(),
+    type: text("type").notNull(), // essay | blog | review | news | event
+    title: text("title").notNull(),
+    slug: text("slug").notNull().unique(),
+    topic: text("topic").notNull().default(""),
+    bodyHtml: text("body_html").notNull().default(""),
+    description: text("description").notNull().default(""),
+    tags: text("tags").array().notNull().default([]),
+    published: boolean("published").notNull().default(false),
+    publishedAt: timestamp("published_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [index("content_type_idx").on(table.type)]
+);
+
+// ─── Content Links (content ↔ video poem / collection) ─────────────────────
+
+export const contentLinks = pgTable(
+  "content_links",
+  {
+    id: serial("id").primaryKey(),
+    contentId: integer("content_id")
+      .notNull()
+      .references(() => content.id, { onDelete: "cascade" }),
+    videoPoemId: integer("video_poem_id").references(() => videoPoems.id, {
+      onDelete: "cascade",
+    }),
+    collectionId: integer("collection_id").references(() => collections.id, {
+      onDelete: "cascade",
+    }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("content_links_content_id_idx").on(table.contentId),
+    index("content_links_video_poem_id_idx").on(table.videoPoemId),
+    index("content_links_collection_id_idx").on(table.collectionId),
+  ]
+);
+
 // ─── Relations ──────────────────────────────────────────────────────────────
 
 export const collectionsRelations = relations(collections, ({ many }) => ({
@@ -132,12 +149,27 @@ export const collectionItemsRelations = relations(
   })
 );
 
+export const contentRelations = relations(content, ({ many }) => ({
+  links: many(contentLinks),
+}));
+
+export const contentLinksRelations = relations(contentLinks, ({ one }) => ({
+  content: one(content, {
+    fields: [contentLinks.contentId],
+    references: [content.id],
+  }),
+  videoPoem: one(videoPoems, {
+    fields: [contentLinks.videoPoemId],
+    references: [videoPoems.id],
+  }),
+  collection: one(collections, {
+    fields: [contentLinks.collectionId],
+    references: [collections.id],
+  }),
+}));
+
 // ─── Inferred Types ─────────────────────────────────────────────────────────
 
-export type Essay = typeof essays.$inferSelect;
-export type NewEssay = typeof essays.$inferInsert;
-export type BookReview = typeof bookReviews.$inferSelect;
-export type NewBookReview = typeof bookReviews.$inferInsert;
 export type Photo = typeof photos.$inferSelect;
 export type NewPhoto = typeof photos.$inferInsert;
 export type VideoPoem = typeof videoPoems.$inferSelect;
@@ -146,3 +178,9 @@ export type Collection = typeof collections.$inferSelect;
 export type NewCollection = typeof collections.$inferInsert;
 export type CollectionItem = typeof collectionItems.$inferSelect;
 export type NewCollectionItem = typeof collectionItems.$inferInsert;
+export type Content = typeof content.$inferSelect;
+export type NewContent = typeof content.$inferInsert;
+export type ContentLink = typeof contentLinks.$inferSelect;
+export type NewContentLink = typeof contentLinks.$inferInsert;
+
+export type ContentType = "essay" | "blog" | "review" | "news" | "event";

@@ -17,7 +17,7 @@ export default function OpEdsPage() {
       />
       <ul className="divide-y divide-border">
         {sorted.map((item) => (
-          <li key={item.url} className="py-8">
+          <li key={`${item.date}--${item.title}`} className="py-8">
             <a
               href={item.url}
               target="_blank"

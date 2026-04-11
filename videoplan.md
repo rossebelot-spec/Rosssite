@@ -12,9 +12,11 @@
 
 ## 1. Drizzle Schema
 
-Three tables extend `db/schema.ts`. Run `npm run db:generate` and apply the migration before writing any other code.
+`db/schema.ts` also defines `photos` and unified editorial **`content`** / **`content_links`** (prose that can be linked to a video poem or collection). Run `npm run db:generate` and apply migrations when schema changes.
 
 ### `video_poems`
+
+Long-form essay HTML is **not** stored on this table. It lives in **`content.body_html`** (typically `type = 'essay'`) and is associated via **`content_links`** (`video_poem_id`). The public collection reader joins those rows when building the essay pane beside the Vimeo embed.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -24,13 +26,41 @@ Three tables extend `db/schema.ts`. Run `npm run db:generate` and apply the migr
 | `vimeo_id` | `text` | not null — bare numeric ID, NOT a full URL |
 | `thumbnail_url` | `text` | not null, default `""` — Vercel Blob URL, 16:9 aspect ratio |
 | `thumbnail_alt` | `text` | not null, default `""` |
-| `essay_html` | `text` | not null, default `""` — TipTap output HTML, matches `body_html` convention |
 | `description` | `text` | not null, default `""` — short lede for meta/listings |
 | `duration_seconds` | `integer` | nullable |
 | `created_at` | `timestamp` | not null, defaultNow |
 | `updated_at` | `timestamp` | not null, defaultNow |
 
 Indexes: unique on `slug`.
+
+### `content` (unified prose)
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `serial` | primary key |
+| `type` | `text` | not null — e.g. `essay`, `review`, `blog`, `news`, `event` |
+| `title`, `slug` | `text` | slug unique |
+| `topic` | `text` | not null, default `""` |
+| `body_html` | `text` | TipTap HTML; same reading typography as public essay pages |
+| `description` | `text` | not null, default `""` |
+| `tags` | `text[]` | not null, default `[]` |
+| `published` | `boolean` | not null, default false |
+| `published_at` | `timestamp` | nullable |
+| `created_at` / `updated_at` | `timestamp` | not null, defaultNow |
+
+Index: `content_type_idx` on `type`.
+
+### `content_links`
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `serial` | primary key |
+| `content_id` | `integer` | not null, FK → `content.id`, on delete cascade |
+| `video_poem_id` | `integer` | nullable, FK → `video_poems.id`, on delete cascade |
+| `collection_id` | `integer` | nullable, FK → `collections.id`, on delete cascade |
+| `created_at` | `timestamp` | not null, defaultNow |
+
+At most one of `video_poem_id` / `collection_id` may be set per product rule (enforced in app logic). Used to attach an essay (or other prose) to a video poem for the collection reader.
 
 ### `collections`
 
@@ -72,18 +102,21 @@ Indexes:
 - `collectionsRelations`: `items: many(collectionItems)`
 - `videoPoemsRelations`: `items: many(collectionItems)`
 - `collectionItemsRelations`: `collection: one(collections, …)`, `videoPoem: one(videoPoems, …)`
+- `contentRelations`: `links: many(contentLinks)`
+- `contentLinksRelations`: `content: one(content, …)`, `videoPoem: one(videoPoems, …)`, `collection: one(collections, …)`
 
 ### Inferred types to export
 
 - `VideoPoem`, `NewVideoPoem`
 - `Collection`, `NewCollection`
 - `CollectionItem`, `NewCollectionItem`
+- `Content`, `NewContent`, `ContentLink`, `NewContentLink`
 
 ---
 
 ## 2. Admin Page Structure and Routes
 
-Mirrors the existing `app/admin/essays/**` pattern. Add two nav links to `app/admin/layout.tsx`: `Video Poems` → `/admin/video-poems` and `Collections` → `/admin/collections`.
+Follow the same client-editor + server-action pattern as **`/admin/content`** (unified prose). The admin sidebar includes `Content`, `Video Poems`, and `Collections` (see `app/admin/layout.tsx`).
 
 ```
 app/admin/
@@ -92,7 +125,7 @@ app/admin/
     [id]/
       page.tsx        # editor: title, slug (auto-slugified on new), vimeoId input +
                       # live iframe preview, thumbnail (ImageUploader → Vercel Blob),
-                      # description, TipTap essay. id === "new" = create mode.
+                      # description; link essay via content + content_links. id === "new" = create mode.
   collections/
     page.tsx          # list with item count + published badge + New Collection link
     [id]/
@@ -110,7 +143,7 @@ app/api/admin/
 
 **`/admin/video-poems` (list)** — server component, `force-dynamic`. Selects all poems ordered by `created_at desc`. "New Video Poem" → `/admin/video-poems/new`.
 
-**`/admin/video-poems/[id]` (editor)** — client component. Fields: title, slug, Vimeo ID (text input, hint "bare numeric ID only"), thumbnail upload (ImageUploader → Vercel Blob, crop to 16:9), description, essay (TipTap, key={`video-poem-${id}`}). Renders a live `<iframe>` preview once `vimeo_id` is set — embed URL format: `https://player.vimeo.com/video/${vimeoId}?dnt=1&title=0&byline=0&portrait=0`. Save calls `createVideoPoem` or `updateVideoPoem`. Delete calls `deleteVideoPoem`.
+**`/admin/video-poems/[id]` (editor)** — client component. Fields: title, slug, Vimeo ID (text input, hint "bare numeric ID only"), thumbnail upload (ImageUploader → Vercel Blob, crop to 16:9), description; optional link to an existing essay (`content` row) via `content_links`. Renders a live `<iframe>` preview once `vimeo_id` is set — embed URL format: `https://player.vimeo.com/video/${vimeoId}?dnt=1&title=0&byline=0&portrait=0`. Save calls `createVideoPoem` or `updateVideoPoem`. Delete calls `deleteVideoPoem`. Long-form HTML is edited under **`/admin/content`**, not inline on the video poem row.
 
 **`/admin/collections` (list)** — server component. Shows title, slug, item count (aggregate join), published state, `display_order`.
 
@@ -126,11 +159,15 @@ app/api/admin/
 
 All live in `lib/actions.ts`, each starting with `await requireAdmin()`. Each action revalidates affected public paths.
 
+### Content actions (unified prose + links)
+
+Includes `createContent`, `updateContent`, `deleteContent`, `addContentLink`, `removeContentLink` — insert/update `content`, manage `content_links`, and revalidate `/essays`, `/book-reviews`, and any `/video/collections/...` pages affected by linked poems.
+
 ### Video poem actions
 
 | Action | Inputs | Effect |
 |---|---|---|
-| `createVideoPoem(data)` | `{ title, slug, vimeoId, thumbnailUrl, thumbnailAlt, description, essayHtml, durationSeconds? }` | Insert row, revalidate `/video`, redirect to `/admin/video-poems/${id}` |
+| `createVideoPoem(data)` | `{ title, slug, vimeoId, thumbnailUrl?, thumbnailAlt?, description?, durationSeconds? }` | Insert row, revalidate `/video`, redirect to `/admin/video-poems/${id}` |
 | `updateVideoPoem(id, data)` | partial of above | Update row, revalidate `/video` + every collection page containing it |
 | `deleteVideoPoem(id)` | `id` | Look up affected collection slugs → delete row (cascade) → revalidate all → redirect to `/admin/video-poems` |
 
@@ -143,7 +180,7 @@ All live in `lib/actions.ts`, each starting with `await requireAdmin()`. Each ac
 | `deleteCollection(id)` | `id` | Look up slug → delete (cascade) → revalidate → redirect to `/admin/collections` |
 | `addVideoPoemToCollection({ collectionId, videoPoemId })` | — | Insert join row with `position = max + 1`, revalidate collection page |
 | `removeVideoPoemFromCollection({ collectionId, videoPoemId })` | — | Delete join row, re-normalize positions, revalidate collection page |
-| `reorderCollectionItems({ collectionId, orderedVideoPoemIds })` | `number[]` | Bulk UPDATE positions in a single `$transaction`, revalidate collection page |
+| `reorderCollectionItems({ collectionId, orderedVideoPoemIds })` | `number[]` | Parallel `UPDATE`s on positions (Neon HTTP driver: no `db.transaction()`), revalidate collection page |
 
 ### Internal helper (not exported)
 
@@ -191,13 +228,13 @@ components/video/
 
 **`video-poem-main.tsx`** — Vimeo embed URL always uses: `https://player.vimeo.com/video/${vimeoId}?dnt=1&title=0&byline=0&portrait=0`. 16:9 aspect ratio wrapper.
 
-**`video-poem-essay.tsx`** — renders `essay_html` using the same reading typography classes as the essay pages. No TipTap on the public side — HTML only.
+**`video-poem-essay.tsx`** — renders joined **`content.body_html`** (linked essay for that poem) using the same reading typography classes as `/essays`. No TipTap on the public side — HTML only.
 
 ---
 
 ## 5. Decisions Made
 
-1. **Essay storage** — HTML, matching existing `body_html` convention.
+1. **Essay storage** — HTML in **`content.body_html`**, linked to a video poem via **`content_links`** when needed; matches site-wide `body_html` / reading CSS.
 2. **Reordering** — up/down arrow buttons for MVP. No drag-and-drop libraries.
 3. **Draft state on video poems** — no `published` column on `video_poems`. A poem is implicitly public only if it appears in at least one published collection.
 4. **API route auth** — manual `await auth()` in every `/api/admin/**` handler. Middleware does not cover these routes.
@@ -208,31 +245,25 @@ components/video/
 9. **Mobile sidebar** — below `md`, stack items list above main content.
 10. **Migration order** — schema first, migration applied, then all other files.
 11. **Retire `data/videos.ts`** — check current contents, seed DB from it if it contains MtCCH data, then delete the file.
-12. **TipTap key props** — `key={`video-poem-${id}`}` on poem editor, `key={`collection-intro-${id}`}` on collection intro editor. Required to prevent initialization corruption.
+12. **TipTap key props** — e.g. `key={`collection-intro-${id}`}` on the collection intro editor; use distinct keys for any TipTap instance. Required to prevent initialization corruption (see `tiptap-editor.tsx`).
 13. **Slug namespace** — `video_poems.slug` and `collections.slug` live in different URL contexts, collisions are harmless.
 
 ---
 
 ## 6. Complete File List
 
-Files to create or modify, in implementation order:
+Files to create or modify, in implementation order (the repo may already contain many of these from earlier work):
 
-1. `db/schema.ts` — add three tables + relations + inferred types
-2. Run `npm run db:generate` and apply migration
-3. `lib/actions.ts` — add all server actions + internal helper
-4. `app/admin/layout.tsx` — add Video Poems and Collections nav links
-5. `app/admin/video-poems/page.tsx` — new
-6. `app/admin/video-poems/[id]/page.tsx` — new
-7. `app/admin/collections/page.tsx` — new
-8. `app/admin/collections/[id]/page.tsx` — new
-9. `app/api/admin/video-poems/route.ts` — new
-10. `app/api/admin/video-poems/[id]/route.ts` — new
-11. `app/api/admin/collections/[id]/route.ts` — new
-12. `components/video/collection-sidebar.tsx` — new
-13. `components/video/video-poem-essay.tsx` — new
-14. `components/video/video-poem-main.tsx` — new
-15. `components/video/collection-reader.tsx` — new
-16. `app/video/page.tsx` — replace static version
-17. `app/video/collections/[slug]/page.tsx` — new
-18. `app/video/collections/[slug]/not-found.tsx` — new
-19. `data/videos.ts` — delete after seeding DB
+1. `db/schema.ts` — `video_poems`, `collections`, `collection_items`, unified `content`, `content_links`, relations, inferred types
+2. Run `npm run db:generate` and apply migration(s)
+3. `lib/actions.ts` — content CRUD + link helpers, video poem + collection actions, `getCollectionSlugsContainingPoem`
+4. `app/admin/layout.tsx` — nav: Dashboard, Content, Photography, Video Poems, Collections, static editorial pages
+5. `app/admin/content/page.tsx`, `app/admin/content/[id]/page.tsx` — unified prose admin
+6. `app/api/admin/content/[id]/route.ts` — load single content row for editor
+7. `app/admin/video-poems/page.tsx`, `app/admin/video-poems/[id]/page.tsx`
+8. `app/admin/collections/page.tsx`, `app/admin/collections/[id]/page.tsx`
+9. `app/api/admin/video-poems/route.ts`, `app/api/admin/video-poems/[id]/route.ts`
+10. `app/api/admin/collections/[id]/route.ts`
+11. `components/video/*` — collection reader, sidebar, main embed, essay HTML renderer
+12. `app/video/page.tsx`, `app/video/collections/[slug]/page.tsx`, `not-found.tsx`
+13. `data/videos.ts` — retire per decision §5.11 when migrated

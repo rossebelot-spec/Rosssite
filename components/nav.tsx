@@ -7,6 +7,7 @@ import { Menu } from "lucide-react";
 import { useState } from "react";
 
 const links = [
+  { href: "/", label: "Home" },
   { href: "/essays", label: "Essays" },
   { href: "/op-eds", label: "Op-eds" },
   { href: "/book-reviews", label: "Books" },

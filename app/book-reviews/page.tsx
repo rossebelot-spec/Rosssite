@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getDb } from "@/db";
-import { bookReviews } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { content } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = { title: "Book Reviews" };
@@ -12,9 +12,9 @@ export default async function BookReviewsPage() {
   const db = getDb();
   const reviews = await db
     .select()
-    .from(bookReviews)
-    .where(eq(bookReviews.published, true))
-    .orderBy(desc(bookReviews.publishedAt));
+    .from(content)
+    .where(and(eq(content.type, "review"), eq(content.published, true)))
+    .orderBy(desc(content.publishedAt));
 
   return (
     <main className="mx-auto w-full max-w-screen-md px-6 py-16">
@@ -39,7 +39,7 @@ export default async function BookReviewsPage() {
                   {review.title}
                 </h2>
                 <p className="text-xs tracking-widest uppercase text-muted-foreground mt-1">
-                  {review.author}
+                  {"by " + review.topic}
                 </p>
                 {review.description && (
                   <p className="mt-2 text-muted-foreground text-sm leading-relaxed">

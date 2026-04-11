@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
-import { collections, collectionItems, videoPoems } from "@/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import {
+  collections,
+  collectionItems,
+  videoPoems,
+  content,
+  contentLinks,
+} from "@/db/schema";
+import { eq, and, asc, inArray } from "drizzle-orm";
 import {
   CollectionReader,
   type CollectionPoemItem,
@@ -24,14 +30,14 @@ async function getCollectionWithItems(slug: string) {
 
   if (!collection) return null;
 
-  const items: CollectionPoemItem[] = await db
+  const rawItems = await db
     .select({
+      videoPoemId: videoPoems.id,
       slug: videoPoems.slug,
       title: videoPoems.title,
       vimeoId: videoPoems.vimeoId,
       thumbnailUrl: videoPoems.thumbnailUrl,
       thumbnailAlt: videoPoems.thumbnailAlt,
-      essayHtml: videoPoems.essayHtml,
       description: videoPoems.description,
       durationSeconds: videoPoems.durationSeconds,
     })
@@ -39,6 +45,44 @@ async function getCollectionWithItems(slug: string) {
     .innerJoin(videoPoems, eq(collectionItems.videoPoemId, videoPoems.id))
     .where(eq(collectionItems.collectionId, collection.id))
     .orderBy(asc(collectionItems.position));
+
+  const poemIds = rawItems.map((item) => item.videoPoemId);
+
+  const essayRows =
+    poemIds.length > 0
+      ? await db
+          .select({
+            videoPoemId: contentLinks.videoPoemId,
+            bodyHtml: content.bodyHtml,
+          })
+          .from(contentLinks)
+          .innerJoin(content, eq(content.id, contentLinks.contentId))
+          .where(
+            and(
+              inArray(contentLinks.videoPoemId, poemIds),
+              eq(content.type, "essay"),
+              eq(content.published, true)
+            )
+          )
+      : [];
+
+  const essayMap = new Map<number, string>();
+  for (const row of essayRows) {
+    if (row.videoPoemId != null) {
+      essayMap.set(row.videoPoemId, row.bodyHtml);
+    }
+  }
+
+  const items: CollectionPoemItem[] = rawItems.map((item) => ({
+    slug: item.slug,
+    title: item.title,
+    vimeoId: item.vimeoId,
+    thumbnailUrl: item.thumbnailUrl,
+    thumbnailAlt: item.thumbnailAlt,
+    description: item.description,
+    durationSeconds: item.durationSeconds,
+    essayHtml: essayMap.get(item.videoPoemId) ?? "",
+  }));
 
   return { collection, items };
 }

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getDb } from "@/db";
-import { essays } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { content } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = { title: "Essays" };
@@ -12,9 +12,9 @@ export default async function EssaysPage() {
   const db = getDb();
   const posts = await db
     .select()
-    .from(essays)
-    .where(eq(essays.published, true))
-    .orderBy(desc(essays.publishedAt));
+    .from(content)
+    .where(and(eq(content.type, "essay"), eq(content.published, true)))
+    .orderBy(desc(content.publishedAt));
 
   return (
     <main className="mx-auto w-full max-w-screen-md px-6 py-16">

@@ -18,7 +18,7 @@ export default function AdminOpEdsPage() {
       </p>
       <ul className="divide-y divide-border">
         {sorted.map((item) => (
-          <li key={item.url} className="py-5">
+          <li key={`${item.date}--${item.title}`} className="py-5">
             <div className="flex items-baseline gap-3">
               <time className="text-xs tracking-widest uppercase text-muted-foreground">
                 {new Date(item.date).toLocaleDateString("en-CA")}

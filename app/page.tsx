@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getDb } from "@/db";
-import { essays, bookReviews, photos } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { content, photos } from "@/db/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { opEds } from "@/data/op-eds";
 import { Hero } from "@/components/hero";
 
@@ -11,16 +11,26 @@ export default async function HomePage() {
   const db = getDb();
   const [recentEssays, recentReviews, heroPhotos] = await Promise.all([
     db
-      .select({ id: essays.id, title: essays.title, slug: essays.slug, publishedAt: essays.publishedAt })
-      .from(essays)
-      .where(eq(essays.published, true))
-      .orderBy(desc(essays.publishedAt))
+      .select({
+        id: content.id,
+        title: content.title,
+        slug: content.slug,
+        publishedAt: content.publishedAt,
+      })
+      .from(content)
+      .where(and(eq(content.type, "essay"), eq(content.published, true)))
+      .orderBy(desc(content.publishedAt))
       .limit(3),
     db
-      .select({ id: bookReviews.id, title: bookReviews.title, slug: bookReviews.slug, author: bookReviews.author })
-      .from(bookReviews)
-      .where(eq(bookReviews.published, true))
-      .orderBy(desc(bookReviews.publishedAt))
+      .select({
+        id: content.id,
+        title: content.title,
+        slug: content.slug,
+        author: content.topic,
+      })
+      .from(content)
+      .where(and(eq(content.type, "review"), eq(content.published, true)))
+      .orderBy(desc(content.publishedAt))
       .limit(3),
     db.select({ blobUrl: photos.blobUrl }).from(photos).where(eq(photos.isHero, true)).limit(1),
   ]);
@@ -89,7 +99,7 @@ export default async function HomePage() {
           </h2>
           <ul className="space-y-6">
             {recentOpEds.map((item) => (
-              <li key={item.url}>
+              <li key={`${item.date}--${item.title}`}>
                 <a
                   href={item.url}
                   target="_blank"

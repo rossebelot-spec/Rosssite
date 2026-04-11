@@ -4,8 +4,7 @@ import Link from "next/link";
 
 const adminLinks = [
   { href: "/admin", label: "Dashboard" },
-  { href: "/admin/essays", label: "Essays" },
-  { href: "/admin/book-reviews", label: "Book Reviews" },
+  { href: "/admin/content", label: "Content" },
   { href: "/admin/photography", label: "Photography" },
   { href: "/admin/video-poems", label: "Video Poems" },
   { href: "/admin/collections", label: "Collections" },

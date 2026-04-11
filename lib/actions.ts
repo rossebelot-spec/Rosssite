@@ -4,12 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import {
-  essays,
-  bookReviews,
   photos,
   videoPoems,
   collections,
   collectionItems,
+  content,
+  contentLinks,
+  type ContentType,
 } from "@/db/schema";
 import { eq, ne, and, asc, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
@@ -22,29 +23,56 @@ async function requireAdmin() {
   if (!session?.user) redirect("/api/auth/signin");
 }
 
-// ─── Essays ────────────────────────────────────────────────────────────────
+// ─── Content (unified: essay | blog | review | news | event) ──────────────
 
-export async function createEssay(data: {
+function contentPrimaryPaths(type: string, slug: string): string[] {
+  if (type === "essay" || type === "blog") {
+    return ["/essays", `/essays/${slug}`];
+  }
+  if (type === "review") {
+    return ["/book-reviews", `/book-reviews/${slug}`];
+  }
+  return [];
+}
+
+export async function createContent(data: {
+  type: ContentType;
   title: string;
   slug: string;
+  topic?: string;
   bodyHtml: string;
   description: string;
   tags: string[];
   published: boolean;
   publishedAt?: Date | null;
+  pendingLink?: { videoPoemId?: number; collectionId?: number };
 }) {
   await requireAdmin();
   const db = getDb();
-  const [essay] = await db.insert(essays).values(data).returning();
-  revalidatePath("/essays");
-  redirect(`/admin/essays/${essay.id}`);
+  const { pendingLink, ...insertData } = data;
+  const [row] = await db.insert(content).values(insertData).returning();
+
+  if (pendingLink && (pendingLink.videoPoemId || pendingLink.collectionId)) {
+    await db.insert(contentLinks).values({
+      contentId: row.id,
+      videoPoemId: pendingLink.videoPoemId ?? null,
+      collectionId: pendingLink.collectionId ?? null,
+    });
+  }
+
+  for (const path of contentPrimaryPaths(row.type, row.slug)) {
+    revalidatePath(path);
+  }
+  redirect(`/admin/content/${row.id}`);
 }
 
-export async function updateEssay(
+export async function updateContent(
   id: number,
   data: {
+    type?: ContentType;
     title?: string;
     slug?: string;
+    topic?: string;
     bodyHtml?: string;
     description?: string;
     tags?: string[];
@@ -55,65 +83,104 @@ export async function updateEssay(
 ) {
   await requireAdmin();
   const db = getDb();
-  await db.update(essays).set(data).where(eq(essays.id, id));
-  revalidatePath("/essays");
-  revalidatePath(`/essays/${data.slug ?? ""}`);
+  await db.update(content).set(data).where(eq(content.id, id));
+
+  // Load the current row to determine type + slug for revalidation
+  const [row] = await db
+    .select({ type: content.type, slug: content.slug })
+    .from(content)
+    .where(eq(content.id, id));
+  if (row) {
+    for (const path of contentPrimaryPaths(row.type, row.slug)) {
+      revalidatePath(path);
+    }
+  }
+
+  // Revalidate collection pages for any linked video poems
+  const linkedPoems = await db
+    .select({ videoPoemId: contentLinks.videoPoemId })
+    .from(contentLinks)
+    .where(eq(contentLinks.contentId, id));
+  for (const { videoPoemId } of linkedPoems) {
+    if (videoPoemId == null) continue;
+    const slugs = await getCollectionSlugsContainingPoem(videoPoemId);
+    for (const slug of slugs) {
+      revalidatePath(`/video/collections/${slug}`);
+    }
+  }
 }
 
-export async function deleteEssay(id: number) {
+export async function deleteContent(id: number) {
   await requireAdmin();
   const db = getDb();
-  await db.delete(essays).where(eq(essays.id, id));
+  await db.delete(content).where(eq(content.id, id));
   revalidatePath("/essays");
-  redirect("/admin/essays");
+  revalidatePath("/book-reviews");
+  redirect("/admin/content");
 }
 
-// ─── Book Reviews ──────────────────────────────────────────────────────────
-
-export async function createBookReview(data: {
-  title: string;
-  slug: string;
-  author: string;
-  bodyHtml: string;
-  description: string;
-  rating?: number | null;
-  published: boolean;
-  publishedAt?: Date | null;
+export async function addContentLink({
+  contentId,
+  videoPoemId,
+  collectionId,
+}: {
+  contentId: number;
+  videoPoemId?: number;
+  collectionId?: number;
 }) {
   await requireAdmin();
   const db = getDb();
-  const [review] = await db.insert(bookReviews).values(data).returning();
-  revalidatePath("/book-reviews");
-  redirect(`/admin/book-reviews/${review.id}`);
-}
+  await db.insert(contentLinks).values({
+    contentId,
+    videoPoemId: videoPoemId ?? null,
+    collectionId: collectionId ?? null,
+  });
 
-export async function updateBookReview(
-  id: number,
-  data: {
-    title?: string;
-    slug?: string;
-    author?: string;
-    bodyHtml?: string;
-    description?: string;
-    rating?: number | null;
-    published?: boolean;
-    publishedAt?: Date | null;
-    updatedAt: Date;
+  const [row] = await db
+    .select({ type: content.type, slug: content.slug })
+    .from(content)
+    .where(eq(content.id, contentId));
+  if (row) {
+    for (const path of contentPrimaryPaths(row.type, row.slug)) {
+      revalidatePath(path);
+    }
   }
-) {
-  await requireAdmin();
-  const db = getDb();
-  await db.update(bookReviews).set(data).where(eq(bookReviews.id, id));
-  revalidatePath("/book-reviews");
-  revalidatePath(`/book-reviews/${data.slug ?? ""}`);
+
+  if (videoPoemId) {
+    const slugs = await getCollectionSlugsContainingPoem(videoPoemId);
+    for (const slug of slugs) {
+      revalidatePath(`/video/collections/${slug}`);
+    }
+  }
 }
 
-export async function deleteBookReview(id: number) {
+export async function removeContentLink(linkId: number) {
   await requireAdmin();
   const db = getDb();
-  await db.delete(bookReviews).where(eq(bookReviews.id, id));
-  revalidatePath("/book-reviews");
-  redirect("/admin/book-reviews");
+  const [link] = await db
+    .select()
+    .from(contentLinks)
+    .where(eq(contentLinks.id, linkId));
+  if (!link) return;
+
+  await db.delete(contentLinks).where(eq(contentLinks.id, linkId));
+
+  const [row] = await db
+    .select({ type: content.type, slug: content.slug })
+    .from(content)
+    .where(eq(content.id, link.contentId));
+  if (row) {
+    for (const path of contentPrimaryPaths(row.type, row.slug)) {
+      revalidatePath(path);
+    }
+  }
+
+  if (link.videoPoemId) {
+    const slugs = await getCollectionSlugsContainingPoem(link.videoPoemId);
+    for (const slug of slugs) {
+      revalidatePath(`/video/collections/${slug}`);
+    }
+  }
 }
 
 // ─── Photos ────────────────────────────────────────────────────────────────
@@ -187,7 +254,6 @@ export async function createVideoPoem(data: {
   thumbnailUrl?: string;
   thumbnailAlt?: string;
   description?: string;
-  essayHtml?: string;
   durationSeconds?: number | null;
 }) {
   await requireAdmin();
@@ -206,7 +272,6 @@ export async function updateVideoPoem(
     thumbnailUrl?: string;
     thumbnailAlt?: string;
     description?: string;
-    essayHtml?: string;
     durationSeconds?: number | null;
     updatedAt: Date;
   }
@@ -375,19 +440,19 @@ export async function reorderCollectionItems({
 }) {
   await requireAdmin();
   const db = getDb();
-  await db.transaction(async (tx) => {
-    for (let i = 0; i < orderedVideoPoemIds.length; i++) {
-      await tx
+  await Promise.all(
+    orderedVideoPoemIds.map((videoPoemId, i) =>
+      db
         .update(collectionItems)
         .set({ position: i })
         .where(
           and(
             eq(collectionItems.collectionId, collectionId),
-            eq(collectionItems.videoPoemId, orderedVideoPoemIds[i])
+            eq(collectionItems.videoPoemId, videoPoemId)
           )
-        );
-    }
-  });
+        )
+    )
+  );
   const [coll] = await db
     .select({ slug: collections.slug })
     .from(collections)
