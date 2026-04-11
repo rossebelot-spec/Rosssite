@@ -13,7 +13,6 @@ import {
   CollectionReader,
   type CollectionPoemItem,
 } from "@/components/video/collection-reader";
-import { SetNavContextLine } from "@/components/nav-context";
 
 export const dynamic = "force-dynamic";
 
@@ -162,7 +161,6 @@ export default async function CollectionPage({
 
   return (
     <>
-      <SetNavContextLine line={`Collection: ${collection.title}`} />
       <CollectionReader
         collection={{
           title: collection.title,

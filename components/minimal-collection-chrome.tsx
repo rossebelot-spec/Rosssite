@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef } from "react";
-import { useNavContext } from "@/components/nav-context";
 import { siteNavLinksWithAdmin } from "@/lib/site-nav-links";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +24,6 @@ export function MinimalCollectionChrome({
   onMenuOpenChange,
 }: MinimalCollectionChromeProps) {
   const pathname = usePathname();
-  const { contextLine } = useNavContext();
   const headerRef = useRef<HTMLElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -58,7 +56,7 @@ export function MinimalCollectionChrome({
     return () => {
       ro.disconnect();
     };
-  }, [contextLine]);
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -120,14 +118,15 @@ export function MinimalCollectionChrome({
       {/* Title bar — height drives --site-header-height; left gutter for fixed Menu */}
       <header
         ref={headerRef}
-        className="sticky top-0 z-40 border-b border-border bg-surface pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 pl-24 pr-24"
+        className="sticky top-0 z-40 border-b border-border bg-surface pt-[max(1.25rem,env(safe-area-inset-top))] pb-4 pl-24 pr-24"
       >
-        <div className="mx-auto flex w-full max-w-screen-xl items-center justify-center">
-          {contextLine ? (
-            <p className="max-w-[min(100%,42rem)] text-center text-xs tracking-widest uppercase text-muted-foreground text-balance">
-              {contextLine}
-            </p>
-          ) : null}
+        <div className="mx-auto flex w-full max-w-screen-xl items-baseline justify-center gap-3">
+          <span className="font-heading text-xl text-foreground leading-none">
+            Ross Belot
+          </span>
+          <span className="text-xs tracking-widest uppercase text-muted-foreground">
+            Poet · Journalist · Environmental Writer
+          </span>
         </div>
       </header>
 
