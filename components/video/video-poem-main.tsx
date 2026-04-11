@@ -1,18 +1,22 @@
 import { VideoPoemEssay } from "./video-poem-essay";
 
 interface VideoPoemMainProps {
-  collectionTitle: string;
-  title: string;
+  /** `video_poems.title` — shown above the player. */
+  videoTitle: string;
+  /** `content.title` for the linked published essay (may be absent from serialized props). */
+  essayTitle?: string | null;
   vimeoId: string;
   essayHtml: string;
 }
 
 export function VideoPoemMain({
-  collectionTitle,
-  title,
+  videoTitle,
+  essayTitle,
   vimeoId,
   essayHtml,
 }: VideoPoemMainProps) {
+  const essayTitleTrimmed = (essayTitle ?? "").trim();
+
   return (
     <div className="flex flex-col gap-8">
       <div
@@ -28,9 +32,9 @@ export function VideoPoemMain({
           paddingRight: "var(--essay-folio-padding)",
         }}
       >
-        <p className="font-heading text-4xl md:text-5xl mb-8 text-balance">
-          {collectionTitle}
-        </p>
+        <h1 className="font-heading text-4xl md:text-5xl mb-8 text-balance">
+          {videoTitle}
+        </h1>
         <div className="relative w-full aspect-video bg-black">
           <iframe
             src={`https://player.vimeo.com/video/${vimeoId}?dnt=1&title=0&byline=0&portrait=0`}
@@ -39,7 +43,11 @@ export function VideoPoemMain({
             allowFullScreen
           />
         </div>
-        <h1 className="font-heading text-3xl mt-8">{title}</h1>
+        {essayTitleTrimmed ? (
+          <h2 className="font-heading text-3xl mt-8 text-balance">
+            {essayTitleTrimmed}
+          </h2>
+        ) : null}
       </div>
       <VideoPoemEssay html={essayHtml} />
     </div>

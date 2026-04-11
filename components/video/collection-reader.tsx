@@ -6,6 +6,8 @@ import { VideoPoemEssay } from "./video-poem-essay";
 
 export interface CollectionPoemItem extends SidebarItem {
   vimeoId: string;
+  /** From `content.title` when a published essay is linked to this poem. */
+  essayTitle: string;
   essayHtml: string;
   description: string;
 }
@@ -47,8 +49,8 @@ export function CollectionReader({
         <div className="journal-folio-paper essay-reading-paper">
           {activePoem ? (
             <VideoPoemMain
-              collectionTitle={collection.title}
-              title={activePoem.title}
+              videoTitle={activePoem.title}
+              essayTitle={activePoem.essayTitle ?? ""}
               vimeoId={activePoem.vimeoId}
               essayHtml={activePoem.essayHtml}
             />

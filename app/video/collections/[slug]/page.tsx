@@ -8,7 +8,7 @@ import {
   content,
   contentLinks,
 } from "@/db/schema";
-import { eq, and, asc, inArray } from "drizzle-orm";
+import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import {
   CollectionReader,
   type CollectionPoemItem,
@@ -48,12 +48,14 @@ async function getCollectionWithItems(slug: string) {
 
   const poemIds = rawItems.map((item) => item.videoPoemId);
 
+  // Linked essay prose: `content.title` + `body_html` for the reader (same row).
   const essayRows =
     poemIds.length > 0
       ? await db
           .select({
             videoPoemId: contentLinks.videoPoemId,
             bodyHtml: content.bodyHtml,
+            essayTitle: content.title,
           })
           .from(contentLinks)
           .innerJoin(content, eq(content.id, contentLinks.contentId))
@@ -64,25 +66,36 @@ async function getCollectionWithItems(slug: string) {
               eq(content.published, true)
             )
           )
+          .orderBy(desc(content.id))
       : [];
 
-  const essayMap = new Map<number, string>();
+  const essayMap = new Map<
+    number,
+    { bodyHtml: string; essayTitle: string }
+  >();
   for (const row of essayRows) {
-    if (row.videoPoemId != null) {
-      essayMap.set(row.videoPoemId, row.bodyHtml);
+    if (row.videoPoemId != null && !essayMap.has(row.videoPoemId)) {
+      essayMap.set(row.videoPoemId, {
+        bodyHtml: row.bodyHtml,
+        essayTitle: row.essayTitle,
+      });
     }
   }
 
-  const items: CollectionPoemItem[] = rawItems.map((item) => ({
-    slug: item.slug,
-    title: item.title,
-    vimeoId: item.vimeoId,
-    thumbnailUrl: item.thumbnailUrl,
-    thumbnailAlt: item.thumbnailAlt,
-    description: item.description,
-    durationSeconds: item.durationSeconds,
-    essayHtml: essayMap.get(item.videoPoemId) ?? "",
-  }));
+  const items: CollectionPoemItem[] = rawItems.map((item) => {
+    const linked = essayMap.get(item.videoPoemId);
+    return {
+      slug: item.slug,
+      title: item.title,
+      vimeoId: item.vimeoId,
+      thumbnailUrl: item.thumbnailUrl,
+      thumbnailAlt: item.thumbnailAlt,
+      description: item.description,
+      durationSeconds: item.durationSeconds,
+      essayTitle: linked?.essayTitle ?? "",
+      essayHtml: linked?.bodyHtml ?? "",
+    };
+  });
 
   return { collection, items };
 }
@@ -102,8 +115,9 @@ export async function generateMetadata({
   if (poemSlug) {
     const poem = items.find((i) => i.slug === poemSlug);
     if (poem) {
+      const tabTitle = (poem.essayTitle ?? "").trim() || poem.title;
       return {
-        title: poem.title,
+        title: tabTitle,
         description: poem.description,
         openGraph: poem.thumbnailUrl
           ? { images: [{ url: poem.thumbnailUrl }] }
