@@ -1,6 +1,8 @@
 import { VideoPoemEssay } from "./video-poem-essay";
 
 interface VideoPoemMainProps {
+  /** Collection display name — large line above the video title. */
+  collectionTitle?: string;
   /** `video_poems.title` — shown above the player. */
   videoTitle: string;
   /** `content.title` for the linked published essay (may be absent from serialized props). */
@@ -10,6 +12,7 @@ interface VideoPoemMainProps {
 }
 
 export function VideoPoemMain({
+  collectionTitle,
   videoTitle,
   essayTitle,
   vimeoId,
@@ -32,7 +35,12 @@ export function VideoPoemMain({
           paddingRight: "var(--essay-folio-padding)",
         }}
       >
-        <h1 className="font-heading text-4xl md:text-5xl mb-8 text-balance">
+        {collectionTitle && (
+          <p className="font-heading text-4xl md:text-5xl mb-4 text-balance text-[var(--color-stone-900)]">
+            {collectionTitle}
+          </p>
+        )}
+        <h1 className="font-heading text-3xl md:text-4xl mb-8 text-balance">
           {videoTitle}
         </h1>
         <div className="relative w-full aspect-video bg-black">

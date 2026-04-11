@@ -56,6 +56,7 @@ export function CollectionReader({
           <div className="journal-folio-paper essay-reading-paper">
             {activePoem ? (
               <VideoPoemMain
+                collectionTitle={collection.title}
                 videoTitle={activePoem.title}
                 essayTitle={activePoem.essayTitle ?? ""}
                 vimeoId={activePoem.vimeoId}
