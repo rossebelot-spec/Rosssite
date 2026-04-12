@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  createVideoPoem,
-  updateVideoPoem,
-  publishVideoPoem,
-  deleteVideoPoem,
+  createVideo,
+  updateVideo,
+  publishVideo,
+  deleteVideo,
   removeContentLink,
-  setVideoPoemCollections,
+  setVideoCollections,
 } from "@/lib/actions";
 import {
   CollectionAssignment,
@@ -27,7 +27,7 @@ interface LinkedEssay {
   type: string;
 }
 
-interface VideoPoemData {
+interface VideoData {
   id?: number;
   title: string;
   slug: string;
@@ -38,7 +38,7 @@ interface VideoPoemData {
   linkedEssay: LinkedEssay | null;
 }
 
-const empty: VideoPoemData = {
+const empty: VideoData = {
   title: "",
   slug: "",
   vimeoId: "",
@@ -48,13 +48,13 @@ const empty: VideoPoemData = {
   linkedEssay: null,
 };
 
-export default function AdminVideoPoemEditor() {
+export default function AdminVideoEditor() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
   const isNew = id === "new";
 
-  const [data, setData] = useState<VideoPoemData>(empty);
+  const [data, setData] = useState<VideoData>(empty);
   const [published, setPublished] = useState(false);
   const [memberCollections, setMemberCollections] = useState<CollectionRef[]>([]);
   const [allCollections, setAllCollections] = useState<CollectionRef[]>([]);
@@ -67,21 +67,21 @@ export default function AdminVideoPoemEditor() {
 
   useEffect(() => {
     if (!isNew) {
-      fetch(`/api/admin/video-poems/${id}`)
+      fetch(`/api/admin/videos/${id}`)
         .then((r) => r.json())
-        .then((poem) => {
+        .then((video) => {
           setData({
-            id: poem.id,
-            title: poem.title,
-            slug: poem.slug,
-            vimeoId: poem.vimeoId,
-            thumbnailUrl: poem.thumbnailUrl,
-            thumbnailAlt: poem.thumbnailAlt,
-            description: poem.description,
-            linkedEssay: poem.linkedEssay ?? null,
+            id: video.id,
+            title: video.title,
+            slug: video.slug,
+            vimeoId: video.vimeoId,
+            thumbnailUrl: video.thumbnailUrl,
+            thumbnailAlt: video.thumbnailAlt,
+            description: video.description,
+            linkedEssay: video.linkedEssay ?? null,
           });
-          setPublished(poem.published ?? false);
-          setMemberCollections(poem.memberCollections ?? []);
+          setPublished(video.published ?? false);
+          setMemberCollections(video.memberCollections ?? []);
         });
     }
     fetch("/api/admin/collections")
@@ -89,7 +89,7 @@ export default function AdminVideoPoemEditor() {
       .then((rows) => { if (Array.isArray(rows)) setAllCollections(rows); });
   }, [id, isNew]);
 
-  function set<K extends keyof VideoPoemData>(field: K, value: VideoPoemData[K]) {
+  function set<K extends keyof VideoData>(field: K, value: VideoData[K]) {
     setData((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -113,14 +113,14 @@ export default function AdminVideoPoemEditor() {
       };
 
       if (isNew) {
-        await createVideoPoem({
+        await createVideo({
           ...payload,
           collectionIds: memberCollections.map((c) => c.id),
         });
       } else {
-        await updateVideoPoem(data.id!, { ...payload, updatedAt: new Date() });
-        await setVideoPoemCollections({
-          videoPoemId: data.id!,
+        await updateVideo(data.id!, { ...payload, updatedAt: new Date() });
+        await setVideoCollections({
+          videoId: data.id!,
           collectionIds: memberCollections.map((c) => c.id),
         });
       }
@@ -133,7 +133,7 @@ export default function AdminVideoPoemEditor() {
     if (!data.id) return;
     setPublishing(true);
     try {
-      await publishVideoPoem(data.id, !published);
+      await publishVideo(data.id, !published);
       setPublished(!published);
     } finally {
       setPublishing(false);
@@ -141,8 +141,8 @@ export default function AdminVideoPoemEditor() {
   }
 
   async function handleDelete() {
-    if (!data.id || !confirm("Delete this video poem?")) return;
-    await deleteVideoPoem(data.id);
+    if (!data.id || !confirm("Delete this video?")) return;
+    await deleteVideo(data.id);
   }
 
   return (
@@ -150,7 +150,7 @@ export default function AdminVideoPoemEditor() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="font-heading text-3xl">
-            {isNew ? "New Video Poem" : "Edit Video Poem"}
+            {isNew ? "New Video" : "Edit Video"}
           </h1>
           {!isNew && (
             <span className={`text-xs tracking-widest uppercase px-2 py-0.5 border ${published ? "border-green-600 text-green-600" : "border-muted-foreground text-muted-foreground"}`}>
@@ -191,7 +191,7 @@ export default function AdminVideoPoemEditor() {
               set("title", e.target.value);
               if (isNew) set("slug", slugify(e.target.value));
             }}
-            placeholder="Video poem title"
+            placeholder="Video title"
           />
         </div>
 
@@ -269,7 +269,7 @@ export default function AdminVideoPoemEditor() {
         <div className="space-y-3 pt-4 border-t border-border">
           <h2 className="font-heading text-xl">Collections</h2>
           <CollectionAssignment
-            linkedType="video_poem"
+            linkedType="video"
             linkedId={isNew ? null : (data.id ?? null)}
             staging={isNew}
             value={memberCollections}
@@ -287,7 +287,7 @@ export default function AdminVideoPoemEditor() {
           <h2 className="font-heading text-xl">Linked Essay</h2>
           {isNew ? (
             <p className="text-xs text-muted-foreground">
-              Save this video poem first to link an essay.
+              Save this video first to link an essay.
             </p>
           ) : data.linkedEssay ? (
             <div className="flex items-center justify-between gap-4 py-2">
@@ -317,7 +317,7 @@ export default function AdminVideoPoemEditor() {
                 No essay linked yet.
               </p>
               <Link
-                href={`/admin/content/new?linkType=video_poem&linkId=${data.id}`}
+                href={`/admin/content/new?linkType=video&linkId=${data.id}`}
                 className="text-xs tracking-widest uppercase px-4 py-2 border border-border hover:border-warm-accent hover:text-warm-accent transition-colors"
               >
                 Create Linked Essay

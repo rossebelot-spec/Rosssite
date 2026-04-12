@@ -17,8 +17,8 @@ import type { ContentType } from "@/db/schema";
 
 interface LinkItem {
   id: number;
-  videoPoemId?: number;
-  videoPoemTitle?: string;
+  videoId?: number;
+  videoTitle?: string;
   collectionId?: number;
   collectionTitle?: string;
 }
@@ -40,9 +40,9 @@ interface EditorState {
   published: boolean;
   publishedAt: string;
   links: LinkItem[];
-  videoPoems: DropdownItem[];
+  videos: DropdownItem[];
   collections: DropdownItem[];
-  pendingLinkType: "video_poem" | "collection" | "";
+  pendingLinkType: "video" | "collection" | "";
   pendingLinkId: number | "";
 }
 
@@ -57,7 +57,7 @@ const empty: EditorState = {
   published: false,
   publishedAt: "",
   links: [],
-  videoPoems: [],
+  videos: [],
   collections: [],
   pendingLinkType: "",
   pendingLinkId: "",
@@ -97,7 +97,7 @@ export default function AdminContentEditor() {
   const deepLinkId = searchParams.get("linkId");
   const hasDeepLink =
     isNew &&
-    (deepLinkType === "video_poem" || deepLinkType === "collection") &&
+    (deepLinkType === "video" || deepLinkType === "collection") &&
     deepLinkId != null &&
     !Number.isNaN(Number(deepLinkId));
 
@@ -120,10 +120,10 @@ export default function AdminContentEditor() {
           published: row?.published ?? false,
           publishedAt: toDateInputValue(row?.publishedAt),
           links: payload.links ?? [],
-          videoPoems: payload.videoPoems ?? [],
+          videos: payload.videos ?? [],
           collections: payload.collections ?? [],
           pendingLinkType: hasDeepLink
-            ? (deepLinkType as "video_poem" | "collection")
+            ? (deepLinkType as "video" | "collection")
             : "",
           pendingLinkId: hasDeepLink ? Number(deepLinkId) : "",
         }));
@@ -170,8 +170,8 @@ export default function AdminContentEditor() {
       if (isNew) {
         const pendingLink =
           hasDeepLink && data.pendingLinkId !== ""
-            ? data.pendingLinkType === "video_poem"
-              ? { videoPoemId: Number(data.pendingLinkId) }
+            ? data.pendingLinkType === "video"
+              ? { videoId: Number(data.pendingLinkId) }
               : { collectionId: Number(data.pendingLinkId) }
             : undefined;
         await createContent({
@@ -261,11 +261,11 @@ export default function AdminContentEditor() {
     if (isNew || !data.pendingLinkType || data.pendingLinkId === "") return;
     const payload: {
       contentId: number;
-      videoPoemId?: number;
+      videoId?: number;
       collectionId?: number;
     } = { contentId: Number(id) };
-    if (data.pendingLinkType === "video_poem") {
-      payload.videoPoemId = Number(data.pendingLinkId);
+    if (data.pendingLinkType === "video") {
+      payload.videoId = Number(data.pendingLinkId);
     } else {
       payload.collectionId = Number(data.pendingLinkId);
     }
@@ -444,7 +444,7 @@ export default function AdminContentEditor() {
           {isNew ? (
             hasDeepLink ? (
               <p className="text-xs text-muted-foreground">
-                Will link to {deepLinkType === "video_poem" ? "video poem" : "collection"} #
+                Will link to {deepLinkType === "video" ? "video" : "collection"} #
                 {deepLinkId} on save.
               </p>
             ) : (
@@ -459,8 +459,8 @@ export default function AdminContentEditor() {
               ) : (
                 <ul className="divide-y divide-border">
                   {data.links.map((link) => {
-                    const label = link.videoPoemId
-                      ? `Video Poem · ${link.videoPoemTitle ?? `#${link.videoPoemId}`}`
+                    const label = link.videoId
+                      ? `Video · ${link.videoTitle ?? `#${link.videoId}`}`
                       : link.collectionId
                       ? `Collection · ${link.collectionTitle ?? `#${link.collectionId}`}`
                       : `Link #${link.id}`;
@@ -494,7 +494,7 @@ export default function AdminContentEditor() {
                       setData((prev) => ({
                         ...prev,
                         pendingLinkType: e.target.value as
-                          | "video_poem"
+                          | "video"
                           | "collection"
                           | "",
                         pendingLinkId: "",
@@ -503,7 +503,7 @@ export default function AdminContentEditor() {
                     className="h-9 w-full rounded border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   >
                     <option value="">Select type…</option>
-                    <option value="video_poem">Video Poem</option>
+                    <option value="video">Video</option>
                     <option value="collection">Collection</option>
                   </select>
                 </div>
@@ -523,8 +523,8 @@ export default function AdminContentEditor() {
                     className="h-9 w-full rounded border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
                   >
                     <option value="">Select target…</option>
-                    {(data.pendingLinkType === "video_poem"
-                      ? data.videoPoems
+                    {(data.pendingLinkType === "video"
+                      ? data.videos
                       : data.pendingLinkType === "collection"
                       ? data.collections
                       : []

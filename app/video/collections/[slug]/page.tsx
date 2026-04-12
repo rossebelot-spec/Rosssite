@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getDb } from "@/db";
-import {
-  collections,
-  collectionItems,
-  videoPoems,
-  content,
-  contentLinks,
-} from "@/db/schema";
+import { collections, collectionItems, videos, content, contentLinks } from "@/db/schema";
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import {
   CollectionReader,
-  type CollectionPoemItem,
+  type CollectionVideoItem,
 } from "@/components/video/collection-reader";
 
 export const dynamic = "force-dynamic";
@@ -21,10 +15,8 @@ interface Props {
   searchParams: Promise<{ poem?: string | string[] }>;
 }
 
-/** Empty or whitespace `?poem=` must be treated as absent — otherwise redirect can target `?poem=` and loop. */
-function poemParamFromSearchParams(sp: {
-  poem?: string | string[];
-}): string | undefined {
+/** Empty or whitespace `?poem=` must be treated as absent to avoid redirect loops. */
+function poemParamFromSearchParams(sp: { poem?: string | string[] }): string | undefined {
   const raw = sp.poem;
   const s = Array.isArray(raw) ? raw[0] : raw;
   if (typeof s !== "string") return undefined;
@@ -43,35 +35,34 @@ async function getCollectionWithItems(slug: string) {
 
   const rawItems = await db
     .select({
-      videoPoemId: videoPoems.id,
-      slug: videoPoems.slug,
-      title: videoPoems.title,
-      vimeoId: videoPoems.vimeoId,
-      thumbnailUrl: videoPoems.thumbnailUrl,
-      thumbnailAlt: videoPoems.thumbnailAlt,
-      description: videoPoems.description,
-      durationSeconds: videoPoems.durationSeconds,
+      videoId: videos.id,
+      slug: videos.slug,
+      title: videos.title,
+      vimeoId: videos.vimeoId,
+      thumbnailUrl: videos.thumbnailUrl,
+      thumbnailAlt: videos.thumbnailAlt,
+      description: videos.description,
+      durationSeconds: videos.durationSeconds,
     })
     .from(collectionItems)
     .innerJoin(
-      videoPoems,
+      videos,
       and(
-        eq(collectionItems.linkedType, "video_poem"),
-        eq(collectionItems.linkedId, videoPoems.id),
-        eq(videoPoems.published, true)
+        eq(collectionItems.linkedType, "video"),
+        eq(collectionItems.linkedId, videos.id),
+        eq(videos.published, true)
       )
     )
     .where(eq(collectionItems.collectionId, collection.id))
     .orderBy(asc(collectionItems.position));
 
-  const poemIds = rawItems.map((item) => item.videoPoemId);
+  const videoIds = rawItems.map((item) => item.videoId);
 
-  // Linked essay prose: `content.title` + `body_html` for the reader (same row).
   const essayRows =
-    poemIds.length > 0
+    videoIds.length > 0
       ? await db
           .select({
-            videoPoemId: contentLinks.videoPoemId,
+            videoId: contentLinks.videoId,
             bodyHtml: content.bodyHtml,
             essayTitle: content.title,
           })
@@ -79,7 +70,7 @@ async function getCollectionWithItems(slug: string) {
           .innerJoin(content, eq(content.id, contentLinks.contentId))
           .where(
             and(
-              inArray(contentLinks.videoPoemId, poemIds),
+              inArray(contentLinks.videoId, videoIds),
               eq(content.type, "essay"),
               eq(content.published, true)
             )
@@ -87,21 +78,18 @@ async function getCollectionWithItems(slug: string) {
           .orderBy(desc(content.id))
       : [];
 
-  const essayMap = new Map<
-    number,
-    { bodyHtml: string; essayTitle: string }
-  >();
+  const essayMap = new Map<number, { bodyHtml: string; essayTitle: string }>();
   for (const row of essayRows) {
-    if (row.videoPoemId != null && !essayMap.has(row.videoPoemId)) {
-      essayMap.set(row.videoPoemId, {
+    if (row.videoId != null && !essayMap.has(row.videoId)) {
+      essayMap.set(row.videoId, {
         bodyHtml: row.bodyHtml,
         essayTitle: row.essayTitle,
       });
     }
   }
 
-  const items: CollectionPoemItem[] = rawItems.map((item) => {
-    const linked = essayMap.get(item.videoPoemId);
+  const items: CollectionVideoItem[] = rawItems.map((item) => {
+    const linked = essayMap.get(item.videoId);
     return {
       slug: item.slug,
       title: item.title,
@@ -118,27 +106,22 @@ async function getCollectionWithItems(slug: string) {
   return { collection, items };
 }
 
-export async function generateMetadata({
-  params,
-  searchParams,
-}: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { slug } = await params;
   const poemSlug = poemParamFromSearchParams(await searchParams);
-
   const result = await getCollectionWithItems(slug);
   if (!result) return {};
-
   const { collection, items } = result;
 
   if (poemSlug) {
-    const poem = items.find((i) => i.slug === poemSlug);
-    if (poem) {
-      const tabTitle = (poem.essayTitle ?? "").trim() || poem.title;
+    const video = items.find((i) => i.slug === poemSlug);
+    if (video) {
+      const tabTitle = (video.essayTitle ?? "").trim() || video.title;
       return {
         title: tabTitle,
-        description: poem.description,
-        openGraph: poem.thumbnailUrl
-          ? { images: [{ url: poem.thumbnailUrl }] }
+        description: video.description,
+        openGraph: video.thumbnailUrl
+          ? { images: [{ url: video.thumbnailUrl }] }
           : undefined,
       };
     }
@@ -153,10 +136,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function CollectionPage({
-  params,
-  searchParams,
-}: Props) {
+export default async function CollectionPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const poemSlug = poemParamFromSearchParams(await searchParams);
 
@@ -165,6 +145,7 @@ export default async function CollectionPage({
 
   const { collection, items } = result;
 
+  // Redirect to first video if none selected
   if (!poemSlug && items.length > 0) {
     const first = items.find((i) => i.slug?.trim());
     if (first?.slug?.trim()) {
@@ -175,15 +156,10 @@ export default async function CollectionPage({
   }
 
   return (
-    <>
-      <CollectionReader
-        collection={{
-          title: collection.title,
-          introHtml: collection.introHtml,
-        }}
-        items={items}
-        activeSlug={poemSlug ?? null}
-      />
-    </>
+    <CollectionReader
+      collection={{ title: collection.title, introHtml: collection.introHtml ?? "" }}
+      items={items}
+      activeSlug={poemSlug ?? null}
+    />
   );
 }

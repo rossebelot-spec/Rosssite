@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/db";
 import {
-  videoPoems,
+  videos,
   contentLinks,
   content,
   collectionItems,
@@ -21,11 +21,11 @@ export async function GET(
   const { id } = await params;
   const poemId = Number(id);
   const db = getDb();
-  const [poem] = await db
+  const [video] = await db
     .select()
-    .from(videoPoems)
-    .where(eq(videoPoems.id, poemId));
-  if (!poem)
+    .from(videos)
+    .where(eq(videos.id, poemId));
+  if (!video)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const [linkedEssay] = await db
@@ -37,7 +37,7 @@ export async function GET(
     })
     .from(contentLinks)
     .innerJoin(content, eq(content.id, contentLinks.contentId))
-    .where(eq(contentLinks.videoPoemId, poemId))
+    .where(eq(contentLinks.videoId, poemId))
     .limit(1);
 
   const memberCollections = await db
@@ -50,14 +50,14 @@ export async function GET(
     .innerJoin(collections, eq(collectionItems.collectionId, collections.id))
     .where(
       and(
-        eq(collectionItems.linkedType, "video_poem"),
+        eq(collectionItems.linkedType, "video"),
         eq(collectionItems.linkedId, poemId)
       )
     )
     .orderBy(asc(collections.title));
 
   return NextResponse.json({
-    ...poem,
+    ...video,
     linkedEssay: linkedEssay ?? null,
     memberCollections,
   });

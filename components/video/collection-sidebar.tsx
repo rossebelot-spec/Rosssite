@@ -28,10 +28,10 @@ export function CollectionSidebar({
   collectionTitle,
 }: CollectionSidebarProps) {
   return (
-    <nav aria-label={`${collectionTitle} poems`}>
+    <nav aria-label={`${collectionTitle} videos`}>
       <ul className="space-y-3">
         {items.map((item, index) => {
-          const poemKey = item.slug?.trim();
+          const slugKey = item.slug?.trim();
           const row = (
             <>
               {item.thumbnailUrl && (
@@ -62,28 +62,31 @@ export function CollectionSidebar({
               </div>
             </>
           );
+
           const baseClass = cn(
             "flex flex-col gap-2 rounded p-2 transition-colors",
-            activeSlug === item.slug
-              ? "bg-warm-accent/10"
-              : "hover:bg-surface"
+            activeSlug === item.slug ? "bg-warm-accent/10" : "hover:bg-surface"
           );
+
           return (
-          <li key={poemKey || `item-${index}`}>
-            {poemKey ? (
-            <Link
-              href={`?poem=${encodeURIComponent(poemKey)}`}
-              scroll={false}
-              className={baseClass}
-            >
-              {row}
-            </Link>
-            ) : (
-              <div className={cn(baseClass, "cursor-not-allowed opacity-70")} title="Missing slug — fix in admin">
-              {row}
-              </div>
-            )}
-          </li>
+            <li key={slugKey || `item-${index}`}>
+              {slugKey ? (
+                <Link
+                  href={`?poem=${encodeURIComponent(slugKey)}`}
+                  scroll={false}
+                  className={baseClass}
+                >
+                  {row}
+                </Link>
+              ) : (
+                <div
+                  className={cn(baseClass, "cursor-not-allowed opacity-70")}
+                  title="Missing slug — fix in admin"
+                >
+                  {row}
+                </div>
+              )}
+            </li>
           );
         })}
       </ul>

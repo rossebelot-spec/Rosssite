@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getDb } from "@/db";
 import { content, type ContentType } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
-import { getContentIdsLinkedToVideoPoem } from "@/lib/content-video-links";
+import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +37,7 @@ export default async function AdminContentPage({
   const activeType = isContentType(type) ? type : "all";
 
   const db = getDb();
-  const videoLinkedIds = new Set(await getContentIdsLinkedToVideoPoem());
+  const videoLinkedIds = new Set(await getContentIdsLinkedToVideo());
   const rows = await (isContentType(type)
     ? db
         .select()

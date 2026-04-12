@@ -1,8 +1,8 @@
-interface VideoPoemEssayProps {
+interface VideoEssayProps {
   html: string;
 }
 
-export function VideoPoemEssay({ html }: VideoPoemEssayProps) {
+export function VideoEssay({ html }: VideoEssayProps) {
   if (!html) return null;
   return (
     <div className="reading-theme">

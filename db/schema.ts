@@ -21,9 +21,9 @@ export const photos = pgTable("photos", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// ─── Video Poems ────────────────────────────────────────────────────────────
+// ─── Videos ─────────────────────────────────────────────────────────────────
 
-export const videoPoems = pgTable("video_poems", {
+export const videos = pgTable("videos", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   slug: text("slug").notNull().unique(),
@@ -103,7 +103,7 @@ export const content = pgTable(
   (table) => [index("content_type_idx").on(table.type)]
 );
 
-// ─── Content Links (content ↔ video poem / collection) ─────────────────────
+// ─── Content Links (content ↔ video / collection) ───────────────────────────
 
 export const contentLinks = pgTable(
   "content_links",
@@ -112,7 +112,7 @@ export const contentLinks = pgTable(
     contentId: integer("content_id")
       .notNull()
       .references(() => content.id, { onDelete: "cascade" }),
-    videoPoemId: integer("video_poem_id").references(() => videoPoems.id, {
+    videoId: integer("video_id").references(() => videos.id, {
       onDelete: "cascade",
     }),
     collectionId: integer("collection_id").references(() => collections.id, {
@@ -122,7 +122,7 @@ export const contentLinks = pgTable(
   },
   (table) => [
     index("content_links_content_id_idx").on(table.contentId),
-    index("content_links_video_poem_id_idx").on(table.videoPoemId),
+    index("content_links_video_id_idx").on(table.videoId),
     index("content_links_collection_id_idx").on(table.collectionId),
   ]
 );
@@ -152,9 +152,9 @@ export const contentLinksRelations = relations(contentLinks, ({ one }) => ({
     fields: [contentLinks.contentId],
     references: [content.id],
   }),
-  videoPoem: one(videoPoems, {
-    fields: [contentLinks.videoPoemId],
-    references: [videoPoems.id],
+  video: one(videos, {
+    fields: [contentLinks.videoId],
+    references: [videos.id],
   }),
   collection: one(collections, {
     fields: [contentLinks.collectionId],
@@ -166,8 +166,8 @@ export const contentLinksRelations = relations(contentLinks, ({ one }) => ({
 
 export type Photo = typeof photos.$inferSelect;
 export type NewPhoto = typeof photos.$inferInsert;
-export type VideoPoem = typeof videoPoems.$inferSelect;
-export type NewVideoPoem = typeof videoPoems.$inferInsert;
+export type Video = typeof videos.$inferSelect;
+export type NewVideo = typeof videos.$inferInsert;
 export type Collection = typeof collections.$inferSelect;
 export type NewCollection = typeof collections.$inferInsert;
 export type CollectionItem = typeof collectionItems.$inferSelect;
@@ -178,4 +178,4 @@ export type ContentLink = typeof contentLinks.$inferSelect;
 export type NewContentLink = typeof contentLinks.$inferInsert;
 
 export type ContentType = "essay" | "blog" | "review" | "news" | "event";
-export type CollectionItemLinkedType = "video_poem" | "photo";
+export type CollectionItemLinkedType = "video" | "photo";

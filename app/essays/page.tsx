@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getDb } from "@/db";
 import { content } from "@/db/schema";
 import { eq, and, desc, notInArray } from "drizzle-orm";
-import { getContentIdsLinkedToVideoPoem } from "@/lib/content-video-links";
+import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
 import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = { title: "Essays" };
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EssaysPage() {
   const db = getDb();
-  const videoLinkedIds = await getContentIdsLinkedToVideoPoem();
+  const videoLinkedIds = await getContentIdsLinkedToVideo();
   const posts = await db
     .select()
     .from(content)

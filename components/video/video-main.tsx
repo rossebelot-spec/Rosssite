@@ -1,23 +1,20 @@
-import { VideoPoemEssay } from "./video-poem-essay";
+import { VideoEssay } from "./video-essay";
 
-interface VideoPoemMainProps {
-  /** Collection display name — large line above the video title. */
-  collectionTitle?: string;
-  /** `video_poems.title` — shown above the player. */
+interface VideoMainProps {
+  /** `videos.title` — shown as the primary h1. */
   videoTitle: string;
-  /** `content.title` for the linked published essay (may be absent from serialized props). */
+  /** `content.title` for the linked published essay (may be absent). */
   essayTitle?: string | null;
   vimeoId: string;
   essayHtml: string;
 }
 
-export function VideoPoemMain({
-  collectionTitle,
+export function VideoMain({
   videoTitle,
   essayTitle,
   vimeoId,
   essayHtml,
-}: VideoPoemMainProps) {
+}: VideoMainProps) {
   const essayTitleTrimmed = (essayTitle ?? "").trim();
 
   return (
@@ -35,11 +32,6 @@ export function VideoPoemMain({
           paddingRight: "var(--essay-folio-padding)",
         }}
       >
-        {collectionTitle && (
-          <p className="font-heading text-4xl md:text-5xl mb-4 text-balance text-[var(--color-stone-900)]">
-            {collectionTitle}
-          </p>
-        )}
         <h1 className="font-heading text-3xl md:text-4xl mb-8 text-balance">
           {videoTitle}
         </h1>
@@ -56,7 +48,7 @@ export function VideoPoemMain({
         {essayTitleTrimmed ? (
           <h2 className="font-heading text-3xl text-balance">{essayTitleTrimmed}</h2>
         ) : null}
-        <VideoPoemEssay html={essayHtml} />
+        <VideoEssay html={essayHtml} />
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ import {
   updateCollection,
   publishCollection,
   deleteCollection,
-  removeVideoPoemFromCollection,
+  removeVideoFromCollection,
   reorderCollectionItems,
 } from "@/lib/actions";
 
@@ -127,7 +127,7 @@ export default function AdminCollectionEditor() {
       !nextPublished &&
       items.length > 0 &&
       !confirm(
-        `Unpublishing this collection will also unpublish its ${items.length} video poem(s). Continue?`
+        `Unpublishing this collection will also unpublish its ${items.length} video(s). Continue?`
       )
     )
       return;
@@ -147,9 +147,9 @@ export default function AdminCollectionEditor() {
 
   async function handleRemovePoem(linkedId: number) {
     if (!data.id) return;
-    await removeVideoPoemFromCollection({
+    await removeVideoFromCollection({
       collectionId: data.id,
-      videoPoemId: linkedId,
+      videoId: linkedId,
     });
     await fetchCollection();
   }
@@ -166,7 +166,7 @@ export default function AdminCollectionEditor() {
     setItems(newItems);
     await reorderCollectionItems({
       collectionId: data.id,
-      orderedVideoPoemIds: newItems.map((item) => item.linkedId),
+      orderedVideoIds: newItems.map((item) => item.linkedId),
     });
   }
 
@@ -338,15 +338,15 @@ export default function AdminCollectionEditor() {
                     </span>
                     <Badge
                       variant={
-                        item.linkedType === "video_poem" ||
+                        item.linkedType === "video" ||
                         item.linkedType === "photo"
                           ? "secondary"
                           : "outline"
                       }
                       className="text-xs tracking-widest uppercase shrink-0"
                     >
-                      {item.linkedType === "video_poem"
-                        ? "VIDEO POEM"
+                      {item.linkedType === "video"
+                        ? "VIDEO"
                         : item.linkedType === "photo"
                         ? "PHOTO"
                         : item.linkedType}

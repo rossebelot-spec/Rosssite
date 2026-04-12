@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/db";
-import { collections, collectionItems, videoPoems } from "@/db/schema";
+import { collections, collectionItems, videos } from "@/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 
 export async function GET(
@@ -28,19 +28,19 @@ export async function GET(
       position: collectionItems.position,
       linkedType: collectionItems.linkedType,
       linkedId: collectionItems.linkedId,
-      title: videoPoems.title,
-      slug: videoPoems.slug,
-      vimeoId: videoPoems.vimeoId,
-      thumbnailUrl: videoPoems.thumbnailUrl,
-      thumbnailAlt: videoPoems.thumbnailAlt,
-      durationSeconds: videoPoems.durationSeconds,
+      title: videos.title,
+      slug: videos.slug,
+      vimeoId: videos.vimeoId,
+      thumbnailUrl: videos.thumbnailUrl,
+      thumbnailAlt: videos.thumbnailAlt,
+      durationSeconds: videos.durationSeconds,
     })
     .from(collectionItems)
     .innerJoin(
-      videoPoems,
+      videos,
       and(
-        eq(collectionItems.linkedType, "video_poem"),
-        eq(collectionItems.linkedId, videoPoems.id)
+        eq(collectionItems.linkedType, "video"),
+        eq(collectionItems.linkedId, videos.id)
       )
     )
     .where(eq(collectionItems.collectionId, collection.id))

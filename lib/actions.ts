@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import {
   photos,
-  videoPoems,
+  videos,
   collections,
   collectionItems,
   content,
@@ -45,19 +45,26 @@ export async function createContent(data: {
   tags: string[];
   published: boolean;
   publishedAt?: Date | null;
-  pendingLink?: { videoPoemId?: number; collectionId?: number };
+  pendingLink?: { videoId?: number; collectionId?: number };
 }) {
   await requireAdmin();
   const db = getDb();
   const { pendingLink, ...insertData } = data;
   const [row] = await db.insert(content).values(insertData).returning();
 
-  if (pendingLink && (pendingLink.videoPoemId || pendingLink.collectionId)) {
+  if (pendingLink && (pendingLink.videoId || pendingLink.collectionId)) {
     await db.insert(contentLinks).values({
       contentId: row.id,
-      videoPoemId: pendingLink.videoPoemId ?? null,
+      videoId: pendingLink.videoId ?? null,
       collectionId: pendingLink.collectionId ?? null,
     });
+    if (pendingLink.videoId) {
+      const [vid] = await db
+        .select({ slug: videos.slug })
+        .from(videos)
+        .where(eq(videos.id, pendingLink.videoId));
+      if (vid) revalidatePath(`/video/${vid.slug}`);
+    }
   }
 
   for (const path of contentPrimaryPaths(row.type, row.slug)) {
@@ -85,7 +92,6 @@ export async function updateContent(
   const db = getDb();
   await db.update(content).set(data).where(eq(content.id, id));
 
-  // Load the current row to determine type + slug for revalidation
   const [row] = await db
     .select({ type: content.type, slug: content.slug })
     .from(content)
@@ -96,15 +102,20 @@ export async function updateContent(
     }
   }
 
-  // Revalidate collection pages for any linked video poems
-  const linkedPoems = await db
-    .select({ videoPoemId: contentLinks.videoPoemId })
+  // Revalidate canonical video pages and collection pages for any linked videos
+  const linkedVideos = await db
+    .select({ videoId: contentLinks.videoId })
     .from(contentLinks)
     .where(eq(contentLinks.contentId, id));
-  for (const { videoPoemId } of linkedPoems) {
-    if (videoPoemId == null) continue;
-    const slugs = await getCollectionSlugsContainingPoem(videoPoemId);
-    for (const slug of slugs) {
+  for (const { videoId } of linkedVideos) {
+    if (videoId == null) continue;
+    const [vid] = await db
+      .select({ slug: videos.slug })
+      .from(videos)
+      .where(eq(videos.id, videoId));
+    if (vid) revalidatePath(`/video/${vid.slug}`);
+    const collSlugs = await getCollectionSlugsForVideo(videoId);
+    for (const slug of collSlugs) {
       revalidatePath(`/video/collections/${slug}`);
     }
   }
@@ -121,18 +132,18 @@ export async function deleteContent(id: number) {
 
 export async function addContentLink({
   contentId,
-  videoPoemId,
+  videoId,
   collectionId,
 }: {
   contentId: number;
-  videoPoemId?: number;
+  videoId?: number;
   collectionId?: number;
 }) {
   await requireAdmin();
   const db = getDb();
   await db.insert(contentLinks).values({
     contentId,
-    videoPoemId: videoPoemId ?? null,
+    videoId: videoId ?? null,
     collectionId: collectionId ?? null,
   });
 
@@ -146,9 +157,14 @@ export async function addContentLink({
     }
   }
 
-  if (videoPoemId) {
-    const slugs = await getCollectionSlugsContainingPoem(videoPoemId);
-    for (const slug of slugs) {
+  if (videoId) {
+    const [vid] = await db
+      .select({ slug: videos.slug })
+      .from(videos)
+      .where(eq(videos.id, videoId));
+    if (vid) revalidatePath(`/video/${vid.slug}`);
+    const collSlugs = await getCollectionSlugsForVideo(videoId);
+    for (const slug of collSlugs) {
       revalidatePath(`/video/collections/${slug}`);
     }
   }
@@ -175,9 +191,14 @@ export async function removeContentLink(linkId: number) {
     }
   }
 
-  if (link.videoPoemId) {
-    const slugs = await getCollectionSlugsContainingPoem(link.videoPoemId);
-    for (const slug of slugs) {
+  if (link.videoId) {
+    const [vid] = await db
+      .select({ slug: videos.slug })
+      .from(videos)
+      .where(eq(videos.id, link.videoId));
+    if (vid) revalidatePath(`/video/${vid.slug}`);
+    const collSlugs = await getCollectionSlugsForVideo(link.videoId);
+    for (const slug of collSlugs) {
       revalidatePath(`/video/collections/${slug}`);
     }
   }
@@ -216,7 +237,6 @@ export async function updatePhoto(
 export async function setHeroPhoto(id: number) {
   await requireAdmin();
   const db = getDb();
-  // Clear any existing hero, then set the new one
   await db.update(photos).set({ isHero: false }).where(ne(photos.id, id));
   await db.update(photos).set({ isHero: true }).where(eq(photos.id, id));
   revalidatePath("/");
@@ -233,9 +253,7 @@ export async function deletePhoto(id: number, blobUrl: string) {
 
 // ─── Internal helpers ───────────────────────────────────────────────────────
 
-async function getCollectionSlugsContainingPoem(
-  poemId: number
-): Promise<string[]> {
+async function getCollectionSlugsForVideo(videoId: number): Promise<string[]> {
   const db = getDb();
   const rows = await db
     .select({ slug: collections.slug })
@@ -243,16 +261,16 @@ async function getCollectionSlugsContainingPoem(
     .innerJoin(collections, eq(collectionItems.collectionId, collections.id))
     .where(
       and(
-        eq(collectionItems.linkedType, "video_poem"),
-        eq(collectionItems.linkedId, poemId)
+        eq(collectionItems.linkedType, "video"),
+        eq(collectionItems.linkedId, videoId)
       )
     );
   return rows.map((r) => r.slug);
 }
 
-// ─── Video Poems ────────────────────────────────────────────────────────────
+// ─── Videos ─────────────────────────────────────────────────────────────────
 
-export async function createVideoPoem(data: {
+export async function createVideo(data: {
   title: string;
   slug: string;
   vimeoId: string;
@@ -260,7 +278,6 @@ export async function createVideoPoem(data: {
   thumbnailAlt?: string;
   description?: string;
   durationSeconds?: number | null;
-  /** Applied after insert so one save can create the poem and collection membership. */
   collectionIds?: number[];
 }) {
   await requireAdmin();
@@ -271,24 +288,25 @@ export async function createVideoPoem(data: {
   if (!title || !slug || !vimeoId) {
     throw new Error("Title, slug, and Vimeo ID are required before saving.");
   }
+  if (slug === "collections") {
+    throw new Error('"collections" is a reserved slug and cannot be used.');
+  }
 
   const db = getDb();
   const { collectionIds, ...insertData } = data;
-  const [poem] = await db
-    .insert(videoPoems)
+  const [video] = await db
+    .insert(videos)
     .values({ ...insertData, title, slug, vimeoId })
     .returning();
   revalidatePath("/video");
+  revalidatePath(`/video/${slug}`);
   if (collectionIds && collectionIds.length > 0) {
-    await setVideoPoemCollections({
-      videoPoemId: poem.id,
-      collectionIds,
-    });
+    await setVideoCollections({ videoId: video.id, collectionIds });
   }
-  redirect(`/admin/video-poems/${poem.id}`);
+  redirect(`/admin/videos/${video.id}`);
 }
 
-export async function updateVideoPoem(
+export async function updateVideo(
   id: number,
   data: {
     title?: string;
@@ -304,52 +322,74 @@ export async function updateVideoPoem(
   }
 ) {
   await requireAdmin();
+  if (data.slug === "collections") {
+    throw new Error('"collections" is a reserved slug and cannot be used.');
+  }
   const db = getDb();
-  await db.update(videoPoems).set(data).where(eq(videoPoems.id, id));
+  // Fetch old slug before update so we can revalidate the old canonical URL
+  const [before] = await db
+    .select({ slug: videos.slug })
+    .from(videos)
+    .where(eq(videos.id, id));
+  await db.update(videos).set(data).where(eq(videos.id, id));
   revalidatePath("/video");
-  const slugs = await getCollectionSlugsContainingPoem(id);
-  for (const slug of slugs) {
+  if (before) revalidatePath(`/video/${before.slug}`);
+  if (data.slug && data.slug !== before?.slug) {
+    revalidatePath(`/video/${data.slug}`);
+  }
+  const collSlugs = await getCollectionSlugsForVideo(id);
+  for (const slug of collSlugs) {
     revalidatePath(`/video/collections/${slug}`);
   }
 }
 
-export async function publishVideoPoem(id: number, publish: boolean) {
+export async function publishVideo(id: number, publish: boolean) {
   await requireAdmin();
   const db = getDb();
+  const [before] = await db
+    .select({ slug: videos.slug })
+    .from(videos)
+    .where(eq(videos.id, id));
   await db
-    .update(videoPoems)
+    .update(videos)
     .set({
       published: publish,
       publishedAt: publish ? new Date() : null,
       updatedAt: new Date(),
     })
-    .where(eq(videoPoems.id, id));
+    .where(eq(videos.id, id));
   revalidatePath("/video");
-  const slugs = await getCollectionSlugsContainingPoem(id);
-  for (const slug of slugs) {
+  if (before) revalidatePath(`/video/${before.slug}`);
+  const collSlugs = await getCollectionSlugsForVideo(id);
+  for (const slug of collSlugs) {
     revalidatePath(`/video/collections/${slug}`);
   }
 }
 
-export async function deleteVideoPoem(id: number) {
+export async function deleteVideo(id: number) {
   await requireAdmin();
-  const slugs = await getCollectionSlugsContainingPoem(id);
+  const [before] = await (() => {
+    const db = getDb();
+    return db.select({ slug: videos.slug }).from(videos).where(eq(videos.id, id));
+  })();
+  const collSlugs = await getCollectionSlugsForVideo(id);
   const db = getDb();
   // No FK cascade on linkedId — delete orphaned collection_items explicitly
   await db
     .delete(collectionItems)
     .where(
       and(
-        eq(collectionItems.linkedType, "video_poem"),
+        eq(collectionItems.linkedType, "video"),
         eq(collectionItems.linkedId, id)
       )
     );
-  await db.delete(videoPoems).where(eq(videoPoems.id, id));
+  await db.delete(videos).where(eq(videos.id, id));
   revalidatePath("/video");
-  for (const slug of slugs) {
+  if (before) revalidatePath(`/video/${before.slug}`);
+  for (const slug of collSlugs) {
     revalidatePath(`/video/collections/${slug}`);
   }
-  redirect("/admin/video-poems");
+  redirect("/admin/videos");
 }
 
 // ─── Collections ────────────────────────────────────────────────────────────
@@ -366,15 +406,12 @@ export async function createCollection(data: {
 }) {
   await requireAdmin();
   const db = getDb();
-  const [collection] = await db
-    .insert(collections)
-    .values(data)
-    .returning();
+  const [collection] = await db.insert(collections).values(data).returning();
   revalidatePath("/video");
   redirect(`/admin/collections/${collection.id}`);
 }
 
-/** Empty collection for admin pickers when the video poem row does not exist yet; link rows are added when the video is saved. */
+/** Empty collection for admin pickers when the video row does not exist yet; link rows are added when the video is saved. */
 export async function createCollectionForPicker(data: {
   title: string;
   slug: string;
@@ -422,22 +459,30 @@ export async function publishCollection(id: number, publish: boolean) {
     .where(eq(collections.id, id));
 
   if (!publish) {
-    // Cascade unpublish to all video poems in this collection
+    // Cascade unpublish to all videos in this collection
     const members = await db
       .select({ linkedId: collectionItems.linkedId })
       .from(collectionItems)
       .where(
         and(
           eq(collectionItems.collectionId, id),
-          eq(collectionItems.linkedType, "video_poem")
+          eq(collectionItems.linkedType, "video")
         )
       );
     if (members.length > 0) {
-      const poemIds = members.map((r) => r.linkedId);
+      const videoIds = members.map((r) => r.linkedId);
       await db
-        .update(videoPoems)
+        .update(videos)
         .set({ published: false, publishedAt: null, updatedAt: new Date() })
-        .where(inArray(videoPoems.id, poemIds));
+        .where(inArray(videos.id, videoIds));
+      // Revalidate canonical pages for each unpublished video
+      const videoRows = await db
+        .select({ slug: videos.slug })
+        .from(videos)
+        .where(inArray(videos.id, videoIds));
+      for (const { slug } of videoRows) {
+        revalidatePath(`/video/${slug}`);
+      }
     }
   }
 
@@ -496,12 +541,12 @@ export async function deleteCollection(id: number) {
   redirect("/admin/collections");
 }
 
-export async function addVideoPoemToCollection({
+export async function addVideoToCollection({
   collectionId,
-  videoPoemId,
+  videoId,
 }: {
   collectionId: number;
-  videoPoemId: number;
+  videoId: number;
 }) {
   await requireAdmin();
   const db = getDb();
@@ -513,8 +558,8 @@ export async function addVideoPoemToCollection({
     .where(eq(collectionItems.collectionId, collectionId));
   await db.insert(collectionItems).values({
     collectionId,
-    linkedType: "video_poem",
-    linkedId: videoPoemId,
+    linkedType: "video",
+    linkedId: videoId,
     position: (maxRow?.maxPos ?? -1) + 1,
   });
   const [coll] = await db
@@ -526,12 +571,12 @@ export async function addVideoPoemToCollection({
   }
 }
 
-export async function removeVideoPoemFromCollection({
+export async function removeVideoFromCollection({
   collectionId,
-  videoPoemId,
+  videoId,
 }: {
   collectionId: number;
-  videoPoemId: number;
+  videoId: number;
 }) {
   await requireAdmin();
   const db = getDb();
@@ -540,8 +585,8 @@ export async function removeVideoPoemFromCollection({
     .where(
       and(
         eq(collectionItems.collectionId, collectionId),
-        eq(collectionItems.linkedType, "video_poem"),
-        eq(collectionItems.linkedId, videoPoemId)
+        eq(collectionItems.linkedType, "video"),
+        eq(collectionItems.linkedId, videoId)
       )
     );
   const remaining = await db
@@ -566,23 +611,23 @@ export async function removeVideoPoemFromCollection({
 
 export async function reorderCollectionItems({
   collectionId,
-  orderedVideoPoemIds,
+  orderedVideoIds,
 }: {
   collectionId: number;
-  orderedVideoPoemIds: number[];
+  orderedVideoIds: number[];
 }) {
   await requireAdmin();
   const db = getDb();
   await Promise.all(
-    orderedVideoPoemIds.map((videoPoemId, i) =>
+    orderedVideoIds.map((videoId, i) =>
       db
         .update(collectionItems)
         .set({ position: i })
         .where(
           and(
             eq(collectionItems.collectionId, collectionId),
-            eq(collectionItems.linkedType, "video_poem"),
-            eq(collectionItems.linkedId, videoPoemId)
+            eq(collectionItems.linkedType, "video"),
+            eq(collectionItems.linkedId, videoId)
           )
         )
     )
@@ -596,11 +641,11 @@ export async function reorderCollectionItems({
   }
 }
 
-export async function setVideoPoemCollections({
-  videoPoemId,
+export async function setVideoCollections({
+  videoId,
   collectionIds,
 }: {
-  videoPoemId: number;
+  videoId: number;
   collectionIds: number[];
 }) {
   await requireAdmin();
@@ -611,8 +656,8 @@ export async function setVideoPoemCollections({
     .from(collectionItems)
     .where(
       and(
-        eq(collectionItems.linkedType, "video_poem"),
-        eq(collectionItems.linkedId, videoPoemId)
+        eq(collectionItems.linkedType, "video"),
+        eq(collectionItems.linkedId, videoId)
       )
     );
 
@@ -627,8 +672,8 @@ export async function setVideoPoemCollections({
       .where(
         and(
           eq(collectionItems.collectionId, collectionId),
-          eq(collectionItems.linkedType, "video_poem"),
-          eq(collectionItems.linkedId, videoPoemId)
+          eq(collectionItems.linkedType, "video"),
+          eq(collectionItems.linkedId, videoId)
         )
       );
     const remaining = await db
@@ -653,8 +698,8 @@ export async function setVideoPoemCollections({
       .where(eq(collectionItems.collectionId, collectionId));
     await db.insert(collectionItems).values({
       collectionId,
-      linkedType: "video_poem",
-      linkedId: videoPoemId,
+      linkedType: "video",
+      linkedId: videoId,
       position: (maxRow?.maxPos ?? -1) + 1,
     });
   }

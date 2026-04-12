@@ -3,7 +3,7 @@ import { getDb } from "@/db";
 import {
   content,
   photos,
-  videoPoems,
+  videos,
   collections,
   type ContentType,
 } from "@/db/schema";
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 const sections = [
   { label: "Content", href: "/admin/content" },
   { label: "Photography", href: "/admin/photography" },
-  { label: "Video Poems", href: "/admin/video-poems" },
+  { label: "Videos", href: "/admin/videos" },
   { label: "Collections", href: "/admin/collections" },
   { label: "Op-eds", href: "/admin/op-eds" },
   { label: "Press", href: "/admin/press" },
@@ -39,14 +39,14 @@ const CONTENT_TYPE_ORDER: ContentType[] = [
 
 export default async function AdminDashboard() {
   const db = getDb();
-  const [contentRows, [photoCount], [videoPoemCount], [collectionCount]] =
+  const [contentRows, [photoCount], [videoCount], [collectionCount]] =
     await Promise.all([
       db
         .select({ type: content.type, count: count() })
         .from(content)
         .groupBy(content.type),
       db.select({ count: count() }).from(photos),
-      db.select({ count: count() }).from(videoPoems),
+      db.select({ count: count() }).from(videos),
       db.select({ count: count() }).from(collections),
     ]);
 
@@ -65,9 +65,9 @@ export default async function AdminDashboard() {
     ...contentStats,
     { label: "Photos", count: photoCount.count, href: "/admin/photography" },
     {
-      label: "Video Poems",
-      count: videoPoemCount.count,
-      href: "/admin/video-poems",
+      label: "Videos",
+      count: videoCount.count,
+      href: "/admin/videos",
     },
     {
       label: "Collections",
