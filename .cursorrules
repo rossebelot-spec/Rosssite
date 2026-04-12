@@ -177,6 +177,8 @@ Stop and describe your plan before proceeding if the task involves any of:
 - Significant layout or design changes that affect the whole site
 - Anything that requires a new environment variable
 
+**Unexpected or “impossible” behavior** (redirect loops, floods of requests, empty slugs in URLs, inconsistent state, etc.) usually means something upstream is wrong—bad data, missing validation, or a wrong assumption. **Investigate root cause first** (schema, admin saves, migrations). **Do not** add symptom-only patches or defensive branching without explaining findings and **getting permission to change code**—prefer fixing upstream (validation, data repair). If another agent may be editing the same files, coordinate before writing.
+
 ---
 
 ## Things agents must NEVER do silently

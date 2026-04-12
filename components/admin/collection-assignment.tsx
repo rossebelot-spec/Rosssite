@@ -4,7 +4,10 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createCollectionWithFirstItem } from "@/lib/actions";
+import {
+  createCollectionForPicker,
+  createCollectionWithFirstItem,
+} from "@/lib/actions";
 import type { CollectionItemLinkedType } from "@/db/schema";
 
 export interface CollectionRef {
@@ -16,6 +19,8 @@ export interface CollectionRef {
 interface Props {
   linkedType: CollectionItemLinkedType;
   linkedId: number | null;
+  /** When true with `linkedId === null`, pick existing collections into `value` before the row exists (save applies membership). */
+  staging?: boolean;
   value: CollectionRef[];
   allCollections: CollectionRef[];
   onChange: (value: CollectionRef[]) => void;
@@ -32,6 +37,7 @@ function slugify(title: string) {
 export function CollectionAssignment({
   linkedType,
   linkedId,
+  staging = false,
   value,
   allCollections,
   onChange,
@@ -40,8 +46,10 @@ export function CollectionAssignment({
   const [addingNew, setAddingNew] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
+  /** Controlled value avoids uncontrolled select + DOM resets fighting React after option list changes (server actions / refresh). */
+  const [pickValue, setPickValue] = useState("");
 
-  if (linkedId === null) {
+  if (linkedId === null && !staging) {
     return (
       <p className="text-xs text-muted-foreground">
         Save this item first to assign collections.
@@ -56,37 +64,53 @@ export function CollectionAssignment({
     onChange(value.filter((c) => c.id !== id));
   }
 
-  function handleSelect(e: React.ChangeEvent<HTMLSelectElement>) {
-    const val = e.target.value;
-    e.target.value = "";
+  function handlePick(val: string) {
+    setPickValue("");
+    if (!val || val === "") return;
     if (val === "__new__") {
       setAddingNew(true);
       return;
     }
     const id = Number(val);
+    if (Number.isNaN(id)) return;
     const coll = allCollections.find((c) => c.id === id);
     if (coll) onChange([...value, coll]);
   }
 
   async function handleCreate() {
     const trimmed = newTitle.trim();
-    if (!trimmed || linkedId === null) return;
+    if (!trimmed) return;
     setCreating(true);
-    const coll = await createCollectionWithFirstItem({
-      title: trimmed,
-      slug: slugify(trimmed),
-      linkedType,
-      linkedId,
-    });
-    onChange([...value, coll]);
-    onCollectionCreated(coll);
-    setNewTitle("");
-    setAddingNew(false);
-    setCreating(false);
+    try {
+      const coll =
+        linkedId !== null
+          ? await createCollectionWithFirstItem({
+              title: trimmed,
+              slug: slugify(trimmed),
+              linkedType,
+              linkedId,
+            })
+          : await createCollectionForPicker({
+              title: trimmed,
+              slug: slugify(trimmed),
+            });
+      onChange([...value, coll]);
+      onCollectionCreated(coll);
+      setNewTitle("");
+      setAddingNew(false);
+      setPickValue("");
+    } finally {
+      setCreating(false);
+    }
   }
 
   return (
     <div className="space-y-3">
+      {staging ? (
+        <p className="text-xs text-muted-foreground">
+          Existing and new collections are linked to this video when you save.
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         {value.map((coll) => (
           <span
@@ -107,8 +131,8 @@ export function CollectionAssignment({
 
         {!addingNew && (
           <select
-            defaultValue=""
-            onChange={handleSelect}
+            value={pickValue}
+            onChange={(e) => handlePick(e.target.value)}
             className="rounded border border-border bg-background px-2 py-1 text-sm text-muted-foreground cursor-pointer focus:outline-none focus:border-foreground"
           >
             <option value="" disabled>
@@ -137,6 +161,7 @@ export function CollectionAssignment({
               if (e.key === "Escape") {
                 setAddingNew(false);
                 setNewTitle("");
+                setPickValue("");
               }
             }}
           />
@@ -153,6 +178,7 @@ export function CollectionAssignment({
             onClick={() => {
               setAddingNew(false);
               setNewTitle("");
+              setPickValue("");
             }}
           >
             Cancel

@@ -14,6 +14,15 @@ Before considering the task done:
 3. **Minimal slice** — Implement only what the user asked in this turn. Do not add overlays, new packages, or refactors “while we’re here” unless requested.
 4. **No destructive git** — Do not run `git reset --hard`, `git clean -fd`, or force-push unless the user explicitly asks.
 
+## Unexpected behavior — root cause before patches
+
+If something looks wrong (loops, repeated requests, invalid URLs, inconsistent state, “that should never happen”):
+
+1. **Investigate root cause** — data, admin validation, schema, migrations—not only the surface component.
+2. **Explain findings** and propose a fix (usually upstream: validation, cleanup, invariant).
+3. **Ask for permission** before implementing code changes, especially defensive “band-aids.” Do not paper over symptoms without agreement.
+4. If **another tool or agent** may be editing the same area, **do not overwrite their work**—confirm or wait before changing those files.
+
 ## When the user describes route-specific UI (e.g. different nav on `/video/collections/*`)
 
 - Prefer **one client shell** (`SiteShell` or equivalent) chosen in **root layout** via `usePathname()`, unless the user asks for route groups.

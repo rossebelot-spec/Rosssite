@@ -12,6 +12,7 @@ import { ChevronUp, ChevronDown, X } from "lucide-react";
 import {
   createCollection,
   updateCollection,
+  publishCollection,
   deleteCollection,
   removeVideoPoemFromCollection,
   reorderCollectionItems,
@@ -62,6 +63,7 @@ export default function AdminCollectionEditor() {
   const [data, setData] = useState<CollectionData>(empty);
   const [items, setItems] = useState<CollectionItem[]>([]);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   const fetchCollection = useCallback(async () => {
     const res = await fetch(`/api/admin/collections/${id}`);
@@ -118,6 +120,26 @@ export default function AdminCollectionEditor() {
     }
   }
 
+  async function handlePublish() {
+    if (!data.id) return;
+    const nextPublished = !data.published;
+    if (
+      !nextPublished &&
+      items.length > 0 &&
+      !confirm(
+        `Unpublishing this collection will also unpublish its ${items.length} video poem(s). Continue?`
+      )
+    )
+      return;
+    setPublishing(true);
+    try {
+      await publishCollection(data.id, nextPublished);
+      setData((prev) => ({ ...prev, published: nextPublished }));
+    } finally {
+      setPublishing(false);
+    }
+  }
+
   async function handleDelete() {
     if (!data.id || !confirm("Delete this collection?")) return;
     await deleteCollection(data.id);
@@ -151,14 +173,33 @@ export default function AdminCollectionEditor() {
   return (
     <div className="space-y-6 max-w-screen-lg">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-3xl">
-          {isNew ? "New Collection" : "Edit Collection"}
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="font-heading text-3xl">
+            {isNew ? "New Collection" : "Edit Collection"}
+          </h1>
+          {!isNew && (
+            <span className={`text-xs tracking-widest uppercase px-2 py-0.5 border ${data.published ? "border-green-600 text-green-600" : "border-muted-foreground text-muted-foreground"}`}>
+              {data.published ? "Published" : "Draft"}
+            </span>
+          )}
+        </div>
         <div className="flex gap-3">
           {!isNew && (
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
-              Delete
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePublish}
+                disabled={publishing}
+              >
+                {publishing
+                  ? data.published ? "Unpublishing…" : "Publishing…"
+                  : data.published ? "Unpublish" : "Publish"}
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                Delete
+              </Button>
+            </>
           )}
           <Button size="sm" onClick={handleSave} disabled={saving}>
             {saving ? "Saving…" : "Save"}
@@ -215,7 +256,7 @@ export default function AdminCollectionEditor() {
           />
         </div>
 
-        <div className="flex gap-6 items-center">
+        <div className="flex gap-6 items-end">
           <div>
             <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">
               Display Order
@@ -238,17 +279,6 @@ export default function AdminCollectionEditor() {
               className="w-44"
             />
           </div>
-          <label className="flex items-center gap-2 cursor-pointer mt-4">
-            <input
-              type="checkbox"
-              checked={data.published}
-              onChange={(e) => set("published", e.target.checked)}
-              className="accent-warm-accent"
-            />
-            <span className="text-xs tracking-widest uppercase text-muted-foreground">
-              Published
-            </span>
-          </label>
         </div>
 
         <div>

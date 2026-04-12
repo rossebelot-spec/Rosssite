@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   createVideoPoem,
   updateVideoPoem,
+  publishVideoPoem,
   deleteVideoPoem,
   removeContentLink,
   setVideoPoemCollections,
@@ -54,9 +55,15 @@ export default function AdminVideoPoemEditor() {
   const isNew = id === "new";
 
   const [data, setData] = useState<VideoPoemData>(empty);
+  const [published, setPublished] = useState(false);
   const [memberCollections, setMemberCollections] = useState<CollectionRef[]>([]);
   const [allCollections, setAllCollections] = useState<CollectionRef[]>([]);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const isFormValid =
+    data.title.trim() !== "" &&
+    data.slug.trim() !== "" &&
+    data.vimeoId.trim() !== "";
 
   useEffect(() => {
     if (!isNew) {
@@ -73,6 +80,7 @@ export default function AdminVideoPoemEditor() {
             description: poem.description,
             linkedEssay: poem.linkedEssay ?? null,
           });
+          setPublished(poem.published ?? false);
           setMemberCollections(poem.memberCollections ?? []);
         });
     }
@@ -94,24 +102,41 @@ export default function AdminVideoPoemEditor() {
 
   async function handleSave() {
     setSaving(true);
-    const payload = {
-      title: data.title,
-      slug: data.slug,
-      vimeoId: data.vimeoId,
-      thumbnailUrl: data.thumbnailUrl,
-      thumbnailAlt: data.thumbnailAlt,
-      description: data.description,
-    };
+    try {
+      const payload = {
+        title: data.title,
+        slug: data.slug,
+        vimeoId: data.vimeoId,
+        thumbnailUrl: data.thumbnailUrl,
+        thumbnailAlt: data.thumbnailAlt,
+        description: data.description,
+      };
 
-    if (isNew) {
-      await createVideoPoem(payload);
-    } else {
-      await updateVideoPoem(data.id!, { ...payload, updatedAt: new Date() });
-      await setVideoPoemCollections({
-        videoPoemId: data.id!,
-        collectionIds: memberCollections.map((c) => c.id),
-      });
+      if (isNew) {
+        await createVideoPoem({
+          ...payload,
+          collectionIds: memberCollections.map((c) => c.id),
+        });
+      } else {
+        await updateVideoPoem(data.id!, { ...payload, updatedAt: new Date() });
+        await setVideoPoemCollections({
+          videoPoemId: data.id!,
+          collectionIds: memberCollections.map((c) => c.id),
+        });
+      }
+    } finally {
       setSaving(false);
+    }
+  }
+
+  async function handlePublish() {
+    if (!data.id) return;
+    setPublishing(true);
+    try {
+      await publishVideoPoem(data.id, !published);
+      setPublished(!published);
+    } finally {
+      setPublishing(false);
     }
   }
 
@@ -123,16 +148,33 @@ export default function AdminVideoPoemEditor() {
   return (
     <div className="space-y-6 max-w-screen-md">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-3xl">
-          {isNew ? "New Video Poem" : "Edit Video Poem"}
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="font-heading text-3xl">
+            {isNew ? "New Video Poem" : "Edit Video Poem"}
+          </h1>
+          {!isNew && (
+            <span className={`text-xs tracking-widest uppercase px-2 py-0.5 border ${published ? "border-green-600 text-green-600" : "border-muted-foreground text-muted-foreground"}`}>
+              {published ? "Published" : "Draft"}
+            </span>
+          )}
+        </div>
         <div className="flex gap-3">
           {!isNew && (
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
-              Delete
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePublish}
+                disabled={publishing || !isFormValid}
+              >
+                {publishing ? (published ? "Unpublishing…" : "Publishing…") : (published ? "Unpublish" : "Publish")}
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                Delete
+              </Button>
+            </>
           )}
-          <Button size="sm" onClick={handleSave} disabled={saving}>
+          <Button size="sm" onClick={handleSave} disabled={saving || !isFormValid}>
             {saving ? "Saving…" : "Save"}
           </Button>
         </div>
@@ -229,11 +271,14 @@ export default function AdminVideoPoemEditor() {
           <CollectionAssignment
             linkedType="video_poem"
             linkedId={isNew ? null : (data.id ?? null)}
+            staging={isNew}
             value={memberCollections}
             allCollections={allCollections}
             onChange={setMemberCollections}
             onCollectionCreated={(coll) =>
-              setAllCollections((prev) => [...prev, coll])
+              setAllCollections((prev) =>
+                prev.some((c) => c.id === coll.id) ? prev : [...prev, coll]
+              )
             }
           />
         </div>

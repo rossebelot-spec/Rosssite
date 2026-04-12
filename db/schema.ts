@@ -32,6 +32,8 @@ export const videoPoems = pgTable("video_poems", {
   thumbnailAlt: text("thumbnail_alt").notNull().default(""),
   description: text("description").notNull().default(""),
   durationSeconds: integer("duration_seconds"),
+  published: boolean("published").notNull().default(false),
+  publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

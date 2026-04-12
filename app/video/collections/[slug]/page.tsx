@@ -18,7 +18,18 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ poem?: string }>;
+  searchParams: Promise<{ poem?: string | string[] }>;
+}
+
+/** Empty or whitespace `?poem=` must be treated as absent — otherwise redirect can target `?poem=` and loop. */
+function poemParamFromSearchParams(sp: {
+  poem?: string | string[];
+}): string | undefined {
+  const raw = sp.poem;
+  const s = Array.isArray(raw) ? raw[0] : raw;
+  if (typeof s !== "string") return undefined;
+  const t = s.trim();
+  return t.length > 0 ? t : undefined;
 }
 
 async function getCollectionWithItems(slug: string) {
@@ -46,7 +57,8 @@ async function getCollectionWithItems(slug: string) {
       videoPoems,
       and(
         eq(collectionItems.linkedType, "video_poem"),
-        eq(collectionItems.linkedId, videoPoems.id)
+        eq(collectionItems.linkedId, videoPoems.id),
+        eq(videoPoems.published, true)
       )
     )
     .where(eq(collectionItems.collectionId, collection.id))
@@ -111,7 +123,7 @@ export async function generateMetadata({
   searchParams,
 }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const { poem: poemSlug } = await searchParams;
+  const poemSlug = poemParamFromSearchParams(await searchParams);
 
   const result = await getCollectionWithItems(slug);
   if (!result) return {};
@@ -146,7 +158,7 @@ export default async function CollectionPage({
   searchParams,
 }: Props) {
   const { slug } = await params;
-  const { poem: poemSlug } = await searchParams;
+  const poemSlug = poemParamFromSearchParams(await searchParams);
 
   const result = await getCollectionWithItems(slug);
   if (!result) notFound();
@@ -154,9 +166,12 @@ export default async function CollectionPage({
   const { collection, items } = result;
 
   if (!poemSlug && items.length > 0) {
-    redirect(
-      `/video/collections/${encodeURIComponent(slug)}?poem=${encodeURIComponent(items[0].slug)}`
-    );
+    const first = items.find((i) => i.slug?.trim());
+    if (first?.slug?.trim()) {
+      redirect(
+        `/video/collections/${encodeURIComponent(slug)}?poem=${encodeURIComponent(first.slug)}`
+      );
+    }
   }
 
   return (

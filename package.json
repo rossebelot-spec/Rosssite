@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "measure:essay-line-height": "node scripts/measure-essay-line-height.mjs",
-    "migrate:collection-items-polymorphic": "node scripts/migrate-collection-items-polymorphic.mjs"
+    "migrate:collection-items-polymorphic": "node scripts/migrate-collection-items-polymorphic.mjs",
+    "cleanup:blank-video-poems": "node scripts/cleanup-blank-video-poems.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

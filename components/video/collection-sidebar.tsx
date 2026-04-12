@@ -30,18 +30,10 @@ export function CollectionSidebar({
   return (
     <nav aria-label={`${collectionTitle} poems`}>
       <ul className="space-y-3">
-        {items.map((item) => (
-          <li key={item.slug}>
-            <Link
-              href={`?poem=${item.slug}`}
-              scroll={false}
-              className={cn(
-                "flex flex-col gap-2 rounded p-2 transition-colors",
-                activeSlug === item.slug
-                  ? "bg-warm-accent/10"
-                  : "hover:bg-surface"
-              )}
-            >
+        {items.map((item, index) => {
+          const poemKey = item.slug?.trim();
+          const row = (
+            <>
               {item.thumbnailUrl && (
                 <div className="relative w-full aspect-video shrink-0 overflow-hidden rounded bg-surface">
                   <Image
@@ -68,9 +60,32 @@ export function CollectionSidebar({
                   </p>
                 )}
               </div>
+            </>
+          );
+          const baseClass = cn(
+            "flex flex-col gap-2 rounded p-2 transition-colors",
+            activeSlug === item.slug
+              ? "bg-warm-accent/10"
+              : "hover:bg-surface"
+          );
+          return (
+          <li key={poemKey || `item-${index}`}>
+            {poemKey ? (
+            <Link
+              href={`?poem=${encodeURIComponent(poemKey)}`}
+              scroll={false}
+              className={baseClass}
+            >
+              {row}
             </Link>
+            ) : (
+              <div className={cn(baseClass, "cursor-not-allowed opacity-70")} title="Missing slug — fix in admin">
+              {row}
+              </div>
+            )}
           </li>
-        ))}
+          );
+        })}
       </ul>
     </nav>
   );

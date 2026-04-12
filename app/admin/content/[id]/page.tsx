@@ -90,6 +90,7 @@ export default function AdminContentEditor() {
   const [data, setData] = useState<EditorState>(empty);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   // Deep-link params: ?linkType=video_poem&linkId=123
   const deepLinkType = searchParams.get("linkType");
@@ -217,6 +218,31 @@ export default function AdminContentEditor() {
     }
   }
 
+  async function handlePublish() {
+    if (isNew) return;
+    const nextPublished = !data.published;
+    setPublishing(true);
+    try {
+      const publishedAt = nextPublished
+        ? data.publishedAt
+          ? new Date(data.publishedAt)
+          : new Date()
+        : null;
+      await updateContent(Number(id), {
+        published: nextPublished,
+        publishedAt,
+        updatedAt: new Date(),
+      });
+      setData((prev) => ({
+        ...prev,
+        published: nextPublished,
+        publishedAt: publishedAt ? toDateInputValue(publishedAt.toISOString()) : "",
+      }));
+    } finally {
+      setPublishing(false);
+    }
+  }
+
   async function handleDelete() {
     if (isNew || !confirm("Delete this content?")) return;
     await deleteContent(Number(id));
@@ -263,12 +289,31 @@ export default function AdminContentEditor() {
   return (
     <div className="space-y-6 max-w-screen-md">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-3xl">{pageTitle}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="font-heading text-3xl">{pageTitle}</h1>
+          {!isNew && (
+            <span className={`text-xs tracking-widest uppercase px-2 py-0.5 border ${data.published ? "border-green-600 text-green-600" : "border-muted-foreground text-muted-foreground"}`}>
+              {data.published ? "Published" : "Draft"}
+            </span>
+          )}
+        </div>
         <div className="flex gap-3">
           {!isNew && (
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
-              Delete
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePublish}
+                disabled={publishing || !loaded}
+              >
+                {publishing
+                  ? data.published ? "Unpublishing…" : "Publishing…"
+                  : data.published ? "Unpublish" : "Publish"}
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                Delete
+              </Button>
+            </>
           )}
           <Button size="sm" onClick={handleSave} disabled={saving || !loaded}>
             {saving ? "Saving…" : "Save"}
@@ -369,26 +414,16 @@ export default function AdminContentEditor() {
           />
         </div>
 
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="flex-1 min-w-[12rem]">
-            <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">
-              Published Date
-            </label>
-            <Input
-              type="date"
-              value={data.publishedAt}
-              onChange={(e) => set("publishedAt", e.target.value)}
-            />
-          </div>
-          <label className="flex items-center gap-2 text-xs tracking-widest uppercase text-muted-foreground h-9">
-            <input
-              type="checkbox"
-              checked={data.published}
-              onChange={(e) => set("published", e.target.checked)}
-              className="h-4 w-4"
-            />
-            Published
+        <div>
+          <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">
+            Published Date
           </label>
+          <Input
+            type="date"
+            value={data.publishedAt}
+            onChange={(e) => set("publishedAt", e.target.value)}
+            className="max-w-[12rem]"
+          />
         </div>
 
         <div>

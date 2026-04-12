@@ -46,12 +46,19 @@ export default async function AdminVideoPoemsPage() {
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <Link
-                  href={`/admin/video-poems/${poem.id}`}
-                  className="font-heading text-xl hover:text-warm-accent transition-colors"
-                >
-                  {poem.title}
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/admin/video-poems/${poem.id}`}
+                    className="font-heading text-xl hover:text-warm-accent transition-colors"
+                  >
+                    {poem.title}
+                  </Link>
+                  {!poem.published && (
+                    <span className="text-xs tracking-widest uppercase px-2 py-0.5 border border-muted-foreground text-muted-foreground shrink-0">
+                      Draft
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {poem.slug}
                 </p>

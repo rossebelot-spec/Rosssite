@@ -260,11 +260,31 @@ export async function createVideoPoem(data: {
   thumbnailAlt?: string;
   description?: string;
   durationSeconds?: number | null;
+  /** Applied after insert so one save can create the poem and collection membership. */
+  collectionIds?: number[];
 }) {
   await requireAdmin();
+
+  const title = data.title.trim();
+  const slug = data.slug.trim();
+  const vimeoId = data.vimeoId.trim();
+  if (!title || !slug || !vimeoId) {
+    throw new Error("Title, slug, and Vimeo ID are required before saving.");
+  }
+
   const db = getDb();
-  const [poem] = await db.insert(videoPoems).values(data).returning();
+  const { collectionIds, ...insertData } = data;
+  const [poem] = await db
+    .insert(videoPoems)
+    .values({ ...insertData, title, slug, vimeoId })
+    .returning();
   revalidatePath("/video");
+  if (collectionIds && collectionIds.length > 0) {
+    await setVideoPoemCollections({
+      videoPoemId: poem.id,
+      collectionIds,
+    });
+  }
   redirect(`/admin/video-poems/${poem.id}`);
 }
 
@@ -278,12 +298,32 @@ export async function updateVideoPoem(
     thumbnailAlt?: string;
     description?: string;
     durationSeconds?: number | null;
+    published?: boolean;
+    publishedAt?: Date | null;
     updatedAt: Date;
   }
 ) {
   await requireAdmin();
   const db = getDb();
   await db.update(videoPoems).set(data).where(eq(videoPoems.id, id));
+  revalidatePath("/video");
+  const slugs = await getCollectionSlugsContainingPoem(id);
+  for (const slug of slugs) {
+    revalidatePath(`/video/collections/${slug}`);
+  }
+}
+
+export async function publishVideoPoem(id: number, publish: boolean) {
+  await requireAdmin();
+  const db = getDb();
+  await db
+    .update(videoPoems)
+    .set({
+      published: publish,
+      publishedAt: publish ? new Date() : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(videoPoems.id, id));
   revalidatePath("/video");
   const slugs = await getCollectionSlugsContainingPoem(id);
   for (const slug of slugs) {
@@ -332,6 +372,83 @@ export async function createCollection(data: {
     .returning();
   revalidatePath("/video");
   redirect(`/admin/collections/${collection.id}`);
+}
+
+/** Empty collection for admin pickers when the video poem row does not exist yet; link rows are added when the video is saved. */
+export async function createCollectionForPicker(data: {
+  title: string;
+  slug: string;
+}): Promise<{ id: number; title: string; slug: string }> {
+  await requireAdmin();
+  const db = getDb();
+  const base = data.slug.trim() || "collection";
+  let slug = base;
+  let n = 0;
+  while (true) {
+    const [existing] = await db
+      .select({ id: collections.id })
+      .from(collections)
+      .where(eq(collections.slug, slug))
+      .limit(1);
+    if (!existing) break;
+    n += 1;
+    slug = `${base}-${n}`;
+  }
+  const [collection] = await db
+    .insert(collections)
+    .values({
+      title: data.title.trim(),
+      slug,
+      description: "",
+      introHtml: "",
+      published: false,
+      displayOrder: 0,
+    })
+    .returning();
+  revalidatePath("/video");
+  return { id: collection.id, title: collection.title, slug: collection.slug };
+}
+
+export async function publishCollection(id: number, publish: boolean) {
+  await requireAdmin();
+  const db = getDb();
+  await db
+    .update(collections)
+    .set({
+      published: publish,
+      publishedAt: publish ? new Date() : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(collections.id, id));
+
+  if (!publish) {
+    // Cascade unpublish to all video poems in this collection
+    const members = await db
+      .select({ linkedId: collectionItems.linkedId })
+      .from(collectionItems)
+      .where(
+        and(
+          eq(collectionItems.collectionId, id),
+          eq(collectionItems.linkedType, "video_poem")
+        )
+      );
+    if (members.length > 0) {
+      const poemIds = members.map((r) => r.linkedId);
+      await db
+        .update(videoPoems)
+        .set({ published: false, publishedAt: null, updatedAt: new Date() })
+        .where(inArray(videoPoems.id, poemIds));
+    }
+  }
+
+  const [current] = await db
+    .select({ slug: collections.slug })
+    .from(collections)
+    .where(eq(collections.id, id));
+  revalidatePath("/video");
+  if (current) {
+    revalidatePath(`/video/collections/${current.slug}`);
+  }
 }
 
 export async function updateCollection(
