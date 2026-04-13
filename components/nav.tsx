@@ -4,9 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useNavContext } from "@/components/nav-context";
-import { siteNavLinksWithAdmin } from "@/lib/site-nav-links";
+import {
+  siteHeaderTagline,
+  siteNavLinksWithAdmin,
+} from "@/lib/site-nav-links";
 
 export function Nav() {
   const pathname = usePathname();
@@ -24,16 +27,18 @@ export function Nav() {
 
   const allLinks = [...siteNavLinksWithAdmin];
 
-  const isHome = pathname === "/";
-
-  useEffect(() => {
-    const el = headerRef.current;
+  useLayoutEffect(() => {
+    /* querySelector: ref can still be null on first layout pass in some environments */
+    const el = headerRef.current ?? document.querySelector("body > header");
     if (!el) return;
+    let styleEl = document.getElementById("site-header-height-live");
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = "site-header-height-live";
+      document.head.appendChild(styleEl);
+    }
     const setHeight = () => {
-      document.documentElement.style.setProperty(
-        "--site-header-height",
-        `${el.offsetHeight}px`
-      );
+      styleEl.textContent = `:root { --site-header-height: ${el.offsetHeight}px; }`;
     };
     setHeight();
     const ro = new ResizeObserver(setHeight);
@@ -46,23 +51,22 @@ export function Nav() {
   return (
     <header
       ref={headerRef}
-      className={
-        isHome
-          ? "nav-header--hero fixed top-0 left-0 right-0 z-50 bg-transparent"
-          : "sticky top-0 z-50 border-b border-border bg-surface"
-      }
+      className="sticky top-0 left-0 right-0 z-50 border-b border-border bg-surface"
     >
       <div className="mx-auto flex max-w-screen-xl flex-col gap-2 px-6 py-3">
         <div className="flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className={`nav-site-name font-heading text-sm tracking-[0.2em] uppercase ${
-              isHome ? "" : "text-foreground"
-            }`}
-          >
-            Ross Belot
-          </Link>
-          <div className="md:hidden">
+          <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
+            <Link
+              href="/"
+              className="nav-site-name shrink-0 font-heading text-sm tracking-[0.2em] uppercase text-foreground"
+            >
+              Ross Belot
+            </Link>
+            <span className="nav-site-tagline font-sans text-xs tracking-widest uppercase text-muted-foreground">
+              {siteHeaderTagline}
+            </span>
+          </div>
+          <div className="shrink-0 md:hidden">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger
                 className="nav-menu-trigger inline-flex items-center justify-center rounded-md p-0.5 transition-colors"
@@ -101,11 +105,7 @@ export function Nav() {
         </nav>
 
         {contextLine ? (
-          <p
-            className={`nav-context-line text-xs tracking-widest uppercase ${
-              isHome ? "" : "text-muted-foreground"
-            }`}
-          >
+          <p className="nav-context-line text-xs tracking-widest uppercase text-muted-foreground">
             {contextLine}
           </p>
         ) : null}

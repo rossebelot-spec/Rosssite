@@ -140,22 +140,20 @@
   --warm-accent-foreground:        oklch(0.09 0.003 345);
 }
 
-/* ─── Homepage hero (fixed photo + curtain scroll) ────────────────────────
+/* ─── Homepage hero (in-flow photo + stacked main — no curtain overlap) ───
    All layout values are tokens — adjust here, not in components.
+   Hero band height uses remaining viewport below the sticky header (Nav sets
+   --site-header-height on document.body via ResizeObserver so it inherits).
+   Do not define that min-height on :root — var() there resolves on <html> only.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
   /* Sticky site header (nav row) — sticky toolbars use this as `top` so they sit below the bar */
   --site-header-height: 4.5rem;
-  /* How much of the main column peeks above the fold (80–100px range) */
-  --hero-content-peek: clamp(5rem, 12vw, 6.25rem);
-  /* Height of the bottom gradient band on the hero image */
-  --hero-gradient-height: min(45vh, 24rem);
   /* Same cap as Tailwind max-w-screen-xl — hero copy lines up with main content */
   --site-content-max-width: 80rem;
-  /* Text inset from hero edges (upper-right stack) */
+  /* Text inset from hero edges (upper-right stack); nav is above hero, so modest top inset */
   --hero-text-inset-inline: clamp(1.5rem, 5vw, 4rem);
-  /* Below fixed header (nav + gap) — keep hero title from overlapping the bar */
-  --hero-text-inset-block-start: clamp(7rem, 20vh, 12rem);
+  --hero-text-inset-block-start: clamp(2rem, 10vh, 6rem);
   --hero-text-max-width: min(32rem, 85vw);
 
   /* Essay reading layout (/essays/[slug]) — defaults; .reading-theme applies reference tokens */
@@ -203,18 +201,13 @@
 }
 
 @layer components {
-  .hero-bottom-gradient {
-    position: absolute;
-    inset-inline: 0;
-    bottom: 0;
-    z-index: 1;
-    height: var(--hero-gradient-height);
-    pointer-events: none;
-    background: linear-gradient(
-      to bottom,
-      transparent,
-      var(--color-background)
-    );
+  .home-hero-section {
+    position: relative;
+    z-index: 0;
+    width: 100%;
+    overflow: hidden;
+    /* Not on :root — var(--site-header-height) must inherit (Nav sets it on body). */
+    min-height: clamp(20rem, calc(100svh - var(--site-header-height)), 42rem);
   }
 
   .hero-text-block {
@@ -233,8 +226,23 @@
     text-wrap: balance;
   }
 
-  /* Hero tagline + nav links — readable on photos without hardcoded colors */
-  .hero-text-tagline,
+  /*
+   * Hero display name: set color here, not via Tailwind text-* on the h1.
+   * Utilities layer beats @layer components; a stray text-foreground on the h1
+   * would override a lone .hero-text-name class.
+   */
+  [data-hero-portrait="true"] .hero-text-block h1 {
+    color: oklch(1 0 0);
+    text-shadow:
+      0 0.06em 0.18em color-mix(in oklch, var(--foreground) 45%, transparent),
+      0 0.12em 0.4em color-mix(in oklch, var(--foreground) 30%, transparent);
+  }
+
+  [data-hero-portrait="false"] .hero-text-block h1 {
+    color: var(--foreground);
+  }
+
+  /* Nav links — readable on light header surface */
   .nav-link,
   .nav-menu-trigger {
     color: color-mix(in oklch, var(--foreground) 92%, var(--background));
@@ -256,24 +264,6 @@
 
   .nav-menu-trigger:hover {
     color: var(--foreground);
-  }
-
-  /* Home hero header: name + “where we are” line match nav link contrast */
-  .nav-header--hero .nav-site-name,
-  .nav-header--hero .nav-context-line {
-    color: color-mix(in oklch, var(--foreground) 92%, var(--background));
-    text-shadow:
-      0 0.06em 0.12em color-mix(in oklch, var(--background) 72%, transparent),
-      0 0.12em 0.35em color-mix(in oklch, var(--background) 48%, transparent);
-  }
-
-  .nav-header--hero .nav-site-name:hover {
-    color: var(--foreground);
-  }
-
-  /* Pulls main content up so a band peeks into the viewport over the fixed hero */
-  .hero-main-overlap {
-    margin-top: calc(-1 * var(--hero-content-peek));
   }
 
   /* ─── Essay article (reading) ─────────────────────────────────────────── */
