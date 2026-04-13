@@ -58,6 +58,7 @@ export function CollectionReader({
                 essayTitle={activeVideo.essayTitle}
                 vimeoId={activeVideo.vimeoId}
                 r2Url={activeVideo.r2Url}
+                thumbnailUrl={activeVideo.thumbnailUrl}
                 essayHtml={activeVideo.essayHtml}
               />
             ) : (

@@ -153,10 +153,33 @@
   --site-header-height: 4.3125rem;
   /* Same cap as Tailwind max-w-screen-xl — hero copy lines up with main content */
   --site-content-max-width: 80rem;
-  /* Text inset from hero edges (upper-right stack); nav is above hero, so modest top inset */
-  --hero-text-inset-inline: clamp(1.5rem, 5vw, 4rem);
-  --hero-text-inset-block-start: clamp(2rem, 10vh, 6rem);
-  --hero-text-max-width: min(32rem, 85vw);
+  /* Name panel: tight seam (~25% less than prior), generous outer air + optical nudge for eye line */
+  --hero-name-panel-padding-inline-start: clamp(0.5rem, 2.25vw, 1.35rem);
+  --hero-name-panel-padding-inline-end: clamp(2rem, 6vw, 4rem);
+  --hero-name-panel-padding-block: clamp(2.5rem, 9vh, 5.5rem);
+  --hero-text-stack-gap: clamp(1.5rem, 4.25vh, 3.5rem);
+  --hero-name-line-gap: 0.02em;
+  /* Tunable vertical shift for name vs portrait (eye line); does not detect faces */
+  --hero-name-optical-shift: clamp(-0.65rem, -1.25vh, -0.2rem);
+  /* Push the typographic block lower in the right column */
+  --hero-text-stack-margin-top: clamp(2.25rem, 11vh, 6.5rem);
+  /* Pin crop + zoom to the left edge so the subject sits left in the frame, not centered */
+  --hero-photo-object-position: left center;
+  --hero-photo-transform-origin: left center;
+  --hero-photo-scale: 1.12;
+  /* Solid panel over the right third of the photo (same surface as page) */
+  --hero-photo-mask-width: calc(100% / 3);
+  /* Band breathes more above than below — not a full-viewport banner */
+  --hero-section-margin-block-start: clamp(1.5rem, 4vh, 3rem);
+  --hero-section-margin-block-end: clamp(0.6rem, 1.75vh, 1.35rem);
+  --hero-split-min-height: clamp(
+    16rem,
+    calc(
+      88svh - var(--site-header-height) - var(--hero-section-margin-block-start) -
+        var(--hero-section-margin-block-end)
+    ),
+    36rem
+  );
 
   /* Nav — public header (larger than text-xs/text-sm defaults for readability) */
   --nav-site-font-size: 1.125rem;
@@ -164,8 +187,7 @@
   --nav-link-font-size: 0.9375rem;
   --nav-context-font-size: 0.875rem;
 
-  /* Hero — photo inset to match main column; white gutters (uses --background on section) */
-  --hero-frame-padding-inline: clamp(1.5rem, 5vw, 4rem);
+  /* Hero — rounded corner only on the seam toward the name panel */
   --hero-frame-radius: var(--radius-lg);
 
   /* Essay reading layout (/essays/[slug]) — defaults; .reading-theme applies reference tokens */
@@ -218,27 +240,100 @@
     z-index: 0;
     width: 100%;
     overflow: hidden;
-    /* Not on :root — var(--site-header-height) must inherit (Nav sets it on body). */
-    min-height: clamp(20rem, calc(100svh - var(--site-header-height)), 42rem);
+    margin-block: var(--hero-section-margin-block-start) var(--hero-section-margin-block-end);
   }
 
-  .home-hero-image-frame {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    padding-inline: var(--hero-frame-padding-inline);
-    pointer-events: none;
+  /* Photo ~⅔, name ~⅓ — gallery wall asymmetry */
+  .home-hero-split {
+    display: grid;
+    align-items: stretch;
+    min-height: var(--hero-split-min-height);
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  @media (max-width: 639px) {
+    .home-hero-split {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
+      row-gap: clamp(2rem, 8vw, 3.5rem);
+    }
+  }
+
+  .home-hero-photo-col {
+    position: relative;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  @media (max-width: 639px) {
+    .home-hero-photo-col {
+      min-height: min(52svh, 22rem);
+    }
   }
 
   .home-hero-image-inner {
     position: relative;
+    isolation: isolate;
     height: 100%;
+    min-height: inherit;
     width: 100%;
-    max-width: var(--site-content-max-width);
     overflow: hidden;
-    border-radius: var(--hero-frame-radius);
-    box-shadow: 0 0.25rem 1.25rem color-mix(in oklch, var(--foreground) 8%, transparent);
+    border-radius: 0 var(--hero-frame-radius) var(--hero-frame-radius) 0;
+  }
+
+  @media (max-width: 639px) {
+    .home-hero-image-inner {
+      border-radius: 0 0 var(--hero-frame-radius) var(--hero-frame-radius);
+    }
+  }
+
+  .home-hero-image-zoom {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .home-hero-image-zoom .home-hero-image-img {
+    object-position: var(--hero-photo-object-position);
+    transform: scale(var(--hero-photo-scale));
+    transform-origin: var(--hero-photo-transform-origin);
+  }
+
+  .home-hero-photo-mask-right {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    width: var(--hero-photo-mask-width);
+    height: 100%;
+    background: var(--background);
+    pointer-events: none;
+  }
+
+  .home-hero-image-placeholder {
+    position: absolute;
+    inset: 0;
+    background: var(--muted);
+  }
+
+  .home-hero-name-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding-block: var(--hero-name-panel-padding-block);
+    padding-inline: var(--hero-name-panel-padding-inline-start)
+      var(--hero-name-panel-padding-inline-end);
+    background: var(--background);
+  }
+
+  @media (max-width: 639px) {
+    .home-hero-name-panel {
+      align-items: center;
+      padding-block: clamp(1rem, 4vw, 2rem);
+      min-height: 0;
+    }
   }
 
   .nav-site-name {
@@ -253,36 +348,78 @@
     font-size: var(--nav-context-font-size);
   }
 
-  .hero-text-block {
-    position: absolute;
-    top: calc(var(--hero-text-inset-block-start) + env(safe-area-inset-top, 0px));
-    /* Align right edge with centered content column + padding, not the viewport rim */
-    right: calc(
-      (100vw - min(100vw, var(--site-content-max-width))) / 2
-        + var(--hero-text-inset-inline) + env(safe-area-inset-right, 0px)
-    );
-    left: auto;
-    bottom: auto;
-    z-index: 2;
-    max-width: var(--hero-text-max-width);
+  .hero-text-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--hero-text-stack-gap);
+    width: 100%;
+    max-width: 100%;
+    margin-top: var(--hero-text-stack-margin-top);
+    transform: translateY(var(--hero-name-optical-shift));
+  }
+
+  @media (max-width: 639px) {
+    .hero-text-stack {
+      align-items: center;
+      max-width: none;
+      margin-top: clamp(0.25rem, 2vh, 1.25rem);
+      transform: none;
+    }
+  }
+
+  /* Cormorant (heading stack) — no shadows; flat high-contrast type */
+  .hero-text-name {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1;
     text-align: right;
     text-wrap: balance;
-  }
-
-  /*
-   * Hero display name: set color here, not via Tailwind text-* on the h1.
-   * Utilities layer beats @layer components; a stray text-foreground on the h1
-   * would override a lone .hero-text-name class.
-   */
-  [data-hero-portrait="true"] .hero-text-block h1 {
-    color: oklch(1 0 0);
-    text-shadow:
-      0 0.06em 0.18em color-mix(in oklch, var(--foreground) 45%, transparent),
-      0 0.12em 0.4em color-mix(in oklch, var(--foreground) 30%, transparent);
-  }
-
-  [data-hero-portrait="false"] .hero-text-block h1 {
+    margin: 0;
     color: var(--foreground);
+  }
+
+  @media (max-width: 639px) {
+    .hero-text-name {
+      align-items: center;
+      text-align: center;
+    }
+  }
+
+  .hero-text-name-given {
+    font-family: var(--font-heading);
+    font-weight: 300;
+    letter-spacing: 0.03em;
+    font-size: clamp(2.35rem, 7.5vw, 6.25rem);
+    color: var(--foreground);
+  }
+
+  .hero-text-name-family {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    font-size: clamp(3.25rem, 17vw, 11rem);
+    margin-top: var(--hero-name-line-gap);
+    color: var(--foreground);
+  }
+
+  .hero-text-roles {
+    font-family: var(--font-sans);
+    font-size: clamp(1.0625rem, 2vw, 1.5rem);
+    letter-spacing: 0.16em;
+    font-variant: small-caps;
+    color: color-mix(in oklch, var(--foreground) 58%, var(--background));
+    margin: 0;
+    line-height: 1.45;
+    text-align: right;
+    max-width: 100%;
+  }
+
+  @media (max-width: 639px) {
+    .hero-text-roles {
+      text-align: center;
+    }
   }
 
   /* Nav links — readable on light header surface */

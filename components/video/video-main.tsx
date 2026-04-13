@@ -8,6 +8,8 @@ interface VideoMainProps {
   vimeoId: string;
   /** When set, a native video element is used instead of the Vimeo iframe. */
   r2Url?: string | null;
+  /** Still shown before play when using R2/native `<video>` (`videos.thumbnail_url`). */
+  thumbnailUrl?: string | null;
   essayHtml: string;
 }
 
@@ -16,9 +18,11 @@ export function VideoMain({
   essayTitle,
   vimeoId,
   r2Url,
+  thumbnailUrl,
   essayHtml,
 }: VideoMainProps) {
   const essayTitleTrimmed = (essayTitle ?? "").trim();
+  const poster = thumbnailUrl?.trim() || undefined;
 
   return (
     <div className="flex flex-col gap-8">
@@ -45,6 +49,7 @@ export function VideoMain({
               controls
               preload="metadata"
               className="absolute inset-0 h-full w-full object-contain"
+              poster={poster}
             />
           ) : (
             <iframe

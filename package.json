@@ -16,6 +16,7 @@
     "debug:hero-dom": "node scripts/debug-hero-dom.mjs",
     "debug:hero-refresh-timeline": "node scripts/debug-hero-refresh-timeline.mjs",
     "seed:op-eds": "node scripts/seed-op-eds.mjs",
+    "seed:lac-megantic-video": "node scripts/seed-lac-megantic-video.mjs",
     "seed:ipolitics": "node scripts/seed-ipolitics.mjs",
     "update:policy-thumbnail": "node scripts/update-policy-thumbnail.mjs"
   },

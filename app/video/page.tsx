@@ -3,7 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { getDb } from "@/db";
 import { collections, videos, collectionItems } from "@/db/schema";
-import { eq, and, asc, desc, isNull } from "drizzle-orm";
+import { eq, and, asc, desc, isNull, ne } from "drizzle-orm";
+import { getFeaturedHomeVideo } from "@/lib/featured-home-video";
 import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = { title: "Video" };
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function VideoPage() {
   const db = getDb();
+  const featuredHome = await getFeaturedHomeVideo();
 
   const [published, standaloneVideos] = await Promise.all([
     db
@@ -36,7 +38,13 @@ export default async function VideoPage() {
           eq(collectionItems.linkedId, videos.id)
         )
       )
-      .where(and(eq(videos.published, true), isNull(collectionItems.id)))
+      .where(
+        and(
+          eq(videos.published, true),
+          isNull(collectionItems.id),
+          ...(featuredHome ? [ne(videos.id, featuredHome.id)] : [])
+        )
+      )
       .orderBy(desc(videos.publishedAt)),
   ]);
 

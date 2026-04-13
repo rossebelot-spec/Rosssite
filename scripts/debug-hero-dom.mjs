@@ -26,7 +26,7 @@ try {
     );
 
     const report = await page.evaluate(() => {
-      const h1 = document.querySelector(".hero-text-block h1");
+      const h1 = document.querySelector(".home-hero-name-panel h1");
       const section = document.querySelector("section.home-hero-section");
       const header = document.querySelector("body > header");
       const main = document.querySelector("main");

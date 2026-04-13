@@ -12,28 +12,40 @@ export function Hero({ portraitUrl }: HeroProps) {
       className="home-hero-section bg-background"
       data-hero-portrait={hasPortrait ? "true" : "false"}
     >
-      <div className="home-hero-image-frame" aria-hidden>
-        <div className="home-hero-image-inner">
-          {portraitUrl ? (
-            <Image
-              src={blobImageUrl(portraitUrl)}
-              alt=""
-              fill
-              priority
-              sizes="(max-width: 80rem) 100vw, 80rem"
-              className="object-cover object-center"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-muted" />
-          )}
+      <div className="home-hero-split">
+        <div className="home-hero-photo-col" aria-hidden>
+          <div className="home-hero-image-inner">
+            {portraitUrl ? (
+              <>
+                <div className="home-hero-image-zoom">
+                  <Image
+                    src={blobImageUrl(portraitUrl)}
+                    alt=""
+                    fill
+                    priority
+                    sizes="(max-width: 640px) 100vw, 67vw"
+                    className="home-hero-image-img object-cover"
+                  />
+                </div>
+                <div className="home-hero-photo-mask-right" aria-hidden />
+              </>
+            ) : (
+              <div className="home-hero-image-placeholder" />
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="hero-text-block">
-        {/* Title color: globals.css [data-hero-portrait]… — avoid Tailwind text-* on h1 (utilities win over components). */}
-        <h1 className="font-heading text-5xl sm:text-6xl md:text-7xl lg:text-8xl tracking-wide leading-none text-balance">
-          Ross Belot
-        </h1>
+        <div className="home-hero-name-panel">
+          <div className="hero-text-stack">
+            <h1 className="hero-text-name">
+              <span className="hero-text-name-given">Ross</span>
+              <span className="hero-text-name-family">Belot</span>
+            </h1>
+            <p className="hero-text-roles">
+              Poet · Essayist · Filmmaker · Translator
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -1,18 +1,19 @@
 import Link from "next/link";
 import { getDb } from "@/db";
-import { content, photos } from "@/db/schema";
+import { content, photos, opEds } from "@/db/schema";
 import { eq, and, desc, notInArray, inArray } from "drizzle-orm";
 import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
 import { formatPublishedMonthYear } from "@/lib/format-published-date";
-import { opEds } from "@/db/schema";
+import { getFeaturedHomeVideo } from "@/lib/featured-home-video";
 import { Hero } from "@/components/hero";
+import { HomeFeaturedVideo } from "@/components/home-featured-video";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const db = getDb();
   const videoLinkedIds = await getContentIdsLinkedToVideo();
-  const [recentEssays, recentReviews, heroPhotos, recentOpEdRows] = await Promise.all([
+  const [recentEssays, featuredVideo, heroPhotos, recentOpEdRows] = await Promise.all([
     db
       .select({
         id: content.id,
@@ -32,17 +33,7 @@ export default async function HomePage() {
       )
       .orderBy(desc(content.publishedAt))
       .limit(3),
-    db
-      .select({
-        id: content.id,
-        title: content.title,
-        slug: content.slug,
-        author: content.topic,
-      })
-      .from(content)
-      .where(and(eq(content.type, "review"), eq(content.published, true)))
-      .orderBy(desc(content.publishedAt))
-      .limit(3),
+    getFeaturedHomeVideo(),
     db.select({ blobUrl: photos.blobUrl }).from(photos).where(eq(photos.isHero, true)).limit(1),
     db
       .select({
@@ -64,7 +55,7 @@ export default async function HomePage() {
       <Hero portraitUrl={portraitUrl} />
 
       <main className="relative bg-background">
-        <div className="mx-auto w-full max-w-screen-xl px-6 lg:px-16 pt-8 pb-24">
+        <div className="mx-auto w-full max-w-screen-xl px-6 lg:px-16 pt-12 pb-24">
 
           {/* ── Recent work grid ──────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -135,33 +126,28 @@ export default async function HomePage() {
           </Link>
         </section>
 
-        {/* Book Reviews */}
+        {/* Featured video (slug: lib/featured-home-video.ts) */}
         <section>
           <h2 className="text-xs tracking-widest uppercase text-muted-foreground mb-6">
-            Book Reviews
+            Featured video
           </h2>
-          {recentReviews.length === 0 ? (
+          {!featuredVideo ? (
             <p className="text-muted-foreground text-sm">Coming soon.</p>
           ) : (
-            <ul className="space-y-6">
-              {recentReviews.map((review) => (
-                <li key={review.id}>
-                  <Link
-                    href={`/book-reviews/${review.slug}`}
-                    className="group block font-heading text-xl hover:text-warm-accent transition-colors"
-                  >
-                    {review.title}
-                  </Link>
-                  <p className="text-xs text-muted-foreground">{review.author}</p>
-                </li>
-              ))}
-            </ul>
+            <HomeFeaturedVideo
+              slug={featuredVideo.slug}
+              title={featuredVideo.title}
+              description={featuredVideo.description}
+              vimeoId={featuredVideo.vimeoId}
+              r2Url={featuredVideo.r2Url}
+              thumbnailUrl={featuredVideo.thumbnailUrl}
+            />
           )}
           <Link
-            href="/book-reviews"
+            href="/video"
             className="mt-8 inline-block text-xs tracking-widest uppercase text-warm-accent hover:text-foreground transition-colors"
           >
-            All reviews &rarr;
+            All video &rarr;
           </Link>
         </section>
       </div>{/* end grid */}
