@@ -163,8 +163,10 @@
   --hero-name-given-shift: clamp(-0.55rem, -1.05vh, -0.2rem);
   /* Tunable vertical shift for name vs portrait (eye line); does not detect faces */
   --hero-name-optical-shift: clamp(-0.65rem, -1.25vh, -0.2rem);
-  /* Gap between name+roles block and featured video player in hero */
-  --hero-featured-after-roles-gap: clamp(0.85rem, 2.25vh, 1.75rem);
+  /* Gap between name+roles block and featured video player in hero (larger = player sits lower) */
+  --hero-featured-after-roles-gap: clamp(1.75rem, 5.25vh, 3.75rem);
+  /* Wider than the name column: min() caps size; % extends left into the photo seam */
+  --hero-featured-player-width: min(132%, min(54vw, 42rem));
   /* Push the typographic block lower in the right column */
   --hero-text-stack-margin-top: clamp(2.25rem, 11vh, 6.5rem);
   /* Pin crop + zoom to the left edge so the subject sits left in the frame, not centered */
@@ -387,10 +389,21 @@
     }
   }
 
-  /* Featured player: align to name column width; column copy continues in <main> */
+  /* Featured player: wider than name stack, anchored right, extends left toward portrait */
   .home-hero-featured-player {
-    align-self: stretch;
-    width: 100%;
+    align-self: flex-end;
+    width: var(--hero-featured-player-width);
+    max-width: none;
+    position: relative;
+    z-index: 2;
+  }
+
+  @media (max-width: 639px) {
+    .home-hero-featured-player {
+      width: 100%;
+      max-width: min(100%, 40rem);
+      align-self: stretch;
+    }
   }
 
   /* Cormorant (heading stack) — no shadows; flat high-contrast type */
