@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 60" width="320" height="60">
+  <rect width="320" height="60" fill="white"/>
+  <!-- Red flame/spark mark -->
+  <circle cx="18" cy="30" r="10" fill="#FF3A1E"/>
+  <!-- Wordmark -->
+  <text x="36" y="22" font-family="Georgia, 'Times New Roman', serif" font-size="11" font-weight="700" fill="#1a1a1a" letter-spacing="2">CANADA'S</text>
+  <text x="36" y="42" font-family="Georgia, 'Times New Roman', serif" font-size="17" font-weight="700" fill="#1a1a1a" letter-spacing="1">National Observer</text>
+</svg>

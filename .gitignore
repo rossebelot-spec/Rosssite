@@ -26,6 +26,8 @@
 
 # Claude Code — machine-specific overrides (do not commit)
 .claude/settings.local.json
+# Nested worktrees are separate git repos — do not submodule by accident
+.claude/worktrees/
 
 # debug
 npm-debug.log*

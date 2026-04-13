@@ -6,6 +6,8 @@ interface VideoMainProps {
   /** `content.title` for the linked published essay (may be absent). */
   essayTitle?: string | null;
   vimeoId: string;
+  /** When set, a native video element is used instead of the Vimeo iframe. */
+  r2Url?: string | null;
   essayHtml: string;
 }
 
@@ -13,6 +15,7 @@ export function VideoMain({
   videoTitle,
   essayTitle,
   vimeoId,
+  r2Url,
   essayHtml,
 }: VideoMainProps) {
   const essayTitleTrimmed = (essayTitle ?? "").trim();
@@ -36,12 +39,21 @@ export function VideoMain({
           {videoTitle}
         </h1>
         <div className="relative w-full aspect-video bg-black">
-          <iframe
-            src={`https://player.vimeo.com/video/${vimeoId}?dnt=1&title=0&byline=0&portrait=0`}
-            className="absolute inset-0 w-full h-full"
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowFullScreen
-          />
+          {r2Url?.trim() ? (
+            <video
+              src={r2Url.trim()}
+              controls
+              preload="metadata"
+              className="absolute inset-0 h-full w-full object-contain"
+            />
+          ) : (
+            <iframe
+              src={`https://player.vimeo.com/video/${vimeoId}?dnt=1&title=0&byline=0&portrait=0`}
+              className="absolute inset-0 h-full w-full"
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowFullScreen
+            />
+          )}
         </div>
       </div>
       <div className="flex flex-col gap-6">

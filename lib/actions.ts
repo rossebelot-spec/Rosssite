@@ -10,6 +10,8 @@ import {
   collectionItems,
   content,
   contentLinks,
+  opEdCollections,
+  opEds,
   type ContentType,
 } from "@/db/schema";
 import { eq, ne, and, asc, sql, inArray } from "drizzle-orm";
@@ -274,6 +276,7 @@ export async function createVideo(data: {
   title: string;
   slug: string;
   vimeoId: string;
+  r2Url?: string | null;
   thumbnailUrl?: string;
   thumbnailAlt?: string;
   description?: string;
@@ -293,7 +296,9 @@ export async function createVideo(data: {
   }
 
   const db = getDb();
-  const { collectionIds, ...insertData } = data;
+  const { collectionIds, r2Url, ...rest } = data;
+  const r2Norm = r2Url?.trim() ? r2Url.trim() : null;
+  const insertData = { ...rest, r2Url: r2Norm };
   const [video] = await db
     .insert(videos)
     .values({ ...insertData, title, slug, vimeoId })
@@ -312,6 +317,7 @@ export async function updateVideo(
     title?: string;
     slug?: string;
     vimeoId?: string;
+    r2Url?: string | null;
     thumbnailUrl?: string;
     thumbnailAlt?: string;
     description?: string;
@@ -745,4 +751,124 @@ export async function createCollectionWithFirstItem({
 
   revalidatePath("/video");
   return { id: collection.id, title: collection.title, slug: collection.slug };
+}
+
+// ─── Op-ed Collections ──────────────────────────────────────────────────────
+
+export async function createOpEdCollection(data: {
+  publication: string;
+  slug: string;
+  mastheadUrl?: string | null;
+  description?: string;
+  displayOrder?: number;
+}) {
+  await requireAdmin();
+  const db = getDb();
+  const [row] = await db
+    .insert(opEdCollections)
+    .values({
+      publication: data.publication,
+      slug: data.slug,
+      mastheadUrl: data.mastheadUrl ?? null,
+      description: data.description ?? "",
+      displayOrder: data.displayOrder ?? 0,
+    })
+    .returning();
+  revalidatePath("/op-eds");
+  revalidatePath("/admin/op-eds");
+  return row;
+}
+
+export async function updateOpEdCollection(
+  id: number,
+  data: {
+    publication?: string;
+    slug?: string;
+    mastheadUrl?: string | null;
+    description?: string;
+    displayOrder?: number;
+  }
+) {
+  await requireAdmin();
+  const db = getDb();
+  await db
+    .update(opEdCollections)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(opEdCollections.id, id));
+  revalidatePath("/op-eds");
+  revalidatePath("/admin/op-eds");
+}
+
+export async function deleteOpEdCollection(id: number) {
+  await requireAdmin();
+  const db = getDb();
+  await db.delete(opEdCollections).where(eq(opEdCollections.id, id));
+  revalidatePath("/op-eds");
+  revalidatePath("/admin/op-eds");
+}
+
+// ─── Op-eds ─────────────────────────────────────────────────────────────────
+
+export async function createOpEd(data: {
+  collectionId?: number | null;
+  publication: string;
+  title: string;
+  url: string;
+  date: string;
+  summary?: string;
+  pullQuote?: string | null;
+  thumbnailUrl?: string | null;
+  displayOrder?: number;
+}) {
+  await requireAdmin();
+  const db = getDb();
+  const [row] = await db
+    .insert(opEds)
+    .values({
+      collectionId: data.collectionId ?? null,
+      publication: data.publication,
+      title: data.title,
+      url: data.url,
+      date: data.date,
+      summary: data.summary ?? "",
+      pullQuote: data.pullQuote ?? null,
+      thumbnailUrl: data.thumbnailUrl ?? null,
+      displayOrder: data.displayOrder ?? 0,
+    })
+    .returning();
+  revalidatePath("/op-eds");
+  revalidatePath("/admin/op-eds");
+  return row;
+}
+
+export async function updateOpEd(
+  id: number,
+  data: {
+    collectionId?: number | null;
+    publication?: string;
+    title?: string;
+    url?: string;
+    date?: string;
+    summary?: string;
+    pullQuote?: string | null;
+    thumbnailUrl?: string | null;
+    displayOrder?: number;
+  }
+) {
+  await requireAdmin();
+  const db = getDb();
+  await db
+    .update(opEds)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(opEds.id, id));
+  revalidatePath("/op-eds");
+  revalidatePath("/admin/op-eds");
+}
+
+export async function deleteOpEd(id: number) {
+  await requireAdmin();
+  const db = getDb();
+  await db.delete(opEds).where(eq(opEds.id, id));
+  revalidatePath("/op-eds");
+  revalidatePath("/admin/op-eds");
 }

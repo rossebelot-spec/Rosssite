@@ -9,6 +9,7 @@ const adminLinks = [
   { href: "/admin/videos", label: "Videos" },
   { href: "/admin/collections", label: "Collections" },
   { href: "/admin/op-eds", label: "Op-eds" },
+  { href: "/admin/op-ed-collections", label: "Op-ed Collections" },
   { href: "/admin/press", label: "Press" },
   { href: "/admin/events", label: "Events" },
 ];

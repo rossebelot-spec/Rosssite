@@ -50,6 +50,20 @@
       "when": 1744502400000,
       "tag": "0006_rename_video_poems_to_videos",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1776029441021,
+      "tag": "0007_videos_r2_url",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1744588800000,
+      "tag": "0008_op_eds",
+      "breakpoints": true
     }
   ]
 }

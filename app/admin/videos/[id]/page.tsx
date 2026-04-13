@@ -32,6 +32,7 @@ interface VideoData {
   title: string;
   slug: string;
   vimeoId: string;
+  r2Url: string;
   thumbnailUrl: string;
   thumbnailAlt: string;
   description: string;
@@ -42,6 +43,7 @@ const empty: VideoData = {
   title: "",
   slug: "",
   vimeoId: "",
+  r2Url: "",
   thumbnailUrl: "",
   thumbnailAlt: "",
   description: "",
@@ -75,6 +77,7 @@ export default function AdminVideoEditor() {
             title: video.title,
             slug: video.slug,
             vimeoId: video.vimeoId,
+            r2Url: video.r2Url ?? "",
             thumbnailUrl: video.thumbnailUrl,
             thumbnailAlt: video.thumbnailAlt,
             description: video.description,
@@ -107,6 +110,7 @@ export default function AdminVideoEditor() {
         title: data.title,
         slug: data.slug,
         vimeoId: data.vimeoId,
+        r2Url: data.r2Url.trim() || null,
         thumbnailUrl: data.thumbnailUrl,
         thumbnailAlt: data.thumbnailAlt,
         description: data.description,
@@ -217,18 +221,38 @@ export default function AdminVideoEditor() {
           />
         </div>
 
-        {data.vimeoId && (
+        <div>
+          <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">
+            R2 URL (optional — overrides Vimeo)
+          </label>
+          <Input
+            value={data.r2Url}
+            onChange={(e) => set("r2Url", e.target.value)}
+            placeholder="https://…"
+          />
+        </div>
+
+        {(data.r2Url.trim() || data.vimeoId) && (
           <div>
             <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-2">
               Preview
             </label>
-            <div className="relative w-full aspect-video rounded overflow-hidden border border-border">
-              <iframe
-                src={`https://player.vimeo.com/video/${data.vimeoId}?dnt=1&title=0&byline=0&portrait=0`}
-                className="absolute inset-0 w-full h-full"
-                allow="autoplay; fullscreen; picture-in-picture"
-                allowFullScreen
-              />
+            <div className="relative w-full aspect-video rounded overflow-hidden border border-border bg-black">
+              {data.r2Url.trim() ? (
+                <video
+                  src={data.r2Url.trim()}
+                  controls
+                  preload="metadata"
+                  className="absolute inset-0 h-full w-full object-contain"
+                />
+              ) : (
+                <iframe
+                  src={`https://player.vimeo.com/video/${data.vimeoId}?dnt=1&title=0&byline=0&portrait=0`}
+                  className="absolute inset-0 h-full w-full"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                />
+              )}
             </div>
           </div>
         )}

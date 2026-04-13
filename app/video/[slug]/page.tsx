@@ -96,6 +96,7 @@ export default async function VideoSlugPage({ params }: Props) {
           videoTitle={video.title}
           essayTitle={linkedEssay?.essayTitle}
           vimeoId={video.vimeoId}
+          r2Url={video.r2Url}
           essayHtml={linkedEssay?.bodyHtml ?? ""}
         />
       </div>

@@ -28,6 +28,8 @@ export const videos = pgTable("videos", {
   title: text("title").notNull(),
   slug: text("slug").notNull().unique(),
   vimeoId: text("vimeo_id").notNull(),
+  /** Optional Cloudflare R2 (or other) direct MP4 URL; when set, collection/single video UI prefers this over Vimeo. */
+  r2Url: text("r2_url"),
   thumbnailUrl: text("thumbnail_url").notNull().default(""),
   thumbnailAlt: text("thumbnail_alt").notNull().default(""),
   description: text("description").notNull().default(""),
@@ -162,6 +164,55 @@ export const contentLinksRelations = relations(contentLinks, ({ one }) => ({
   }),
 }));
 
+// ─── Op-ed Collections (one per publication) ────────────────────────────────
+
+export const opEdCollections = pgTable("op_ed_collections", {
+  id: serial("id").primaryKey(),
+  publication: text("publication").notNull(),        // "Canada's National Observer"
+  slug: text("slug").notNull().unique(),              // "national-observer"
+  mastheadUrl: text("masthead_url"),                  // path to local SVG or blob URL
+  description: text("description").notNull().default(""),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ─── Op-eds ─────────────────────────────────────────────────────────────────
+
+export const opEds = pgTable(
+  "op_eds",
+  {
+    id: serial("id").primaryKey(),
+    collectionId: integer("collection_id").references(() => opEdCollections.id, {
+      onDelete: "set null",
+    }),
+    publication: text("publication").notNull(),       // kept for standalone articles
+    title: text("title").notNull(),
+    url: text("url").notNull(),
+    date: text("date").notNull(),                     // ISO date string "YYYY-MM-DD"
+    summary: text("summary").notNull().default(""),
+    pullQuote: text("pull_quote"),
+    thumbnailUrl: text("thumbnail_url"),
+    displayOrder: integer("display_order").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [index("op_eds_collection_id_idx").on(table.collectionId)]
+);
+
+// ─── Op-ed Relations ────────────────────────────────────────────────────────
+
+export const opEdCollectionsRelations = relations(opEdCollections, ({ many }) => ({
+  articles: many(opEds),
+}));
+
+export const opEdsRelations = relations(opEds, ({ one }) => ({
+  collection: one(opEdCollections, {
+    fields: [opEds.collectionId],
+    references: [opEdCollections.id],
+  }),
+}));
+
 // ─── Inferred Types ─────────────────────────────────────────────────────────
 
 export type Photo = typeof photos.$inferSelect;
@@ -176,6 +227,10 @@ export type Content = typeof content.$inferSelect;
 export type NewContent = typeof content.$inferInsert;
 export type ContentLink = typeof contentLinks.$inferSelect;
 export type NewContentLink = typeof contentLinks.$inferInsert;
+export type OpEdCollection = typeof opEdCollections.$inferSelect;
+export type NewOpEdCollection = typeof opEdCollections.$inferInsert;
+export type OpEd = typeof opEds.$inferSelect;
+export type NewOpEd = typeof opEds.$inferInsert;
 
 export type ContentType = "essay" | "blog" | "review" | "news" | "event";
 export type CollectionItemLinkedType = "video" | "photo";
