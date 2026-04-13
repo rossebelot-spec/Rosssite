@@ -25,6 +25,22 @@ async function requireAdmin() {
   if (!session?.user) redirect("/api/auth/signin");
 }
 
+/** Renumber `position` 0..n-1 for all rows in a collection (Neon HTTP: sequential updates). */
+async function reindexCollectionItemPositions(collectionId: number) {
+  const db = getDb();
+  const remaining = await db
+    .select({ id: collectionItems.id })
+    .from(collectionItems)
+    .where(eq(collectionItems.collectionId, collectionId))
+    .orderBy(asc(collectionItems.position));
+  for (let i = 0; i < remaining.length; i++) {
+    await db
+      .update(collectionItems)
+      .set({ position: i })
+      .where(eq(collectionItems.id, remaining[i].id));
+  }
+}
+
 // ─── Content (unified: essay | blog | review | news | event) ──────────────
 
 function contentPrimaryPaths(type: string, slug: string): string[] {
@@ -650,17 +666,7 @@ export async function removeVideoFromCollection({
         eq(collectionItems.linkedId, videoId)
       )
     );
-  const remaining = await db
-    .select({ id: collectionItems.id })
-    .from(collectionItems)
-    .where(eq(collectionItems.collectionId, collectionId))
-    .orderBy(asc(collectionItems.position));
-  for (let i = 0; i < remaining.length; i++) {
-    await db
-      .update(collectionItems)
-      .set({ position: i })
-      .where(eq(collectionItems.id, remaining[i].id));
-  }
+  await reindexCollectionItemPositions(collectionId);
   const [coll] = await db
     .select({ slug: collections.slug })
     .from(collections)
@@ -737,17 +743,7 @@ export async function setVideoCollections({
           eq(collectionItems.linkedId, videoId)
         )
       );
-    const remaining = await db
-      .select({ id: collectionItems.id })
-      .from(collectionItems)
-      .where(eq(collectionItems.collectionId, collectionId))
-      .orderBy(asc(collectionItems.position));
-    for (let i = 0; i < remaining.length; i++) {
-      await db
-        .update(collectionItems)
-        .set({ position: i })
-        .where(eq(collectionItems.id, remaining[i].id));
-    }
+    await reindexCollectionItemPositions(collectionId);
   }
 
   for (const collectionId of toAdd) {

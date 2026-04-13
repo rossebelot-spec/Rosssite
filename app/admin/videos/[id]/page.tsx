@@ -19,6 +19,7 @@ import {
   CollectionAssignment,
   type CollectionRef,
 } from "@/components/admin/collection-assignment";
+import { slugify } from "@/lib/utils";
 
 interface LinkedEssay {
   linkId: number;
@@ -94,13 +95,6 @@ export default function AdminVideoEditor() {
 
   function set<K extends keyof VideoData>(field: K, value: VideoData[K]) {
     setData((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function slugify(title: string) {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
   }
 
   async function handleSave() {

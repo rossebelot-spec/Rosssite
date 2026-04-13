@@ -15,6 +15,7 @@ import {
   createOpEdCollection,
 } from "@/lib/actions";
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { slugify } from "@/lib/utils";
 
 interface CollectionRef {
   id: number;
@@ -33,13 +34,6 @@ interface ArticleData {
   pullQuote: string;
   thumbnailUrl: string;
   displayOrder: number;
-}
-
-function slugify(s: string) {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 }
 
 const empty: ArticleData = {

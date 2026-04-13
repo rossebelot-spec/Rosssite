@@ -13,6 +13,7 @@ import {
   deleteUploadedBlobUrl,
 } from "@/lib/actions";
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { slugify } from "@/lib/utils";
 
 interface CollectionData {
   id?: number;
@@ -30,13 +31,6 @@ const empty: CollectionData = {
   description: "",
   displayOrder: 0,
 };
-
-function slugify(s: string) {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 export default function AdminOpEdCollectionEditor() {
   const params = useParams();

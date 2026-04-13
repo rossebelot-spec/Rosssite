@@ -9,6 +9,7 @@ import {
   createCollectionWithFirstItem,
 } from "@/lib/actions";
 import type { CollectionItemLinkedType } from "@/db/schema";
+import { slugify } from "@/lib/utils";
 
 export interface CollectionRef {
   id: number;
@@ -25,13 +26,6 @@ interface Props {
   allCollections: CollectionRef[];
   onChange: (value: CollectionRef[]) => void;
   onCollectionCreated: (coll: CollectionRef) => void;
-}
-
-function slugify(title: string) {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 }
 
 export function CollectionAssignment({

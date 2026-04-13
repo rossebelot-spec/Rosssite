@@ -3,6 +3,7 @@ import { getDb } from "@/db";
 import { content, type ContentType } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
+import { formatPublishedDate } from "@/lib/format-published-date";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -101,7 +102,7 @@ export default async function AdminContentPage({
                 </Link>
                 <p className="text-xs text-muted-foreground mt-1">
                   {row.topic ? `${row.topic} · ` : ""}
-                  {new Date(row.createdAt).toLocaleDateString("en-CA")}
+                  {formatPublishedDate(new Date(row.createdAt))}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">

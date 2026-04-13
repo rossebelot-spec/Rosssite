@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { content } from "@/db/schema";
 import { eq, and, desc, notInArray, inArray } from "drizzle-orm";
 import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
+import { formatPublishedDateLong } from "@/lib/format-published-date";
 import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = { title: "Essays" };
@@ -37,13 +38,9 @@ export default async function EssaysPage() {
             <li key={essay.id} className="py-8">
               <Link href={`/essays/${essay.slug}`} className="group block">
                 <time className="text-xs tracking-widest uppercase text-muted-foreground">
-                  {essay.publishedAt
-                    ? new Date(essay.publishedAt).toLocaleDateString("en-CA", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
-                    : ""}
+                  {formatPublishedDateLong(
+                    essay.publishedAt ? new Date(essay.publishedAt) : null
+                  )}
                 </time>
                 <h2 className="font-heading text-2xl mt-1 group-hover:text-warm-accent transition-colors">
                   {essay.title}

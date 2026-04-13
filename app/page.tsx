@@ -3,6 +3,7 @@ import { getDb } from "@/db";
 import { content, photos } from "@/db/schema";
 import { eq, and, desc, notInArray, inArray } from "drizzle-orm";
 import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
+import { formatPublishedMonthYear } from "@/lib/format-published-date";
 import { opEds } from "@/db/schema";
 import { Hero } from "@/components/hero";
 
@@ -87,10 +88,7 @@ export default async function HomePage() {
                   </Link>
                   {essay.publishedAt && (
                     <time className="text-xs text-muted-foreground">
-                      {new Date(essay.publishedAt).toLocaleDateString("en-CA", {
-                        year: "numeric",
-                        month: "short",
-                      })}
+                      {formatPublishedMonthYear(new Date(essay.publishedAt))}
                     </time>
                   )}
                 </li>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getDb } from "@/db";
 import { content } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { formatPublishedDateLong } from "@/lib/format-published-date";
 import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = { title: "News" };
@@ -27,13 +28,9 @@ export default async function NewsIndexPage() {
             <li key={post.id} className="py-8">
               <Link href={`/news/${post.slug}`} className="group block">
                 <time className="text-xs tracking-widest uppercase text-muted-foreground">
-                  {post.publishedAt
-                    ? new Date(post.publishedAt).toLocaleDateString("en-CA", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
-                    : ""}
+                  {formatPublishedDateLong(
+                    post.publishedAt ? new Date(post.publishedAt) : null
+                  )}
                 </time>
                 <h2 className="font-heading text-2xl mt-1 group-hover:text-warm-accent transition-colors">
                   {post.title}

@@ -17,6 +17,7 @@ import {
   removeVideoFromCollection,
   reorderCollectionItems,
 } from "@/lib/actions";
+import { slugify } from "@/lib/utils";
 
 interface CollectionData {
   id?: number;
@@ -90,13 +91,6 @@ export default function AdminCollectionEditor() {
 
   function set(field: keyof CollectionData, value: string | boolean) {
     setData((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function slugify(title: string) {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
   }
 
   async function handleSave() {
@@ -302,6 +296,10 @@ export default function AdminCollectionEditor() {
             <p className="text-xs tracking-widest uppercase text-muted-foreground mb-3">
               Current Order ({items.length})
             </p>
+            {/*
+              GET /api/admin/collections/[id] joins videos only — items here are video-backed.
+              If collection_items ever includes linked_type=photo without API support, titles may be unresolved.
+            */}
             {items.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No items yet. Add items from their individual editors.
@@ -337,19 +335,10 @@ export default function AdminCollectionEditor() {
                       {index + 1}
                     </span>
                     <Badge
-                      variant={
-                        item.linkedType === "video" ||
-                        item.linkedType === "photo"
-                          ? "secondary"
-                          : "outline"
-                      }
+                      variant="secondary"
                       className="text-xs tracking-widest uppercase shrink-0"
                     >
-                      {item.linkedType === "video"
-                        ? "VIDEO"
-                        : item.linkedType === "photo"
-                        ? "PHOTO"
-                        : item.linkedType}
+                      {item.linkedType.toUpperCase()}
                     </Badge>
                     <span className="flex-1 text-sm truncate">
                       {item.title ??

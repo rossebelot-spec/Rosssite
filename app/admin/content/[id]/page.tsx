@@ -16,6 +16,7 @@ import {
 } from "@/lib/actions";
 import type { ContentType } from "@/db/schema";
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { slugify } from "@/lib/utils";
 
 interface LinkItem {
   id: number;
@@ -66,13 +67,6 @@ const empty: EditorState = {
   pendingLinkId: "",
   imageUrl: "",
 };
-
-function slugify(title: string) {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 function toDateInputValue(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -143,8 +137,7 @@ export default function AdminContentEditor() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, hasDeepLink, deepLinkType, deepLinkId]);
 
   function set<K extends keyof EditorState>(field: K, value: EditorState[K]) {
     setData((prev) => ({ ...prev, [field]: value }));

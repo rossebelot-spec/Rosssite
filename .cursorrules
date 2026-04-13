@@ -132,7 +132,7 @@ Any change to `app/globals.css` or `scopes.css` (if present) must be committed i
 ## Date formatting
 
 - `lib/format-published-date.ts` is the canonical date formatter — use it
-- `app/essays/page.tsx` lists published `content` rows with `type = "essay"`; it currently formats dates inline with `en-CA` — this is a known inconsistency, do not replicate it elsewhere; fix it to use the helper if you touch that file
+- `app/essays/page.tsx` uses `formatPublishedDateLong` from `lib/format-published-date.ts` for listing dates; use that helper or `formatPublishedDate` / `formatPublishedMonthYear` from the same module — do not add new inline `toLocaleDateString` patterns
 
 ---
 

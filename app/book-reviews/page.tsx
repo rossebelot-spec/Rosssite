@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getDb } from "@/db";
 import { content } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { formatPublishedDateLong } from "@/lib/format-published-date";
 import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = { title: "Book Reviews" };
@@ -27,13 +28,9 @@ export default async function BookReviewsPage() {
             <li key={review.id} className="py-8">
               <Link href={`/book-reviews/${review.slug}`} className="group block">
                 <time className="text-xs tracking-widest uppercase text-muted-foreground">
-                  {review.publishedAt
-                    ? new Date(review.publishedAt).toLocaleDateString("en-CA", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
-                    : ""}
+                  {formatPublishedDateLong(
+                    review.publishedAt ? new Date(review.publishedAt) : null
+                  )}
                 </time>
                 <h2 className="font-heading text-2xl mt-1 group-hover:text-warm-accent transition-colors">
                   {review.title}

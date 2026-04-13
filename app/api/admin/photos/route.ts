@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireApiSession } from "@/lib/api-auth";
 import { getDb } from "@/db";
 import { photos } from "@/db/schema";
 import { asc } from "drizzle-orm";
@@ -8,8 +8,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authResult = await requireApiSession();
+    if ("response" in authResult) return authResult.response;
 
     const db = getDb();
     const allPhotos = await db
