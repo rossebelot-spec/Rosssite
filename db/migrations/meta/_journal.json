@@ -85,6 +85,13 @@
       "when": 1776300000000,
       "tag": "0011_content_image_about",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1776400000000,
+      "tag": "0012_videos_featured_home",
+      "breakpoints": true
     }
   ]
 }

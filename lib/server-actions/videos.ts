@@ -157,7 +157,7 @@ export async function publishVideo(id: number, publish: boolean) {
   await requireAdmin();
   const db = getDb();
   const [before] = await db
-    .select({ slug: videos.slug })
+    .select({ slug: videos.slug, featured: videos.isFeaturedForHome })
     .from(videos)
     .where(eq(videos.id, id));
   await db
@@ -166,21 +166,84 @@ export async function publishVideo(id: number, publish: boolean) {
       published: publish,
       publishedAt: publish ? new Date() : null,
       updatedAt: new Date(),
+      ...(!publish ? { isFeaturedForHome: false } : {}),
     })
     .where(eq(videos.id, id));
   revalidatePath("/video");
   if (before) revalidatePath(`/video/${before.slug}`);
+  if (!publish && before?.featured) {
+    revalidatePath("/");
+  }
   const collSlugs = await getCollectionSlugsForVideo(id);
   for (const slug of collSlugs) {
     revalidatePath(`/video/collections/${slug}`);
   }
 }
 
+/** Feature this video on `/` (hero + grid). Clears any other featured row. Requires published. */
+export async function setFeaturedHomeVideo(videoId: number) {
+  await requireAdmin();
+  const db = getDb();
+  const [target] = await db
+    .select({
+      id: videos.id,
+      slug: videos.slug,
+      published: videos.published,
+    })
+    .from(videos)
+    .where(eq(videos.id, videoId));
+  if (!target) throw new Error("Video not found.");
+  if (!target.published) {
+    throw new Error("Publish the video before featuring it on the home page.");
+  }
+
+  const [previous] = await db
+    .select({ slug: videos.slug })
+    .from(videos)
+    .where(eq(videos.isFeaturedForHome, true))
+    .limit(1);
+
+  await db.update(videos).set({ isFeaturedForHome: false });
+  await db
+    .update(videos)
+    .set({ isFeaturedForHome: true, updatedAt: new Date() })
+    .where(eq(videos.id, videoId));
+
+  revalidatePath("/");
+  revalidatePath("/video");
+  if (previous && previous.slug !== target.slug) {
+    revalidatePath(`/video/${previous.slug}`);
+  }
+  revalidatePath(`/video/${target.slug}`);
+}
+
+export async function clearFeaturedHomeVideo(videoId: number) {
+  await requireAdmin();
+  const db = getDb();
+  const [row] = await db
+    .select({ slug: videos.slug })
+    .from(videos)
+    .where(and(eq(videos.id, videoId), eq(videos.isFeaturedForHome, true)));
+  if (!row) return;
+
+  await db
+    .update(videos)
+    .set({ isFeaturedForHome: false, updatedAt: new Date() })
+    .where(eq(videos.id, videoId));
+
+  revalidatePath("/");
+  revalidatePath("/video");
+  revalidatePath(`/video/${row.slug}`);
+}
+
 export async function deleteVideo(id: number) {
   await requireAdmin();
   const [before] = await (() => {
     const db = getDb();
-    return db.select({ slug: videos.slug }).from(videos).where(eq(videos.id, id));
+    return db
+      .select({ slug: videos.slug, featured: videos.isFeaturedForHome })
+      .from(videos)
+      .where(eq(videos.id, id));
   })();
   const collSlugs = await getCollectionSlugsForVideo(id);
   const db = getDb();
@@ -194,6 +257,7 @@ export async function deleteVideo(id: number) {
     );
   await db.delete(videos).where(eq(videos.id, id));
   revalidatePath("/video");
+  if (before?.featured) revalidatePath("/");
   if (before) revalidatePath(`/video/${before.slug}`);
   for (const slug of collSlugs) {
     revalidatePath(`/video/collections/${slug}`);

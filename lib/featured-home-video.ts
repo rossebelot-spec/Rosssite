@@ -1,18 +1,17 @@
 import { getDb } from "@/db";
 import { videos } from "@/db/schema";
-import { eq, and, like, ilike, desc } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 /**
- * Preferred slug for the home featured clip (matches the seed script `ON CONFLICT (slug)`).
+ * Home featured clip: exactly one `videos` row may have `isFeaturedForHome` (set in
+ * `/admin/videos/[id]`). Only **published** rows appear on `/`.
  *
- * **Collection membership does not affect** this feature: the same `videos` row can be
- * listed in `collection_items` and still be loaded here. Only published + lookup below.
+ * **Collection membership does not affect** this feature.
  *
- * Lookup order: exact slug → slug prefix `lac-megantic%` → title contains `Mégantic`
- * (so a surviving “already published” row still appears if its slug drifted after cleanup).
+ * `/video` omits the **resolved** featured row by `id` so it does not duplicate in the grid.
  *
- * `/video` omits the **resolved** featured row by `id` so it does not duplicate in the
- * standalone grid even when the slug is not exactly `lac-megantic`.
+ * Seed scripts may still use slug `lac-megantic`; the row must also be toggled “featured”
+ * in admin (or rely on migration backfill).
  */
 export const FEATURED_HOME_VIDEO_SLUG = "lac-megantic";
 
@@ -40,34 +39,12 @@ const featuredSelect = {
 export async function getFeaturedHomeVideo(): Promise<FeaturedHomeVideoRow | null> {
   const db = getDb();
 
-  const [exact] = await db
+  const [row] = await db
     .select(featuredSelect)
     .from(videos)
-    .where(and(eq(videos.slug, FEATURED_HOME_VIDEO_SLUG), eq(videos.published, true)))
+    .where(
+      and(eq(videos.isFeaturedForHome, true), eq(videos.published, true))
+    )
     .limit(1);
-  if (exact) return exact;
-
-  const [prefix] = await db
-    .select(featuredSelect)
-    .from(videos)
-    .where(and(eq(videos.published, true), like(videos.slug, "lac-megantic%")))
-    .orderBy(desc(videos.updatedAt))
-    .limit(1);
-  if (prefix) return prefix;
-
-  const [byTitle] = await db
-    .select(featuredSelect)
-    .from(videos)
-    .where(and(eq(videos.published, true), ilike(videos.title, "%Mégantic%")))
-    .orderBy(desc(videos.updatedAt))
-    .limit(1);
-  if (byTitle) return byTitle;
-
-  const [byTitleAscii] = await db
-    .select(featuredSelect)
-    .from(videos)
-    .where(and(eq(videos.published, true), ilike(videos.title, "%Megantic%")))
-    .orderBy(desc(videos.updatedAt))
-    .limit(1);
-  return byTitleAscii ?? null;
+  return row ?? null;
 }

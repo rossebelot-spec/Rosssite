@@ -10,7 +10,7 @@ This split keeps the hero visually connected to the film while essays / op-eds s
 
 | Piece | Location |
 |--------|----------|
-| Which row is “featured” | `lib/featured-home-video.ts` — `getFeaturedHomeVideo()`, lookup order (slug → `lac-megantic%` → title `Mégantic`) |
+| Which row is “featured” | DB: `videos.is_featured_for_home` (at most one `true`; set in **`/admin/videos/[id]`**). `getFeaturedHomeVideo()` selects `is_featured_for_home AND published`. |
 | Hero shell + optional player | `components/hero.tsx` — `featuredVideo` prop; `data-hero-featured-video="true\|false"` |
 | Player markup only | `components/home-featured-video-player.tsx` — R2 `<video>` or Vimeo iframe (same rules as `VideoMain`) |
 | Third column | `components/home-featured-video.tsx` — `HomeFeaturedVideoCopy` |

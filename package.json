@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:repair-journal": "node scripts/db-repair-drizzle-journal.mjs",
     "db:apply-0011": "node scripts/db-apply-migration-0011.mjs",
     "build": "next build",
     "start": "next start",

@@ -14,6 +14,8 @@ import {
   deleteVideo,
   removeContentLink,
   setVideoCollections,
+  setFeaturedHomeVideo,
+  clearFeaturedHomeVideo,
 } from "@/lib/actions";
 import {
   CollectionAssignment,
@@ -38,6 +40,7 @@ interface VideoData {
   thumbnailAlt: string;
   description: string;
   linkedEssay: LinkedEssay | null;
+  isFeaturedForHome?: boolean;
 }
 
 const empty: VideoData = {
@@ -49,6 +52,7 @@ const empty: VideoData = {
   thumbnailAlt: "",
   description: "",
   linkedEssay: null,
+  isFeaturedForHome: false,
 };
 
 export default function AdminVideoEditor() {
@@ -63,6 +67,8 @@ export default function AdminVideoEditor() {
   const [allCollections, setAllCollections] = useState<CollectionRef[]>([]);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [featuredAction, setFeaturedAction] = useState(false);
+  const [featuredError, setFeaturedError] = useState<string | null>(null);
   const isFormValid =
     data.title.trim() !== "" &&
     data.slug.trim() !== "" &&
@@ -86,6 +92,10 @@ export default function AdminVideoEditor() {
           });
           setPublished(video.published ?? false);
           setMemberCollections(video.memberCollections ?? []);
+          setData((d) => ({
+            ...d,
+            isFeaturedForHome: Boolean(video.isFeaturedForHome),
+          }));
         });
     }
     fetch("/api/admin/collections")
@@ -132,9 +142,41 @@ export default function AdminVideoEditor() {
     setPublishing(true);
     try {
       await publishVideo(data.id, !published);
-      setPublished(!published);
+      const nextPublished = !published;
+      setPublished(nextPublished);
+      if (!nextPublished) {
+        setData((d) => ({ ...d, isFeaturedForHome: false }));
+      }
     } finally {
       setPublishing(false);
+    }
+  }
+
+  async function handleFeatureHome() {
+    if (!data.id) return;
+    setFeaturedError(null);
+    setFeaturedAction(true);
+    try {
+      await setFeaturedHomeVideo(data.id);
+      setData((d) => ({ ...d, isFeaturedForHome: true }));
+    } catch (e) {
+      setFeaturedError(e instanceof Error ? e.message : "Could not update featured video.");
+    } finally {
+      setFeaturedAction(false);
+    }
+  }
+
+  async function handleUnfeatureHome() {
+    if (!data.id) return;
+    setFeaturedError(null);
+    setFeaturedAction(true);
+    try {
+      await clearFeaturedHomeVideo(data.id);
+      setData((d) => ({ ...d, isFeaturedForHome: false }));
+    } catch (e) {
+      setFeaturedError(e instanceof Error ? e.message : "Could not update featured video.");
+    } finally {
+      setFeaturedAction(false);
     }
   }
 
@@ -283,6 +325,52 @@ export default function AdminVideoEditor() {
             placeholder="Describe the thumbnail image"
           />
         </div>
+
+        {!isNew && (
+          <div className="space-y-3 pt-4 border-t border-border">
+            <h2 className="font-heading text-xl">Home page</h2>
+            <p className="text-xs text-muted-foreground max-w-md">
+              Only one video can appear in the site hero and “Featured video” column on the home
+              page. Choosing another video here moves the feature to that video.
+            </p>
+            {featuredError ? (
+              <p className="text-xs text-destructive" role="alert">
+                {featuredError}
+              </p>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={
+                  featuredAction ||
+                  !published ||
+                  Boolean(data.isFeaturedForHome)
+                }
+                onClick={handleFeatureHome}
+              >
+                {featuredAction && data.isFeaturedForHome === false
+                  ? "Updating…"
+                  : "Feature on home page"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={featuredAction || !data.isFeaturedForHome}
+                onClick={handleUnfeatureHome}
+              >
+                {featuredAction && data.isFeaturedForHome ? "Updating…" : "Remove from home page"}
+              </Button>
+              {!published ? (
+                <span className="text-xs text-muted-foreground">Publish this video to feature it.</span>
+              ) : data.isFeaturedForHome ? (
+                <span className="text-xs text-muted-foreground">Currently featured on the home page.</span>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3 pt-4 border-t border-border">
           <h2 className="font-heading text-xl">Collections</h2>

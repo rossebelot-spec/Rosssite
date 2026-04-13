@@ -17,7 +17,7 @@ export function HomeFeaturedVideoPlayer({
   const poster = thumbnailUrl?.trim() || undefined;
 
   return (
-    <div className="home-hero-featured-player relative w-full max-w-full aspect-video overflow-hidden rounded-md bg-black">
+    <div className="home-hero-featured-player relative aspect-video overflow-hidden rounded-md bg-black">
       {r2 ? (
         <video
           src={r2}

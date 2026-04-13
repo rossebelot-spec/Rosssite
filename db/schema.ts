@@ -34,6 +34,8 @@ export const videos = pgTable("videos", {
   thumbnailAlt: text("thumbnail_alt").notNull().default(""),
   description: text("description").notNull().default(""),
   durationSeconds: integer("duration_seconds"),
+  /** At most one video may be true; home hero + “Featured video” column use this row. */
+  isFeaturedForHome: boolean("is_featured_for_home").notNull().default(false),
   published: boolean("published").notNull().default(false),
   publishedAt: timestamp("published_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

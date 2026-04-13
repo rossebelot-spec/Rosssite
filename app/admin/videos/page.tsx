@@ -47,6 +47,11 @@ export default async function AdminVideosPage() {
                   >
                     {video.title}
                   </Link>
+                  {video.isFeaturedForHome && (
+                    <span className="text-xs tracking-widest uppercase px-2 py-0.5 border border-warm-accent text-warm-accent shrink-0">
+                      Featured on home
+                    </span>
+                  )}
                   {!video.published && (
                     <span className="text-xs tracking-widest uppercase px-2 py-0.5 border border-muted-foreground text-muted-foreground shrink-0">
                       Draft

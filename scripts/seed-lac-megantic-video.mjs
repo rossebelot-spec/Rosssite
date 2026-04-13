@@ -5,6 +5,7 @@
  * Run: node scripts/seed-lac-megantic-video.mjs
  *
  * Matches `FEATURED_HOME_VIDEO_SLUG` in `lib/featured-home-video.ts` (slug: lac-megantic).
+ * Sets `is_featured_for_home` so this row is the home hero clip (clears other featured rows first).
  * Vimeo ID is a placeholder ("0") because playback uses `r2_url` in the video UI.
  */
 
@@ -29,6 +30,8 @@ const R2_MP4 =
 
 const sql = neon(url);
 
+await sql`UPDATE videos SET is_featured_for_home = false`;
+
 await sql`
   INSERT INTO videos (
     title,
@@ -38,6 +41,7 @@ await sql`
     thumbnail_url,
     thumbnail_alt,
     description,
+    is_featured_for_home,
     published,
     published_at,
     updated_at
@@ -51,6 +55,7 @@ await sql`
     '',
     'Poem film.',
     true,
+    true,
     now(),
     now()
   )
@@ -59,6 +64,7 @@ await sql`
     vimeo_id = EXCLUDED.vimeo_id,
     r2_url = EXCLUDED.r2_url,
     description = EXCLUDED.description,
+    is_featured_for_home = true,
     published = EXCLUDED.published,
     published_at = COALESCE(videos.published_at, EXCLUDED.published_at),
     updated_at = now();
