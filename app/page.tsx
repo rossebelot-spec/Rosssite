@@ -6,7 +6,7 @@ import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
 import { formatPublishedMonthYear } from "@/lib/format-published-date";
 import { getFeaturedHomeVideo } from "@/lib/featured-home-video";
 import { Hero } from "@/components/hero";
-import { HomeFeaturedVideo } from "@/components/home-featured-video";
+import { HomeFeaturedVideoCopy } from "@/components/home-featured-video";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +52,20 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero portraitUrl={portraitUrl} />
+      <Hero
+        portraitUrl={portraitUrl}
+        featuredVideo={
+          featuredVideo
+            ? {
+                title: featuredVideo.title,
+                slug: featuredVideo.slug,
+                vimeoId: featuredVideo.vimeoId,
+                r2Url: featuredVideo.r2Url,
+                thumbnailUrl: featuredVideo.thumbnailUrl,
+              }
+            : null
+        }
+      />
 
       <main className="relative bg-background">
         <div className="mx-auto w-full max-w-screen-xl px-6 lg:px-16 pt-12 pb-24">
@@ -126,7 +139,7 @@ export default async function HomePage() {
           </Link>
         </section>
 
-        {/* Featured video (slug: lib/featured-home-video.ts) */}
+        {/* Featured video (slug: lib/featured-home-video.ts); player is in Hero */}
         <section>
           <h2 className="text-xs tracking-widest uppercase text-muted-foreground mb-6">
             Featured video
@@ -134,13 +147,10 @@ export default async function HomePage() {
           {!featuredVideo ? (
             <p className="text-muted-foreground text-sm">Coming soon.</p>
           ) : (
-            <HomeFeaturedVideo
+            <HomeFeaturedVideoCopy
               slug={featuredVideo.slug}
               title={featuredVideo.title}
               description={featuredVideo.description}
-              vimeoId={featuredVideo.vimeoId}
-              r2Url={featuredVideo.r2Url}
-              thumbnailUrl={featuredVideo.thumbnailUrl}
             />
           )}
           <Link
