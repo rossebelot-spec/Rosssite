@@ -21,7 +21,7 @@ export function Nav() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const navLinkClass = (href: string) =>
-    `nav-link text-xs tracking-widest uppercase transition-colors ${
+    `nav-link tracking-widest uppercase transition-colors ${
       isNavActive(href) ? "nav-link--active" : ""
     }`;
 
@@ -53,16 +53,16 @@ export function Nav() {
       ref={headerRef}
       className="sticky top-0 left-0 right-0 z-50 border-b border-border bg-surface"
     >
-      <div className="mx-auto flex max-w-screen-xl flex-col gap-2 px-6 py-3">
+      <div className="mx-auto flex max-w-screen-xl flex-col gap-2 px-6 py-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
             <Link
               href="/"
-              className="nav-site-name shrink-0 font-heading text-sm tracking-[0.2em] uppercase text-foreground"
+              className="nav-site-name shrink-0 font-heading tracking-[0.2em] uppercase text-foreground"
             >
               Ross Belot
             </Link>
-            <span className="nav-site-tagline font-sans text-xs tracking-widest uppercase text-muted-foreground">
+            <span className="nav-site-tagline font-sans tracking-widest uppercase text-muted-foreground">
               {siteHeaderTagline}
             </span>
           </div>
@@ -72,7 +72,7 @@ export function Nav() {
                 className="nav-menu-trigger inline-flex items-center justify-center rounded-md p-0.5 transition-colors"
                 aria-label="Open menu"
               >
-                <Menu size={20} />
+                <Menu size={22} />
               </SheetTrigger>
               <SheetContent side="right" className="bg-surface border-border w-64">
                 <nav className="flex flex-col gap-6 mt-10">
@@ -105,7 +105,7 @@ export function Nav() {
         </nav>
 
         {contextLine ? (
-          <p className="nav-context-line text-xs tracking-widest uppercase text-muted-foreground">
+          <p className="nav-context-line tracking-widest uppercase text-muted-foreground">
             {contextLine}
           </p>
         ) : null}

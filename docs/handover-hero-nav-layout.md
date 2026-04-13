@@ -67,7 +67,7 @@ node scripts/debug-hero-refresh-timeline.mjs http://127.0.0.1:3010
 |------------|------|
 | Hero markup | `components/hero.tsx` |
 | Home page   | `app/page.tsx` |
-| Hero CSS    | `app/globals.css` (`.home-hero-section`, `.hero-text-block`) |
+| Hero CSS    | `app/globals.css` (`.home-hero-section`, `.hero-text-block`, `.home-hero-image-frame`, nav font tokens) |
 | Nav         | `components/nav.tsx` |
 | Shell       | `components/site-shell.tsx` (inline header-height bootstrap) |
 | Bootstrap   | `lib/site-header-height-bootstrap.ts` |

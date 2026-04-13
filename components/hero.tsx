@@ -9,22 +9,24 @@ export function Hero({ portraitUrl }: HeroProps) {
   const hasPortrait = Boolean(portraitUrl);
   return (
     <section
-      className="home-hero-section bg-surface"
+      className="home-hero-section bg-background"
       data-hero-portrait={hasPortrait ? "true" : "false"}
     >
-      <div className="pointer-events-none absolute inset-0">
-        {portraitUrl ? (
-          <Image
-            src={blobImageUrl(portraitUrl)}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-surface" />
-        )}
+      <div className="home-hero-image-frame" aria-hidden>
+        <div className="home-hero-image-inner">
+          {portraitUrl ? (
+            <Image
+              src={blobImageUrl(portraitUrl)}
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 80rem) 100vw, 80rem"
+              className="object-cover object-center"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-muted" />
+          )}
+        </div>
       </div>
 
       <div className="hero-text-block">

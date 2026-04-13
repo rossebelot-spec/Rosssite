@@ -158,6 +158,16 @@
   --hero-text-inset-block-start: clamp(2rem, 10vh, 6rem);
   --hero-text-max-width: min(32rem, 85vw);
 
+  /* Nav — public header (larger than text-xs/text-sm defaults for readability) */
+  --nav-site-font-size: 1.125rem;
+  --nav-tagline-font-size: 0.875rem;
+  --nav-link-font-size: 0.9375rem;
+  --nav-context-font-size: 0.875rem;
+
+  /* Hero — photo inset to match main column; white gutters (uses --background on section) */
+  --hero-frame-padding-inline: clamp(1.5rem, 5vw, 4rem);
+  --hero-frame-radius: var(--radius-lg);
+
   /* Essay reading layout (/essays/[slug]) — defaults; .reading-theme applies reference tokens */
   --essay-content-padding-x: clamp(1.5rem, 5vw, 4rem);
   --essay-content-padding-y: clamp(2.5rem, 6vh, 5rem);
@@ -212,6 +222,37 @@
     min-height: clamp(20rem, calc(100svh - var(--site-header-height)), 42rem);
   }
 
+  .home-hero-image-frame {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    padding-inline: var(--hero-frame-padding-inline);
+    pointer-events: none;
+  }
+
+  .home-hero-image-inner {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    max-width: var(--site-content-max-width);
+    overflow: hidden;
+    border-radius: var(--hero-frame-radius);
+    box-shadow: 0 0.25rem 1.25rem color-mix(in oklch, var(--foreground) 8%, transparent);
+  }
+
+  .nav-site-name {
+    font-size: var(--nav-site-font-size);
+  }
+
+  .nav-site-tagline {
+    font-size: var(--nav-tagline-font-size);
+  }
+
+  .nav-context-line {
+    font-size: var(--nav-context-font-size);
+  }
+
   .hero-text-block {
     position: absolute;
     top: calc(var(--hero-text-inset-block-start) + env(safe-area-inset-top, 0px));
@@ -247,6 +288,7 @@
   /* Nav links — readable on light header surface */
   .nav-link,
   .nav-menu-trigger {
+    font-size: var(--nav-link-font-size);
     color: color-mix(in oklch, var(--foreground) 92%, var(--background));
     text-shadow:
       0 0.06em 0.12em color-mix(in oklch, var(--background) 72%, transparent),
