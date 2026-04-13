@@ -159,6 +159,8 @@
   --hero-name-panel-padding-block: clamp(2.5rem, 9vh, 5.5rem);
   --hero-text-stack-gap: clamp(1.5rem, 4.25vh, 3.5rem);
   --hero-name-line-gap: 0.02em;
+  /* Nudge “Ross” upward relative to “Belot” in the right column (negative = up) */
+  --hero-name-given-shift: clamp(-0.55rem, -1.05vh, -0.2rem);
   /* Tunable vertical shift for name vs portrait (eye line); does not detect faces */
   --hero-name-optical-shift: clamp(-0.65rem, -1.25vh, -0.2rem);
   /* Push the typographic block lower in the right column */
@@ -393,6 +395,7 @@
     letter-spacing: 0.03em;
     font-size: clamp(2.35rem, 7.5vw, 6.25rem);
     color: var(--foreground);
+    transform: translateY(var(--hero-name-given-shift));
   }
 
   .hero-text-name-family {
