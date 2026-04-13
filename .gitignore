@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# Local Safari web archives / iPolitics source trees — large, not for GitHub (secret-scan noise)
+ipolitics/
+*.webarchive
+
 # Claude Code — machine-specific overrides (do not commit)
 .claude/settings.local.json
 # Nested worktrees are separate git repos — do not submodule by accident
