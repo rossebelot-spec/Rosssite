@@ -57,7 +57,9 @@ db/
   index.ts              → lazy getDb() singleton
 lib/
   auth.ts               → NextAuth config; exports auth(), handlers, signIn, signOut, authorized callback
-  actions.ts            → requireAdmin() (private) + all server actions ("use server")
+  actions.ts            → re-exports server actions from `server-actions/*` (import from `@/lib/actions` unchanged)
+  server-actions/       → domain-split server actions (`content`, `photos`, `videos`, `collections`, `op-eds`); each file has `"use server"`
+  action-helpers.ts     → shared server-only helpers (requireAdmin, slug reindex, collection slugs, blob URL check)
   blob.ts               → Vercel Blob helpers
   utils.ts              → shared utilities
   format-published-date.ts → canonical date formatter (see below)
@@ -70,7 +72,7 @@ Two content tiers coexist:
 
 | Tier | Source | Examples |
 |------|--------|---------|
-| DB-backed | Drizzle + Neon Postgres | Unified `content` (+ `content_links` for prose tied to video/collections), photos, `video_poems` / `collections` / `collection_items` |
+| DB-backed | Drizzle + Neon Postgres | Unified `content` (+ `content_links` for prose tied to video/collections), photos, `videos` / `collections` / `collection_items` |
 | Static | `data/*.ts` flat lists | Op-eds, press, events, video |
 
 Do not move static content to the DB or vice versa without asking. Do not add new DB tables for content that already has a static pattern.
