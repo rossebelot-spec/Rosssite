@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getDb } from "@/db";
 import { opEdCollections, opEds } from "@/db/schema";
-import { asc, eq, desc } from "drizzle-orm";
+import { asc, eq, desc, and } from "drizzle-orm";
 import { formatPublishedDate } from "@/lib/format-published-date";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,12 @@ async function getCollectionWithArticles(slug: string) {
   const articles = await db
     .select()
     .from(opEds)
-    .where(eq(opEds.collectionId, collection.id))
+    .where(
+      and(
+        eq(opEds.collectionId, collection.id),
+        eq(opEds.published, true)
+      )
+    )
     .orderBy(desc(opEds.date));
 
   return { collection, articles };

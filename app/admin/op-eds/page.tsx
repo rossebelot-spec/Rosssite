@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { opEds, opEdCollections } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { formatPublishedDate } from "@/lib/format-published-date";
+import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function AdminOpEdsPage() {
       date: opEds.date,
       publication: opEds.publication,
       thumbnailUrl: opEds.thumbnailUrl,
-      collectionId: opEds.collectionId,
+      published: opEds.published,
       collectionPublication: opEdCollections.publication,
     })
     .from(opEds)
@@ -65,13 +66,16 @@ export default async function AdminOpEdsPage() {
                 <div className="w-20 h-14 shrink-0 bg-surface rounded" />
               )}
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <time className="text-xs tracking-widest uppercase text-muted-foreground">
                     {formatPublishedDate(new Date(item.date))}
                   </time>
                   <span className="text-xs tracking-widest uppercase text-warm-accent">
                     {item.collectionPublication ?? item.publication}
                   </span>
+                  <Badge variant={item.published ? "default" : "secondary"}>
+                    {item.published ? "Published" : "Draft"}
+                  </Badge>
                 </div>
                 <Link
                   href={`/admin/op-eds/${item.id}`}

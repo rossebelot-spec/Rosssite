@@ -326,7 +326,7 @@ for (const article of nationalObserverArticles) {
     continue;
   }
   await sql`
-    INSERT INTO op_eds (collection_id, publication, title, url, date, summary, pull_quote, thumbnail_url, display_order)
+    INSERT INTO op_eds (collection_id, publication, title, url, date, summary, pull_quote, thumbnail_url, display_order, published)
     VALUES (
       ${noCollectionId},
       'Canada''s National Observer',
@@ -336,7 +336,8 @@ for (const article of nationalObserverArticles) {
       ${article.summary},
       ${article.pull_quote},
       ${article.thumbnail_url},
-      0
+      0,
+      true
     )
   `;
   inserted++;
@@ -351,7 +352,7 @@ for (const article of standaloneArticles) {
     continue;
   }
   await sql`
-    INSERT INTO op_eds (collection_id, publication, title, url, date, summary, pull_quote, thumbnail_url, display_order)
+    INSERT INTO op_eds (collection_id, publication, title, url, date, summary, pull_quote, thumbnail_url, display_order, published)
     VALUES (
       NULL,
       ${article.publication},
@@ -361,7 +362,8 @@ for (const article of standaloneArticles) {
       ${article.summary},
       ${article.pull_quote},
       ${article.thumbnail_url},
-      0
+      0,
+      true
     )
   `;
   console.log(`  + [standalone] ${article.title}`);

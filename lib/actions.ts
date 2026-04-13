@@ -753,6 +753,10 @@ export async function createCollectionWithFirstItem({
   return { id: collection.id, title: collection.title, slug: collection.slug };
 }
 
+function isVercelBlobStorageUrl(url: string | null | undefined): boolean {
+  return !!url && url.includes(".blob.vercel-storage.com");
+}
+
 // ─── Op-ed Collections ──────────────────────────────────────────────────────
 
 export async function createOpEdCollection(data: {
@@ -776,6 +780,7 @@ export async function createOpEdCollection(data: {
     .returning();
   revalidatePath("/op-eds");
   revalidatePath("/admin/op-eds");
+  revalidatePath("/admin/op-ed-collections");
   return row;
 }
 
@@ -791,27 +796,70 @@ export async function updateOpEdCollection(
 ) {
   await requireAdmin();
   const db = getDb();
+  const [before] = await db
+    .select({
+      mastheadUrl: opEdCollections.mastheadUrl,
+      slug: opEdCollections.slug,
+    })
+    .from(opEdCollections)
+    .where(eq(opEdCollections.id, id));
+
+  if (data.mastheadUrl !== undefined) {
+    const prev = before?.mastheadUrl ?? null;
+    const next = data.mastheadUrl;
+    if (prev && prev !== next && isVercelBlobStorageUrl(prev)) {
+      try {
+        await del(prev);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
   await db
     .update(opEdCollections)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(opEdCollections.id, id));
+
   revalidatePath("/op-eds");
   revalidatePath("/admin/op-eds");
+  revalidatePath("/admin/op-ed-collections");
+  const oldSlug = before?.slug;
+  if (data.slug !== undefined && data.slug !== oldSlug && oldSlug) {
+    revalidatePath(`/op-eds/${oldSlug}`);
+  }
+  const [after] = await db
+    .select({ slug: opEdCollections.slug })
+    .from(opEdCollections)
+    .where(eq(opEdCollections.id, id));
+  if (after?.slug) revalidatePath(`/op-eds/${after.slug}`);
 }
 
 export async function deleteOpEdCollection(id: number) {
   await requireAdmin();
   const db = getDb();
+  const [row] = await db
+    .select({
+      mastheadUrl: opEdCollections.mastheadUrl,
+      slug: opEdCollections.slug,
+    })
+    .from(opEdCollections)
+    .where(eq(opEdCollections.id, id));
+  if (row?.mastheadUrl && isVercelBlobStorageUrl(row.mastheadUrl)) {
+    try {
+      await del(row.mastheadUrl);
+    } catch {
+      /* ignore */
+    }
+  }
+  if (row?.slug) revalidatePath(`/op-eds/${row.slug}`);
   await db.delete(opEdCollections).where(eq(opEdCollections.id, id));
   revalidatePath("/op-eds");
   revalidatePath("/admin/op-eds");
+  revalidatePath("/admin/op-ed-collections");
 }
 
 // ─── Op-eds ─────────────────────────────────────────────────────────────────
-
-function isVercelBlobStorageUrl(url: string | null | undefined): boolean {
-  return !!url && url.includes(".blob.vercel-storage.com");
-}
 
 /** Deletes a Vercel Blob object (e.g. abandoned mid-edit upload). Admin-only. */
 export async function deleteUploadedBlobUrl(url: string) {
@@ -848,6 +896,7 @@ export async function createOpEd(data: {
       summary: data.summary ?? "",
       pullQuote: data.pullQuote ?? null,
       thumbnailUrl: data.thumbnailUrl ?? null,
+      published: false,
       displayOrder: data.displayOrder ?? 0,
     })
     .returning();
@@ -855,6 +904,29 @@ export async function createOpEd(data: {
   revalidatePath("/op-eds");
   revalidatePath("/admin/op-eds");
   return row;
+}
+
+export async function publishOpEd(id: number, publish: boolean) {
+  await requireAdmin();
+  const db = getDb();
+  const [row] = await db
+    .select({ collectionId: opEds.collectionId })
+    .from(opEds)
+    .where(eq(opEds.id, id));
+  await db
+    .update(opEds)
+    .set({ published: publish, updatedAt: new Date() })
+    .where(eq(opEds.id, id));
+  revalidatePath("/");
+  revalidatePath("/op-eds");
+  revalidatePath("/admin/op-eds");
+  if (row?.collectionId != null) {
+    const [coll] = await db
+      .select({ slug: opEdCollections.slug })
+      .from(opEdCollections)
+      .where(eq(opEdCollections.id, row.collectionId));
+    if (coll?.slug) revalidatePath(`/op-eds/${coll.slug}`);
+  }
 }
 
 export async function updateOpEd(
@@ -897,13 +969,27 @@ export async function updateOpEd(
   revalidatePath("/");
   revalidatePath("/op-eds");
   revalidatePath("/admin/op-eds");
+  const [afterMeta] = await db
+    .select({ collectionId: opEds.collectionId })
+    .from(opEds)
+    .where(eq(opEds.id, id));
+  if (afterMeta?.collectionId != null) {
+    const [coll] = await db
+      .select({ slug: opEdCollections.slug })
+      .from(opEdCollections)
+      .where(eq(opEdCollections.id, afterMeta.collectionId));
+    if (coll?.slug) revalidatePath(`/op-eds/${coll.slug}`);
+  }
 }
 
 export async function deleteOpEd(id: number) {
   await requireAdmin();
   const db = getDb();
   const [row] = await db
-    .select({ thumbnailUrl: opEds.thumbnailUrl })
+    .select({
+      thumbnailUrl: opEds.thumbnailUrl,
+      collectionId: opEds.collectionId,
+    })
     .from(opEds)
     .where(eq(opEds.id, id));
   if (row?.thumbnailUrl && isVercelBlobStorageUrl(row.thumbnailUrl)) {
@@ -912,6 +998,13 @@ export async function deleteOpEd(id: number) {
     } catch {
       /* ignore */
     }
+  }
+  if (row?.collectionId != null) {
+    const [coll] = await db
+      .select({ slug: opEdCollections.slug })
+      .from(opEdCollections)
+      .where(eq(opEdCollections.id, row.collectionId));
+    if (coll?.slug) revalidatePath(`/op-eds/${coll.slug}`);
   }
   await db.delete(opEds).where(eq(opEds.id, id));
   revalidatePath("/");

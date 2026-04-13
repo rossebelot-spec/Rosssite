@@ -5,6 +5,7 @@ import {
   photos,
   videos,
   collections,
+  opEdCollections,
   type ContentType,
 } from "@/db/schema";
 import { count } from "drizzle-orm";
@@ -17,6 +18,7 @@ const sections = [
   { label: "Videos", href: "/admin/videos" },
   { label: "Collections", href: "/admin/collections" },
   { label: "Op-eds", href: "/admin/op-eds" },
+  { label: "Op-ed collections", href: "/admin/op-ed-collections" },
   { label: "Press", href: "/admin/press" },
   { label: "Events", href: "/admin/events" },
 ];
@@ -39,7 +41,13 @@ const CONTENT_TYPE_ORDER: ContentType[] = [
 
 export default async function AdminDashboard() {
   const db = getDb();
-  const [contentRows, [photoCount], [videoCount], [collectionCount]] =
+  const [
+    contentRows,
+    [photoCount],
+    [videoCount],
+    [collectionCount],
+    [opEdCollectionCount],
+  ] =
     await Promise.all([
       db
         .select({ type: content.type, count: count() })
@@ -48,6 +56,7 @@ export default async function AdminDashboard() {
       db.select({ count: count() }).from(photos),
       db.select({ count: count() }).from(videos),
       db.select({ count: count() }).from(collections),
+      db.select({ count: count() }).from(opEdCollections),
     ]);
 
   const contentCounts = new Map<string, number>();
@@ -73,6 +82,11 @@ export default async function AdminDashboard() {
       label: "Collections",
       count: collectionCount.count,
       href: "/admin/collections",
+    },
+    {
+      label: "Op-ed collections",
+      count: opEdCollectionCount.count,
+      href: "/admin/op-ed-collections",
     },
   ];
 

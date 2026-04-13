@@ -10,7 +10,9 @@ import {
   createOpEdCollection,
   updateOpEdCollection,
   deleteOpEdCollection,
+  deleteUploadedBlobUrl,
 } from "@/lib/actions";
+import { ImageUploader } from "@/components/admin/image-uploader";
 
 interface CollectionData {
   id?: number;
@@ -44,6 +46,7 @@ export default function AdminOpEdCollectionEditor() {
 
   const [data, setData] = useState<CollectionData>(empty);
   const [saving, setSaving] = useState(false);
+  const [initialMastheadUrl, setInitialMastheadUrl] = useState("");
 
   const isValid = data.publication.trim() !== "" && data.slug.trim() !== "";
 
@@ -52,14 +55,16 @@ export default function AdminOpEdCollectionEditor() {
       fetch(`/api/admin/op-ed-collections/${id}`)
         .then((r) => r.json())
         .then((coll) => {
+          const m = coll.mastheadUrl ?? "";
           setData({
             id: coll.id,
             publication: coll.publication,
             slug: coll.slug,
-            mastheadUrl: coll.mastheadUrl ?? "",
+            mastheadUrl: m,
             description: coll.description ?? "",
             displayOrder: coll.displayOrder ?? 0,
           });
+          setInitialMastheadUrl(m);
         });
     }
   }, [id, isNew]);
@@ -69,6 +74,31 @@ export default function AdminOpEdCollectionEditor() {
     value: CollectionData[K]
   ) {
     setData((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleMastheadUpload(url: string) {
+    const prev = data.mastheadUrl;
+    if (
+      prev &&
+      prev !== url &&
+      prev !== initialMastheadUrl &&
+      prev.includes(".blob.vercel-storage.com")
+    ) {
+      await deleteUploadedBlobUrl(prev);
+    }
+    set("mastheadUrl", url);
+  }
+
+  async function handleRemoveMasthead() {
+    const prev = data.mastheadUrl;
+    if (
+      prev &&
+      prev !== initialMastheadUrl &&
+      prev.includes(".blob.vercel-storage.com")
+    ) {
+      await deleteUploadedBlobUrl(prev);
+    }
+    set("mastheadUrl", "");
   }
 
   async function handleSave() {
@@ -86,6 +116,7 @@ export default function AdminOpEdCollectionEditor() {
         router.push(`/admin/op-ed-collections/${created.id}`);
       } else {
         await updateOpEdCollection(data.id!, payload);
+        setInitialMastheadUrl(payload.mastheadUrl ?? "");
       }
     } finally {
       setSaving(false);
@@ -152,15 +183,38 @@ export default function AdminOpEdCollectionEditor() {
 
         <div>
           <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">
-            Masthead Image URL
+            Masthead (JPEG)
+          </label>
+          <p className="text-muted-foreground text-sm mb-3">
+            Logo or wordmark shown on collection pages. Upload a JPEG, or use a legacy path/URL in
+            the field below.
+          </p>
+          <ImageUploader
+            accept="image/jpeg,.jpg,.jpeg"
+            existingUrl={data.mastheadUrl || undefined}
+            onUpload={handleMastheadUpload}
+          />
+          {data.mastheadUrl ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+              onClick={handleRemoveMasthead}
+            >
+              Remove masthead image
+            </Button>
+          ) : null}
+          <label className="text-xs tracking-widest uppercase text-muted-foreground block mt-4 mb-1">
+            Masthead URL (optional override)
           </label>
           <Input
             value={data.mastheadUrl}
             onChange={(e) => set("mastheadUrl", e.target.value)}
-            placeholder="/mastheads/national-observer.svg"
+            placeholder="/mastheads/example.svg or https://…"
           />
           <p className="text-xs text-muted-foreground mt-1">
-            Path under /public (e.g. /mastheads/national-observer.svg) or a full URL.
+            Set manually for SVG or external URLs; JPEG uploads fill this automatically.
           </p>
         </div>
 

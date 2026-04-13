@@ -51,6 +51,7 @@ export default async function HomePage() {
         url: opEds.url,
       })
       .from(opEds)
+      .where(eq(opEds.published, true))
       .orderBy(desc(opEds.date))
       .limit(3),
   ]);

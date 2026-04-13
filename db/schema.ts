@@ -193,6 +193,8 @@ export const opEds = pgTable(
     summary: text("summary").notNull().default(""),
     pullQuote: text("pull_quote"),
     thumbnailUrl: text("thumbnail_url"),
+    /** Draft op-eds are hidden from public routes; existing rows migrate as published. */
+    published: boolean("published").notNull().default(false),
     displayOrder: integer("display_order").notNull().default(0),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

@@ -515,7 +515,7 @@ for (const article of ipoliticsArticles) {
     continue;
   }
   await sql`
-    INSERT INTO op_eds (collection_id, publication, title, url, date, summary, pull_quote, thumbnail_url, display_order)
+    INSERT INTO op_eds (collection_id, publication, title, url, date, summary, pull_quote, thumbnail_url, display_order, published)
     VALUES (
       ${collectionId},
       'iPolitics',
@@ -525,7 +525,8 @@ for (const article of ipoliticsArticles) {
       ${article.summary},
       ${article.pull_quote},
       ${article.thumbnail_url},
-      0
+      0,
+      true
     )
   `;
   inserted++;

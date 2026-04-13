@@ -24,6 +24,7 @@ export async function GET() {
         summary: opEds.summary,
         pullQuote: opEds.pullQuote,
         thumbnailUrl: opEds.thumbnailUrl,
+        published: opEds.published,
         displayOrder: opEds.displayOrder,
         createdAt: opEds.createdAt,
         collectionPublication: opEdCollections.publication,

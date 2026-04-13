@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getDb } from "@/db";
 import { opEdCollections, opEds } from "@/db/schema";
-import { asc, eq, isNull, desc } from "drizzle-orm";
+import { asc, eq, isNull, desc, and } from "drizzle-orm";
 import { SectionHeader } from "@/components/section-header";
 import { formatPublishedDate } from "@/lib/format-published-date";
 
@@ -28,7 +28,12 @@ export default async function OpEdsPage() {
           date: opEds.date,
         })
         .from(opEds)
-        .where(eq(opEds.collectionId, col.id))
+        .where(
+          and(
+            eq(opEds.collectionId, col.id),
+            eq(opEds.published, true)
+          )
+        )
         .orderBy(desc(opEds.date));
 
       const coverUrl = articles[0]?.thumbnailUrl ?? null;
@@ -40,7 +45,9 @@ export default async function OpEdsPage() {
   const standaloneArticles = await db
     .select()
     .from(opEds)
-    .where(isNull(opEds.collectionId))
+    .where(
+      and(isNull(opEds.collectionId), eq(opEds.published, true))
+    )
     .orderBy(desc(opEds.date));
 
   const hasCollections = collectionsWithMeta.some((c) => c.articleCount > 0);
