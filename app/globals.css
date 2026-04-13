@@ -45,6 +45,9 @@
   --font-mono:    var(--font-mono-stack);
   --font-heading: var(--font-serif-stack);
   --font-serif:   var(--font-serif-stack);
+
+  /* About page portrait image (3:4) */
+  --aspect-about-portrait: 3 / 4;
 }
 
 /* ─── Base palette: light (default for the public site) ──────────────────── */

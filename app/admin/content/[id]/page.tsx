@@ -14,6 +14,7 @@ import {
   removeContentLink,
 } from "@/lib/actions";
 import type { ContentType } from "@/db/schema";
+import { ImageUploader } from "@/components/admin/image-uploader";
 
 interface LinkItem {
   id: number;
@@ -44,6 +45,7 @@ interface EditorState {
   collections: DropdownItem[];
   pendingLinkType: "video" | "collection" | "";
   pendingLinkId: number | "";
+  imageUrl: string;
 }
 
 const empty: EditorState = {
@@ -61,6 +63,7 @@ const empty: EditorState = {
   collections: [],
   pendingLinkType: "",
   pendingLinkId: "",
+  imageUrl: "",
 };
 
 function slugify(title: string) {
@@ -117,6 +120,7 @@ export default function AdminContentEditor() {
           bodyHtml: row?.bodyHtml ?? "",
           description: row?.description ?? "",
           tags: Array.isArray(row?.tags) ? row.tags.join(", ") : "",
+          imageUrl: row?.imageUrl ?? "",
           published: row?.published ?? false,
           publishedAt: toDateInputValue(row?.publishedAt),
           links: payload.links ?? [],
@@ -142,7 +146,10 @@ export default function AdminContentEditor() {
     setData((prev) => ({ ...prev, [field]: value }));
   }
 
-  const showsTopic = data.type !== "essay" && data.type !== "blog";
+  const showsTopic =
+    data.type !== "essay" &&
+    data.type !== "blog" &&
+    data.type !== "about";
   const topicLabel =
     data.type === "review"
       ? "Author"
@@ -169,7 +176,9 @@ export default function AdminContentEditor() {
     try {
       if (isNew) {
         const pendingLink =
-          hasDeepLink && data.pendingLinkId !== ""
+          data.type !== "about" &&
+          hasDeepLink &&
+          data.pendingLinkId !== ""
             ? data.pendingLinkType === "video"
               ? { videoId: Number(data.pendingLinkId) }
               : { collectionId: Number(data.pendingLinkId) }
@@ -185,6 +194,9 @@ export default function AdminContentEditor() {
           published: data.published,
           publishedAt,
           pendingLink,
+          ...(data.type === "about"
+            ? { imageUrl: data.imageUrl.trim() || null }
+            : {}),
         });
         // createContent redirects on success
       } else {
@@ -199,6 +211,9 @@ export default function AdminContentEditor() {
           published: data.published,
           publishedAt,
           updatedAt: new Date(),
+          ...(data.type === "about"
+            ? { imageUrl: data.imageUrl.trim() || null }
+            : {}),
         });
         setSaving(false);
       }
@@ -333,6 +348,12 @@ export default function AdminContentEditor() {
               setData((prev) => ({
                 ...prev,
                 type: nextType,
+                slug:
+                  nextType === "about"
+                    ? "about"
+                    : isNew
+                    ? slugify(prev.title)
+                    : prev.slug,
                 topic:
                   nextType === "review" || nextType === "event" || nextType === "news"
                     ? prev.topic
@@ -346,6 +367,7 @@ export default function AdminContentEditor() {
             <option value="review">Review</option>
             <option value="news">News</option>
             <option value="event">Event</option>
+            <option value="about">About</option>
           </select>
         </div>
 
@@ -360,7 +382,12 @@ export default function AdminContentEditor() {
               setData((prev) => ({
                 ...prev,
                 title: v,
-                slug: isNew ? slugify(v) : prev.slug,
+                slug:
+                  isNew && prev.type !== "about"
+                    ? slugify(v)
+                    : isNew && prev.type === "about"
+                    ? "about"
+                    : prev.slug,
               }));
             }}
             placeholder="Content title"
@@ -426,6 +453,26 @@ export default function AdminContentEditor() {
           />
         </div>
 
+        {data.type === "about" ? (
+          <div>
+            <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-2">
+              Portrait (optional, JPEG)
+            </label>
+            <ImageUploader
+              existingUrl={data.imageUrl || undefined}
+              onUpload={(url) => set("imageUrl", url)}
+              accept="image/jpeg"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              Public About uses slug{" "}
+              <code className="rounded border border-border px-1 py-0.5 font-mono text-xs">
+                about
+              </code>
+              . Only one row can use that slug.
+            </p>
+          </div>
+        ) : null}
+
         <div>
           <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-2">
             Body
@@ -438,6 +485,7 @@ export default function AdminContentEditor() {
           />
         </div>
 
+        {data.type !== "about" ? (
         <div className="space-y-3 pt-4 border-t border-border">
           <h2 className="font-heading text-xl">Linked Items</h2>
 
@@ -546,6 +594,7 @@ export default function AdminContentEditor() {
             </>
           )}
         </div>
+        ) : null}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 export const siteNavLinks = [
   { href: "/", label: "Home" },
   { href: "/essays", label: "Essays" },
+  { href: "/news", label: "News" },
   { href: "/op-eds", label: "Op-eds" },
   { href: "/book-reviews", label: "Books" },
   { href: "/photography", label: "Photography" },

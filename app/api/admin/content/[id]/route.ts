@@ -23,7 +23,11 @@ export async function GET(
         .from(videos)
         .orderBy(asc(videos.title)),
       db
-        .select({ id: collections.id, title: collections.title, slug: collections.slug })
+        .select({
+          id: collections.id,
+          title: collections.title,
+          slug: collections.slug,
+        })
         .from(collections)
         .orderBy(asc(collections.title)),
     ]);

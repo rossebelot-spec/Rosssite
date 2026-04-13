@@ -1,0 +1,24 @@
+---
+description: Apply Drizzle migrations after schema changes — avoid runtime "Failed query" when tables/columns are missing
+alwaysApply: true
+---
+
+# Database migrations (Neon + Drizzle)
+
+Changing `db/schema.ts` or adding files under `db/migrations/` **does not** update the remote Neon database. The app will throw at runtime (e.g. `Failed query: select ... from "some_table"`) until SQL has been applied.
+
+## After any schema or migration change
+
+1. **Run migrations** locally (same DB as `.env.local` if testing): `npm run db:migrate`  
+   Use `DATABASE_URL_UNPOOLED` when drizzle-kit requires it (see `drizzle.config.ts`).  
+   `drizzle-kit` prefers the **`pg`** devDependency over `@neondatabase/serverless` so the CLI uses **TCP/SSL**, not WebSocket (Neon serverless alone often fails `migrate` with exit 1 and no clear error).
+2. If `drizzle-kit migrate` still fails (e.g. **`relation … already exists`**), the DB’s **`drizzle.__drizzle_migrations`** journal is likely **out of sync** with applied SQL — repair the journal or apply SQL manually (Neon SQL Editor / `scripts/db-apply-*.mjs` pattern). If WebSocket-only issues persist, apply the migration SQL in Neon directly.
+3. Before declaring the task done on a schema task: **confirm the migration has been run** or tell the user explicitly they must run `npm run db:migrate` / deploy with migrations on Vercel.
+
+## When the user reports a failed query / missing column / missing table
+
+Assume **migration not applied** until proven otherwise. Do not only adjust application code—verify migrations are applied to the DB they use to run the app.
+
+## Dependencies
+
+`pg` is a **devDependency** so `drizzle-kit migrate` can use the standard Postgres driver; do not remove it without restoring another working migrate path.

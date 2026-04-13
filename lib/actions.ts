@@ -28,11 +28,20 @@ async function requireAdmin() {
 // ─── Content (unified: essay | blog | review | news | event) ──────────────
 
 function contentPrimaryPaths(type: string, slug: string): string[] {
+  if (type === "about") {
+    return ["/about"];
+  }
   if (type === "essay" || type === "blog") {
     return ["/essays", `/essays/${slug}`];
   }
   if (type === "review") {
     return ["/book-reviews", `/book-reviews/${slug}`];
+  }
+  if (type === "news") {
+    return ["/news", `/news/${slug}`];
+  }
+  if (type === "event") {
+    return ["/events", `/events/${slug}`];
   }
   return [];
 }
@@ -47,11 +56,22 @@ export async function createContent(data: {
   tags: string[];
   published: boolean;
   publishedAt?: Date | null;
+  imageUrl?: string | null;
   pendingLink?: { videoId?: number; collectionId?: number };
 }) {
   await requireAdmin();
   const db = getDb();
   const { pendingLink, ...insertData } = data;
+
+  const [slugTaken] = await db
+    .select({ id: content.id })
+    .from(content)
+    .where(eq(content.slug, insertData.slug))
+    .limit(1);
+  if (slugTaken) {
+    redirect(`/admin/content/${slugTaken.id}`);
+  }
+
   const [row] = await db.insert(content).values(insertData).returning();
 
   if (pendingLink && (pendingLink.videoId || pendingLink.collectionId)) {
@@ -87,11 +107,30 @@ export async function updateContent(
     tags?: string[];
     published?: boolean;
     publishedAt?: Date | null;
+    imageUrl?: string | null;
     updatedAt: Date;
   }
 ) {
   await requireAdmin();
   const db = getDb();
+  const [before] = await db
+    .select({ imageUrl: content.imageUrl })
+    .from(content)
+    .where(eq(content.id, id));
+  if (
+    before &&
+    data.imageUrl !== undefined
+  ) {
+    const prev = before.imageUrl ?? null;
+    const next = data.imageUrl;
+    if (prev && prev !== next && isVercelBlobStorageUrl(prev)) {
+      try {
+        await del(prev);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
   await db.update(content).set(data).where(eq(content.id, id));
 
   const [row] = await db
@@ -126,9 +165,25 @@ export async function updateContent(
 export async function deleteContent(id: number) {
   await requireAdmin();
   const db = getDb();
+  const [row] = await db.select().from(content).where(eq(content.id, id));
+  if (row?.imageUrl && isVercelBlobStorageUrl(row.imageUrl)) {
+    try {
+      await del(row.imageUrl);
+    } catch {
+      /* ignore */
+    }
+  }
+  if (row) {
+    for (const path of contentPrimaryPaths(row.type, row.slug)) {
+      revalidatePath(path);
+    }
+  }
   await db.delete(content).where(eq(content.id, id));
   revalidatePath("/essays");
   revalidatePath("/book-reviews");
+  revalidatePath("/about");
+  revalidatePath("/news");
+  revalidatePath("/events");
   redirect("/admin/content");
 }
 

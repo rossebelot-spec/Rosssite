@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getDb } from "@/db";
 import { content, photos } from "@/db/schema";
-import { eq, and, desc, notInArray } from "drizzle-orm";
+import { eq, and, desc, notInArray, inArray } from "drizzle-orm";
 import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
 import { opEds } from "@/db/schema";
 import { Hero } from "@/components/hero";
@@ -22,7 +22,7 @@ export default async function HomePage() {
       .from(content)
       .where(
         and(
-          eq(content.type, "essay"),
+          inArray(content.type, ["essay", "blog"]),
           eq(content.published, true),
           ...(videoLinkedIds.length > 0
             ? [notInArray(content.id, videoLinkedIds)]

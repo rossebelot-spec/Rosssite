@@ -29,6 +29,7 @@ const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   review: "Reviews",
   news: "News",
   event: "Events",
+  about: "About",
 };
 
 const CONTENT_TYPE_ORDER: ContentType[] = [
@@ -37,6 +38,7 @@ const CONTENT_TYPE_ORDER: ContentType[] = [
   "review",
   "news",
   "event",
+  "about",
 ];
 
 export default async function AdminDashboard() {

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "db:migrate": "drizzle-kit migrate",
+    "db:apply-0011": "node scripts/db-apply-migration-0011.mjs",
     "build": "next build",
     "start": "next start",
     "measure:essay-line-height": "node scripts/measure-essay-line-height.mjs",
@@ -46,6 +47,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.10",
+    "pg": "^8.16.0",
     "playwright": "^1.55.0",
     "tailwindcss": "^4",
     "typescript": "^5"

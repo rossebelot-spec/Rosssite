@@ -72,7 +72,7 @@ async function getCollectionWithItems(slug: string) {
           .where(
             and(
               inArray(contentLinks.videoId, videoIds),
-              eq(content.type, "essay"),
+              inArray(content.type, ["essay", "blog"]),
               eq(content.published, true)
             )
           )

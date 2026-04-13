@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getDb } from "@/db";
 import { videos, content, contentLinks, collections, collectionItems } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { VideoMain } from "@/components/video/video-main";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ async function getVideo(slug: string) {
     .where(
       and(
         eq(contentLinks.videoId, video.id),
-        eq(content.type, "essay"),
+        inArray(content.type, ["essay", "blog"]),
         eq(content.published, true)
       )
     )

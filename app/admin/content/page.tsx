@@ -14,6 +14,7 @@ const TYPE_FILTERS: { label: string; value: ContentType | "all" }[] = [
   { label: "Review", value: "review" },
   { label: "News", value: "news" },
   { label: "Event", value: "event" },
+  { label: "About", value: "about" },
 ];
 
 const VALID_TYPES = new Set<ContentType>([
@@ -22,6 +23,7 @@ const VALID_TYPES = new Set<ContentType>([
   "review",
   "news",
   "event",
+  "about",
 ]);
 
 function isContentType(value: string | undefined): value is ContentType {

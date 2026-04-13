@@ -1,17 +1,113 @@
 import type { Metadata } from "next";
-import { AuthorBio } from "@/components/author-bio";
+import Image from "next/image";
+import Link from "next/link";
+import { getDb } from "@/db";
+import { content } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
+import { AuthorBio, siteAuthorName } from "@/components/author-bio";
+import { formatPublishedDate } from "@/lib/format-published-date";
+import { blobImageUrl } from "@/lib/blob";
 
-export const metadata: Metadata = { title: "About" };
+export const dynamic = "force-dynamic";
 
-export default function AboutPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const db = getDb();
+  const [row] = await db
+    .select({
+      title: content.title,
+      description: content.description,
+    })
+    .from(content)
+    .where(
+      and(eq(content.type, "about"), eq(content.slug, "about"), eq(content.published, true))
+    )
+    .limit(1);
+  if (!row) return { title: "About" };
+  return { title: row.title, description: row.description || undefined };
+}
+
+export default async function AboutPage() {
+  const db = getDb();
+  const [about] = await db
+    .select()
+    .from(content)
+    .where(
+      and(eq(content.type, "about"), eq(content.slug, "about"), eq(content.published, true))
+    )
+    .limit(1);
+
+  if (!about) {
+    return (
+      <main id="main" className="essay-layout">
+        <div className="essay-toolbar">
+          <Link href="/" className="essay-back-link">
+            Home
+          </Link>
+          <div className="essay-pdf-slot" aria-hidden="true" />
+        </div>
+        <header className="essay-header">
+          <p className="essay-kicker">About</p>
+          <h1 className="essay-title">About</h1>
+        </header>
+        <section className="essay-bio" aria-labelledby="about-fallback-bio-heading">
+          <h2 id="about-fallback-bio-heading" className="essay-bio-section-heading">
+            Article Author Biography
+          </h2>
+          <AuthorBio />
+        </section>
+      </main>
+    );
+  }
+
+  const dateLabel = formatPublishedDate(about.publishedAt);
+  const dateIso = about.publishedAt ? new Date(about.publishedAt).toISOString() : undefined;
+
   return (
-    <main className="mx-auto w-full max-w-screen-sm px-6 py-16">
-      <header className="mb-10 border-b border-border pb-8">
-        <h1 className="font-heading text-4xl">Ross Belot</h1>
-      </header>
-      <div className="text-muted-foreground leading-relaxed text-sm">
-        <AuthorBio />
+    <main id="main" className="essay-layout">
+      <div className="essay-toolbar">
+        <Link href="/" className="essay-back-link">
+          Home
+        </Link>
+        <div className="essay-pdf-slot" aria-hidden="true" />
       </div>
+
+      <header className="essay-header">
+        <p className="essay-kicker">About</p>
+        <h1 className="essay-title">{about.title}</h1>
+        <p className="essay-meta">
+          <span>{siteAuthorName}</span>
+          {dateLabel ? (
+            <>
+              <span className="essay-meta-sep" aria-hidden="true">
+                &middot;
+              </span>
+              <time dateTime={dateIso}>{dateLabel}</time>
+            </>
+          ) : null}
+        </p>
+      </header>
+
+      {about.imageUrl ? (
+        <div className="relative mx-auto mb-10 w-full max-w-xs aspect-about-portrait overflow-hidden rounded-md bg-surface">
+          <Image
+            src={blobImageUrl(about.imageUrl)}
+            alt={about.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, 320px"
+            unoptimized
+          />
+        </div>
+      ) : null}
+
+      <article className="essay-body" dangerouslySetInnerHTML={{ __html: about.bodyHtml }} />
+
+      <section className="essay-bio" aria-labelledby="essay-bio-heading">
+        <h2 id="essay-bio-heading" className="essay-bio-section-heading">
+          Article Author Biography
+        </h2>
+        <AuthorBio />
+      </section>
     </main>
   );
 }

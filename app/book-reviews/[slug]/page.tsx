@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
 import { content } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { AuthorBio, siteAuthorName } from "@/components/author-bio";
+import { formatPublishedDate } from "@/lib/format-published-date";
 
 export const dynamic = "force-dynamic";
 
@@ -45,33 +48,52 @@ export default async function BookReviewPage({ params }: Props) {
 
   if (!review) notFound();
 
+  const dateLabel = formatPublishedDate(review.publishedAt);
+  const dateIso = review.publishedAt
+    ? new Date(review.publishedAt).toISOString()
+    : undefined;
+
   return (
-    <main className="mx-auto w-full max-w-screen-sm px-6 py-16">
-      <header className="mb-10 border-b border-border pb-8">
-        <time className="text-xs tracking-widest uppercase text-muted-foreground">
-          {review.publishedAt
-            ? new Date(review.publishedAt).toLocaleDateString("en-CA", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })
-            : ""}
-        </time>
-        <h1 className="font-heading text-4xl mt-2">{review.title}</h1>
-        <p className="text-xs tracking-widest uppercase text-muted-foreground mt-1">
-          {"by " + review.topic}
-        </p>
-        {review.description && (
-          <p className="mt-3 text-muted-foreground leading-relaxed">
-            {review.description}
+    <main id="main" className="essay-layout">
+      <div className="essay-toolbar">
+        <Link href="/book-reviews" className="essay-back-link">
+          Back to Book Reviews
+        </Link>
+        <div className="essay-pdf-slot" aria-hidden="true" />
+      </div>
+
+      <header className="essay-header">
+        <p className="essay-kicker">Review</p>
+        <h1 className="essay-title">{review.title}</h1>
+        {review.topic ? (
+          <p className="mt-2 font-sans-reading text-sm text-muted-foreground">
+            by {review.topic}
           </p>
-        )}
+        ) : null}
+        <p className="essay-meta">
+          <span>{siteAuthorName}</span>
+          {dateLabel ? (
+            <>
+              <span className="essay-meta-sep" aria-hidden="true">
+                &middot;
+              </span>
+              <time dateTime={dateIso}>{dateLabel}</time>
+            </>
+          ) : null}
+        </p>
       </header>
 
       <article
-        className="prose prose-sm max-w-none font-sans leading-relaxed"
+        className="essay-body"
         dangerouslySetInnerHTML={{ __html: review.bodyHtml }}
       />
+
+      <section className="essay-bio" aria-labelledby="review-bio-heading">
+        <h2 id="review-bio-heading" className="essay-bio-section-heading">
+          Article Author Biography
+        </h2>
+        <AuthorBio />
+      </section>
     </main>
   );
 }

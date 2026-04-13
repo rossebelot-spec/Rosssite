@@ -90,11 +90,13 @@ export const content = pgTable(
   "content",
   {
     id: serial("id").primaryKey(),
-    type: text("type").notNull(), // essay | blog | review | news | event
+    type: text("type").notNull(), // essay | blog | review | news | event | about
     title: text("title").notNull(),
     slug: text("slug").notNull().unique(),
     topic: text("topic").notNull().default(""),
     bodyHtml: text("body_html").notNull().default(""),
+    /** Optional hero/portrait (e.g. About page); prefer Vercel Blob JPEG URL. */
+    imageUrl: text("image_url"),
     description: text("description").notNull().default(""),
     tags: text("tags").array().notNull().default([]),
     published: boolean("published").notNull().default(false),
@@ -234,5 +236,11 @@ export type NewOpEdCollection = typeof opEdCollections.$inferInsert;
 export type OpEd = typeof opEds.$inferSelect;
 export type NewOpEd = typeof opEds.$inferInsert;
 
-export type ContentType = "essay" | "blog" | "review" | "news" | "event";
+export type ContentType =
+  | "essay"
+  | "blog"
+  | "review"
+  | "news"
+  | "event"
+  | "about";
 export type CollectionItemLinkedType = "video" | "photo";
