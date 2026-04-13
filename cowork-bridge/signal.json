@@ -1,5 +1,4 @@
 {
-  "action": "approve",
-  "step": 1,
-  "message": "Full loop test — Cowork wrote this directly. If you can read it, the bridge is working end to end."
+  "action": "task",
+  "message": "Debug: op-eds collection masthead images missing at localhost:3000/op-eds. The masthead logos (National Observer, iPolitics) have disappeared from the collection cards. The SVG fallbacks exist at /public/mastheads/*.svg and the code correctly falls back to them — but only when mastheadUrl in the DB is null/empty. The fallback is likely being bypassed by a broken stored URL. Please: 1) Query the database and show the current mastheadUrl value for every row in op_ed_collections. 2) For any non-null mastheadUrl, check whether that URL is reachable. 3) Show findings only — do not change anything yet."
 }

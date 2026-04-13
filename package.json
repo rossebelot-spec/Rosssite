@@ -13,6 +13,8 @@
     "cleanup:blank-video-poems": "node scripts/cleanup-blank-video-poems.mjs",
     "compress:vimeo-archive": "node scripts/compress-vimeo-archive.mjs",
     "compress:vimeo-archive:one": "node scripts/compress-vimeo-archive.mjs --limit 1",
+    "debug:hero-dom": "node scripts/debug-hero-dom.mjs",
+    "debug:hero-refresh-timeline": "node scripts/debug-hero-refresh-timeline.mjs",
     "seed:op-eds": "node scripts/seed-op-eds.mjs",
     "seed:ipolitics": "node scripts/seed-ipolitics.mjs",
     "update:policy-thumbnail": "node scripts/update-policy-thumbnail.mjs"

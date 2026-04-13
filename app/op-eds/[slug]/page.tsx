@@ -6,6 +6,8 @@ import { getDb } from "@/db";
 import { opEdCollections, opEds } from "@/db/schema";
 import { asc, eq, desc, and } from "drizzle-orm";
 import { formatPublishedDate } from "@/lib/format-published-date";
+import { OpEdMastheadImg } from "@/components/op-ed-masthead-img";
+import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +56,10 @@ export default async function OpEdCollectionPage({ params }: Props) {
   if (!result) notFound();
 
   const { collection, articles } = result;
+  const mastheadSrc = resolveOpEdCollectionMastheadUrl(
+    collection.slug,
+    collection.mastheadUrl
+  );
 
   return (
     <main className="mx-auto w-full max-w-screen-lg px-6 py-16">
@@ -76,15 +82,14 @@ export default async function OpEdCollectionPage({ params }: Props) {
 
       {/* Masthead */}
       <div className="mb-10 pb-6 border-b border-border">
-        {collection.mastheadUrl ? (
+        {mastheadSrc ? (
           <div className="mb-3">
-            <Image
-              src={collection.mastheadUrl}
+            <OpEdMastheadImg
+              src={mastheadSrc}
               alt={collection.publication}
               width={240}
               height={48}
-              className="object-contain object-left h-12 w-auto"
-              unoptimized
+              className="object-contain object-left h-12 w-auto max-w-sm"
             />
           </div>
         ) : (

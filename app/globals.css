@@ -142,13 +142,15 @@
 
 /* ─── Homepage hero (in-flow photo + stacked main — no curtain overlap) ───
    All layout values are tokens — adjust here, not in components.
-   Hero band height uses remaining viewport below the sticky header (Nav sets
-   --site-header-height on document.body via ResizeObserver so it inherits).
-   Do not define that min-height on :root — var() there resolves on <html> only.
+   Hero band height uses remaining viewport below the sticky header.
+   `lib/site-header-height-bootstrap.ts` + Nav ResizeObserver inject
+   #site-header-height-live (:root { --site-header-height: Npx }) before/after
+   hydration. This rem fallback is only until that runs (e.g. first paint edge).
+   Do not define hero min-height on :root — var() there resolves on <html> only.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {
-  /* Sticky site header (nav row) — sticky toolbars use this as `top` so they sit below the bar */
-  --site-header-height: 4.5rem;
+  /* ~69px desktop single-row nav; live measurement overrides via #site-header-height-live */
+  --site-header-height: 4.3125rem;
   /* Same cap as Tailwind max-w-screen-xl — hero copy lines up with main content */
   --site-content-max-width: 80rem;
   /* Text inset from hero edges (upper-right stack); nav is above hero, so modest top inset */

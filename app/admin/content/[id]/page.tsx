@@ -12,6 +12,7 @@ import {
   deleteContent,
   addContentLink,
   removeContentLink,
+  deleteUploadedBlobUrl,
 } from "@/lib/actions";
 import type { ContentType } from "@/db/schema";
 import { ImageUploader } from "@/components/admin/image-uploader";
@@ -91,6 +92,8 @@ export default function AdminContentEditor() {
   const isNew = id === "new";
 
   const [data, setData] = useState<EditorState>(empty);
+  /** Last saved about portrait URL from server — used to delete only abandoned session uploads. */
+  const [initialAboutImageUrl, setInitialAboutImageUrl] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -131,6 +134,7 @@ export default function AdminContentEditor() {
             : "",
           pendingLinkId: hasDeepLink ? Number(deepLinkId) : "",
         }));
+        setInitialAboutImageUrl(row?.imageUrl ?? "");
         setLoaded(true);
       })
       .catch(() => {
@@ -162,6 +166,45 @@ export default function AdminContentEditor() {
       : data.type === "event"
       ? "Event name"
       : "Topic";
+
+  async function handleAboutPortraitUpload(url: string) {
+    const prev = data.imageUrl;
+    if (
+      prev &&
+      prev !== url &&
+      prev !== initialAboutImageUrl &&
+      prev.includes(".blob.vercel-storage.com")
+    ) {
+      await deleteUploadedBlobUrl(prev);
+    }
+    set("imageUrl", url);
+  }
+
+  async function handleRemoveAboutPortrait() {
+    const prev = data.imageUrl;
+    if (
+      prev &&
+      prev !== initialAboutImageUrl &&
+      prev.includes(".blob.vercel-storage.com")
+    ) {
+      await deleteUploadedBlobUrl(prev);
+      set("imageUrl", initialAboutImageUrl);
+      return;
+    }
+    set("imageUrl", "");
+    if (
+      !isNew &&
+      data.type === "about" &&
+      prev &&
+      prev === initialAboutImageUrl
+    ) {
+      await updateContent(Number(id), {
+        imageUrl: null,
+        updatedAt: new Date(),
+      });
+      setInitialAboutImageUrl("");
+    }
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -215,6 +258,9 @@ export default function AdminContentEditor() {
             ? { imageUrl: data.imageUrl.trim() || null }
             : {}),
         });
+        if (data.type === "about") {
+          setInitialAboutImageUrl(data.imageUrl.trim() || "");
+        }
         setSaving(false);
       }
     } catch (err) {
@@ -460,15 +506,32 @@ export default function AdminContentEditor() {
             </label>
             <ImageUploader
               existingUrl={data.imageUrl || undefined}
-              onUpload={(url) => set("imageUrl", url)}
+              onUpload={(url) => void handleAboutPortraitUpload(url)}
               accept="image/jpeg"
             />
-            <p className="text-xs text-muted-foreground mt-2">
-              Public About uses slug{" "}
-              <code className="rounded border border-border px-1 py-0.5 font-mono text-xs">
-                about
-              </code>
-              . Only one row can use that slug.
+            {data.imageUrl ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => void handleRemoveAboutPortrait()}
+              >
+                Remove portrait
+              </Button>
+            ) : null}
+            <p className="text-xs text-muted-foreground mt-2 space-y-1">
+              <span className="block">
+                Removing the saved portrait clears it on the public About page
+                immediately; other edits still need Save.
+              </span>
+              <span className="block">
+                Public About uses slug{" "}
+                <code className="rounded border border-border px-1 py-0.5 font-mono text-xs">
+                  about
+                </code>
+                . Only one row can use that slug.
+              </span>
             </p>
           </div>
         ) : null}

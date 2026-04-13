@@ -6,6 +6,8 @@ import { opEdCollections, opEds } from "@/db/schema";
 import { asc, eq, isNull, desc, and } from "drizzle-orm";
 import { SectionHeader } from "@/components/section-header";
 import { formatPublishedDate } from "@/lib/format-published-date";
+import { OpEdMastheadImg } from "@/components/op-ed-masthead-img";
+import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Op-eds" };
@@ -72,13 +74,18 @@ export default async function OpEdsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {collectionsWithMeta
                   .filter((col) => col.articleCount > 0)
-                  .map((col) => (
+                  .map((col) => {
+                    const mastheadSrc = resolveOpEdCollectionMastheadUrl(
+                      col.slug,
+                      col.mastheadUrl
+                    );
+                    return (
                     <Link
                       key={col.id}
                       href={`/op-eds/${col.slug}`}
                       className="group flex flex-col gap-3"
                     >
-                      {/* Cover image: most recent article thumbnail */}
+                      {/* Cover: article thumbnail only (masthead sits under the title below) */}
                       {col.coverUrl ? (
                         <div className="relative aspect-video bg-surface overflow-hidden rounded">
                           <Image
@@ -89,45 +96,31 @@ export default async function OpEdsPage() {
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             unoptimized
                           />
-                          {/* Masthead overlay */}
-                          {col.mastheadUrl && (
-                            <div className="absolute inset-0 bg-black/40 flex items-end p-4">
-                              <Image
-                                src={col.mastheadUrl}
-                                alt={col.publication}
-                                width={160}
-                                height={32}
-                                className="object-contain object-left h-8 w-auto brightness-0 invert"
-                                unoptimized
-                              />
-                            </div>
-                          )}
                         </div>
                       ) : (
-                        <div className="aspect-video bg-surface rounded flex items-center justify-center">
-                          {col.mastheadUrl ? (
-                            <Image
-                              src={col.mastheadUrl}
-                              alt={col.publication}
-                              width={160}
-                              height={32}
-                              className="object-contain h-8 w-auto"
-                              unoptimized
-                            />
-                          ) : (
-                            <span className="text-muted-foreground text-sm">
-                              {col.publication}
-                            </span>
-                          )}
-                        </div>
+                        <div
+                          className="aspect-video rounded border border-dashed border-border bg-surface"
+                          aria-hidden
+                        />
                       )}
 
                       <div>
                         <p className="font-heading text-lg group-hover:text-warm-accent transition-colors">
                           {col.publication}
                         </p>
+                        {mastheadSrc ? (
+                          <div className="mt-2">
+                            <OpEdMastheadImg
+                              src={mastheadSrc}
+                              alt={`${col.publication} logo`}
+                              width={200}
+                              height={40}
+                              className="h-8 max-h-10 w-auto max-w-48 object-contain object-left"
+                            />
+                          </div>
+                        ) : null}
                         {col.description && (
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                             {col.description}
                           </p>
                         )}
@@ -136,7 +129,8 @@ export default async function OpEdsPage() {
                         </p>
                       </div>
                     </Link>
-                  ))}
+                    );
+                  })}
               </div>
             </section>
           )}

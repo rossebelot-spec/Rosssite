@@ -42,22 +42,24 @@ node scripts/debug-hero-dom.mjs http://127.0.0.1:3002
 
 After **Nav** changes, if testing against `npm run dev`, **restart the dev server** so the client bundle matches disk.
 
-## Open issue (user report — **not** fixed in this handover)
+## Refresh “pop” — root cause & fix (Playwright)
 
-**Symptom:** Layout looked correct until a **full page refresh**, then something **“popped up to the top”** again (scroll position and/or hero/header stacking — confirm with user or a screen recording).
+**Symptom:** After a full reload, layout briefly jumped — **CLS** from `--site-header-height` staying at the **`globals.css` fallback** until React’s `Nav` injected `#site-header-height-live` after hydration.
 
-**Hypotheses for the next agent (investigate in order):**
+**Fix shipped (inline bootstrap + tighter fallback):**
 
-1. **Scroll restoration / `scrollY`:** Browsers restore scroll on refresh; with a **dynamic hero height** (CSS updates after `#site-header-height-live` runs), the **document height** can change between first paint and after measurement — restored scroll can land in a **wrong** visual position (e.g. content “jumps”).
-2. **First paint vs measured header:** Until `#site-header-height-live` runs, `:root --site-header-height` may still be **4.5rem** from `globals.css`. A **layout shift** on hydrate can feel like things “pop” (CLS). Refresh repeats full navigation so this is more visible than client-side transitions.
-3. **`100svh` / mobile URL bar:** `svh`/`dvh` behaviour differs across loads; less likely on desktop but worth noting if repro is mobile.
-4. **Next.js / React 19:** Any **streaming** or **partial hydration** ordering could theoretically delay the style tag — compare **hard refresh** vs **client navigation** from another route.
+1. **`lib/site-header-height-bootstrap.ts`** — minified IIFE inlined in **`components/site-shell.tsx`** immediately after `<Nav />`. It creates/updates `#site-header-height-live` with `:root { --site-header-height: <header.offsetHeight>px }` **as soon as the parser reaches the script** (before React hydrates).
+2. **`components/nav.tsx`** — unchanged behaviour: same `id`, `ResizeObserver` keeps the value correct when the header height changes (fonts, resize, `contextLine`).
+3. **`app/globals.css`** — `:root` fallback changed from **`4.5rem` → `4.3125rem`** (~69px) so any sub-millisecond gap before the script runs is smaller.
 
-**Suggested next steps:**
+**Verification:** On `next start`, `scripts/debug-hero-refresh-timeline.mjs` now shows **`liveExists: true`** and **`rootVar: 69px`** already at **`readystate-interactive`** / **`load`** (no longer `4.5rem` through `load`).
 
-- Reproduce with **Performance** + **Layout shift** regions, or a tiny Playwright script: log `scrollY`, `document.documentElement.style` / `#site-header-height-live`, and hero/main `getBoundingClientRect()` at `load`, `+100ms`, `+500ms`, and after `requestAnimationFrame` ×2.
-- If CLS is confirmed: consider **reserving** initial space (e.g. `min-height` on header in CSS close to real height) or applying the measured height **earlier** without fighting React (e.g. only `next/script` strategy if approved — **ask before adding dependencies** per project rules).
-- If scroll restore is the issue: `history.scrollRestoration = 'manual'` and controlled scroll-to-top on `/` only — **URL/bookmark impact** — **ask user** before changing scroll behaviour.
+**Run the probe:**
+
+```bash
+npm run build && PORT=3010 npx next start   # any free port
+node scripts/debug-hero-refresh-timeline.mjs http://127.0.0.1:3010
+```
 
 ## Related files (quick map)
 
@@ -67,7 +69,8 @@ After **Nav** changes, if testing against `npm run dev`, **restart the dev serve
 | Home page   | `app/page.tsx` |
 | Hero CSS    | `app/globals.css` (`.home-hero-section`, `.hero-text-block`) |
 | Nav         | `components/nav.tsx` |
-| Shell       | `components/site-shell.tsx` |
+| Shell       | `components/site-shell.tsx` (inline header-height bootstrap) |
+| Bootstrap   | `lib/site-header-height-bootstrap.ts` |
 | Root layout | `app/layout.tsx` |
 
 ## Project constraints (do not ignore)
@@ -77,4 +80,4 @@ After **Nav** changes, if testing against `npm run dev`, **restart the dev serve
 
 ## Summary for the new agent
 
-The **core bug** was **CSS variable resolution on `:root`** plus **fragile inline styles on `html`/`body`**. The **fix** is **section-level hero clamp** + **injected `<style>`** for `:root --site-header-height`. The **refresh “pop”** is a **separate**, likely **timing/scroll/CLS** issue — reproduce first, then fix narrowly without stacking unrelated workarounds.
+The **core bug** was **CSS variable resolution on `:root`** plus **fragile inline styles on `html`/`body`**. The **fix** is **section-level hero clamp** + **injected `<style>`** for `:root --site-header-height`. The **refresh “pop”** was **CLS** until the live rule existed; **bootstrap + tighter rem fallback** applies the measured height before hydration.

@@ -62,11 +62,7 @@ export default async function HomePage() {
     <>
       <Hero portraitUrl={portraitUrl} />
 
-      {/* Spacer: one viewport of scroll while the fixed hero stays behind */}
-      <div className="min-h-screen h-dvh shrink-0" aria-hidden="true" />
-
-      {/* Dark content slides up over the fixed photo (curtain) */}
-      <main className="relative z-10 bg-background hero-main-overlap">
+      <main className="relative bg-background">
         <div className="mx-auto w-full max-w-screen-xl px-6 lg:px-16 pt-8 pb-24">
 
           {/* ── Recent work grid ──────────────────────────────────────────── */}

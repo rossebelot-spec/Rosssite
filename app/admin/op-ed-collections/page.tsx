@@ -1,8 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 import { getDb } from "@/db";
 import { opEdCollections, opEds } from "@/db/schema";
 import { asc, eq, count } from "drizzle-orm";
+import { OpEdMastheadImg } from "@/components/op-ed-masthead-img";
+import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
 
 export const dynamic = "force-dynamic";
 
@@ -38,34 +39,39 @@ export default async function AdminOpEdCollectionsPage() {
         <p className="text-muted-foreground text-sm">No collections yet.</p>
       ) : (
         <ul className="divide-y divide-border">
-          {colls.map((coll) => (
-            <li key={coll.id} className="py-5 flex items-center gap-4">
-              {coll.mastheadUrl && (
-                <div className="relative w-32 h-10 shrink-0 bg-white rounded overflow-hidden border border-border">
-                  <Image
-                    src={coll.mastheadUrl}
-                    alt={coll.publication}
-                    fill
-                    sizes="128px"
-                    className="object-contain p-1"
-                    unoptimized
-                  />
+          {colls.map((coll) => {
+            const mastheadSrc = resolveOpEdCollectionMastheadUrl(
+              coll.slug,
+              coll.mastheadUrl
+            );
+            return (
+              <li key={coll.id} className="py-5 flex items-center gap-4">
+                {mastheadSrc ? (
+                  <div className="flex h-10 w-32 shrink-0 items-center justify-center rounded border border-border bg-white p-1">
+                    <OpEdMastheadImg
+                      src={mastheadSrc}
+                      alt={coll.publication}
+                      width={120}
+                      height={32}
+                      className="max-h-8 w-auto max-w-full object-contain"
+                    />
+                  </div>
+                ) : null}
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={`/admin/op-ed-collections/${coll.id}`}
+                    className="font-heading text-xl hover:text-warm-accent transition-colors"
+                  >
+                    {coll.publication}
+                  </Link>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {coll.slug} · {coll.articleCount}{" "}
+                    {coll.articleCount === 1 ? "article" : "articles"}
+                  </p>
                 </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <Link
-                  href={`/admin/op-ed-collections/${coll.id}`}
-                  className="font-heading text-xl hover:text-warm-accent transition-colors"
-                >
-                  {coll.publication}
-                </Link>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {coll.slug} · {coll.articleCount}{" "}
-                  {coll.articleCount === 1 ? "article" : "articles"}
-                </p>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

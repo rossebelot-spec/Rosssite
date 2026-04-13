@@ -23,11 +23,11 @@ If something looks wrong (loops, repeated requests, invalid URLs, inconsistent s
 3. **Ask for permission** before implementing code changes, especially defensive “band-aids.” Do not paper over symptoms without agreement.
 4. If **another tool or agent** may be editing the same area, **do not overwrite their work**—confirm or wait before changing those files.
 
-## When the user describes route-specific UI (e.g. different nav on `/video/collections/*`)
+## When the user describes route-specific UI (e.g. different nav on a section)
 
-- Prefer **one client shell** (`SiteShell` or equivalent) chosen in **root layout** via `usePathname()`, unless the user asks for route groups.
+- Prefer **one client shell** (`SiteShell` + `Nav` + `Footer`) for the public site unless the user asks for route groups or a deliberate alternate chrome.
+- **`/video/collections/*`** uses the same `Nav` and `Footer` as other public pages (no separate minimal header).
 - Preserve **`--site-header-height`** (same `ResizeObserver` pattern as `Nav`) anywhere sticky offsets depend on it.
-- State **how to verify**: which routes should show full nav vs minimal chrome, and what DOM or behavior differs (e.g. presence of `nav-site-name`).
 
 ## Summary block (end of substantive replies)
 
