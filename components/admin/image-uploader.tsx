@@ -1,16 +1,27 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { blobImageUrl } from "@/lib/blob";
 
 interface ImageUploaderProps {
   onUpload: (blobUrl: string) => void;
   existingUrl?: string;
+  /** Passed to the file input, e.g. "image/jpeg" for JPEG-only. */
+  accept?: string;
 }
 
-export function ImageUploader({ onUpload, existingUrl }: ImageUploaderProps) {
+export function ImageUploader({
+  onUpload,
+  existingUrl,
+  accept = "image/*",
+}: ImageUploaderProps) {
   const [preview, setPreview] = useState<string | null>(existingUrl ?? null);
+
+  useEffect(() => {
+    setPreview(existingUrl ?? null);
+  }, [existingUrl]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -18,6 +29,14 @@ export function ImageUploader({ onUpload, existingUrl }: ImageUploaderProps) {
   async function handleFile(file: File) {
     if (!file.type.startsWith("image/")) {
       setError("Please select an image file.");
+      return;
+    }
+
+    const jpegOnly =
+      typeof accept === "string" &&
+      (/image\/jpeg|\.jpe?g/i.test(accept) || accept === "image/jpeg");
+    if (jpegOnly && file.type !== "image/jpeg") {
+      setError("Please select a JPEG file (.jpg or .jpeg).");
       return;
     }
 
@@ -65,10 +84,11 @@ export function ImageUploader({ onUpload, existingUrl }: ImageUploaderProps) {
         {preview ? (
           <div className="relative mx-auto w-48 aspect-square">
             <Image
-              src={preview}
+              src={blobImageUrl(preview)}
               alt="Upload preview"
               fill
               className="object-cover rounded"
+              unoptimized
             />
           </div>
         ) : (
@@ -81,7 +101,7 @@ export function ImageUploader({ onUpload, existingUrl }: ImageUploaderProps) {
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={accept}
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];

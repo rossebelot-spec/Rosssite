@@ -3,7 +3,7 @@ import { getDb } from "@/db";
 import { content, photos } from "@/db/schema";
 import { eq, and, desc, notInArray } from "drizzle-orm";
 import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
-import { opEds } from "@/data/op-eds";
+import { opEds } from "@/db/schema";
 import { Hero } from "@/components/hero";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const db = getDb();
   const videoLinkedIds = await getContentIdsLinkedToVideo();
-  const [recentEssays, recentReviews, heroPhotos] = await Promise.all([
+  const [recentEssays, recentReviews, heroPhotos, recentOpEdRows] = await Promise.all([
     db
       .select({
         id: content.id,
@@ -43,13 +43,19 @@ export default async function HomePage() {
       .orderBy(desc(content.publishedAt))
       .limit(3),
     db.select({ blobUrl: photos.blobUrl }).from(photos).where(eq(photos.isHero, true)).limit(1),
+    db
+      .select({
+        id: opEds.id,
+        title: opEds.title,
+        publication: opEds.publication,
+        url: opEds.url,
+      })
+      .from(opEds)
+      .orderBy(desc(opEds.date))
+      .limit(3),
   ]);
 
   const portraitUrl = heroPhotos[0]?.blobUrl ?? "";
-
-  const recentOpEds = [...opEds]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 3);
 
   return (
     <>
@@ -107,21 +113,25 @@ export default async function HomePage() {
           <h2 className="text-xs tracking-widest uppercase text-muted-foreground mb-6">
             Recent Op-eds
           </h2>
-          <ul className="space-y-6">
-            {recentOpEds.map((item) => (
-              <li key={`${item.date}--${item.title}`}>
-                <a
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block font-heading text-xl hover:text-warm-accent transition-colors"
-                >
-                  {item.title}
-                </a>
-                <p className="text-xs text-muted-foreground">{item.publication}</p>
-              </li>
-            ))}
-          </ul>
+          {recentOpEdRows.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Coming soon.</p>
+          ) : (
+            <ul className="space-y-6">
+              {recentOpEdRows.map((item) => (
+                <li key={item.id}>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group block font-heading text-xl hover:text-warm-accent transition-colors"
+                  >
+                    {item.title}
+                  </a>
+                  <p className="text-xs text-muted-foreground">{item.publication}</p>
+                </li>
+              ))}
+            </ul>
+          )}
           <Link
             href="/op-eds"
             className="mt-8 inline-block text-xs tracking-widest uppercase text-warm-accent hover:text-foreground transition-colors"

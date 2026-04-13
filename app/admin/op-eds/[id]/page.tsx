@@ -6,7 +6,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createOpEd, updateOpEd, deleteOpEd } from "@/lib/actions";
+import {
+  createOpEd,
+  updateOpEd,
+  deleteOpEd,
+  deleteUploadedBlobUrl,
+} from "@/lib/actions";
+import { ImageUploader } from "@/components/admin/image-uploader";
 
 interface CollectionRef {
   id: number;
@@ -54,6 +60,8 @@ export default function AdminOpEdEditor() {
   });
   const [collections, setCollections] = useState<CollectionRef[]>([]);
   const [saving, setSaving] = useState(false);
+  /** DB thumbnail when the form was loaded; never delete this blob on client until save removes it. */
+  const [initialThumbnailUrl, setInitialThumbnailUrl] = useState("");
 
   const isValid =
     data.title.trim() !== "" &&
@@ -72,6 +80,7 @@ export default function AdminOpEdEditor() {
       fetch(`/api/admin/op-eds/${id}`)
         .then((r) => r.json())
         .then((article) => {
+          const thumb = article.thumbnailUrl ?? "";
           setData({
             id: article.id,
             collectionId: article.collectionId ?? null,
@@ -81,15 +90,41 @@ export default function AdminOpEdEditor() {
             date: article.date,
             summary: article.summary ?? "",
             pullQuote: article.pullQuote ?? "",
-            thumbnailUrl: article.thumbnailUrl ?? "",
+            thumbnailUrl: thumb,
             displayOrder: article.displayOrder ?? 0,
           });
+          setInitialThumbnailUrl(thumb);
         });
     }
   }, [id, isNew]);
 
   function set<K extends keyof ArticleData>(field: K, value: ArticleData[K]) {
     setData((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleThumbnailUpload(url: string) {
+    const prev = data.thumbnailUrl;
+    if (
+      prev &&
+      prev !== url &&
+      prev !== initialThumbnailUrl &&
+      prev.includes(".blob.vercel-storage.com")
+    ) {
+      await deleteUploadedBlobUrl(prev);
+    }
+    set("thumbnailUrl", url);
+  }
+
+  async function handleRemoveThumbnail() {
+    const prev = data.thumbnailUrl;
+    if (
+      prev &&
+      prev !== initialThumbnailUrl &&
+      prev.includes(".blob.vercel-storage.com")
+    ) {
+      await deleteUploadedBlobUrl(prev);
+    }
+    set("thumbnailUrl", "");
   }
 
   async function handleSave() {
@@ -115,6 +150,7 @@ export default function AdminOpEdEditor() {
         router.push("/admin/op-eds");
       } else {
         await updateOpEd(data.id!, payload);
+        setInitialThumbnailUrl(payload.thumbnailUrl ?? "");
       }
     } finally {
       setSaving(false);
@@ -222,13 +258,27 @@ export default function AdminOpEdEditor() {
 
         <div>
           <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">
-            Thumbnail URL
+            Thumbnail (JPEG)
           </label>
-          <Input
-            value={data.thumbnailUrl}
-            onChange={(e) => set("thumbnailUrl", e.target.value)}
-            placeholder="https://…"
+          <p className="text-muted-foreground text-sm mb-3">
+            Upload a square cover image for listing cards. Stored on Vercel Blob.
+          </p>
+          <ImageUploader
+            accept="image/jpeg,.jpg,.jpeg"
+            existingUrl={data.thumbnailUrl || undefined}
+            onUpload={handleThumbnailUpload}
           />
+          {data.thumbnailUrl ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+              onClick={handleRemoveThumbnail}
+            >
+              Remove thumbnail
+            </Button>
+          ) : null}
         </div>
 
         <div>

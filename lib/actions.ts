@@ -809,6 +809,21 @@ export async function deleteOpEdCollection(id: number) {
 
 // ─── Op-eds ─────────────────────────────────────────────────────────────────
 
+function isVercelBlobStorageUrl(url: string | null | undefined): boolean {
+  return !!url && url.includes(".blob.vercel-storage.com");
+}
+
+/** Deletes a Vercel Blob object (e.g. abandoned mid-edit upload). Admin-only. */
+export async function deleteUploadedBlobUrl(url: string) {
+  await requireAdmin();
+  if (!isVercelBlobStorageUrl(url)) return;
+  try {
+    await del(url);
+  } catch {
+    /* ignore missing or already deleted */
+  }
+}
+
 export async function createOpEd(data: {
   collectionId?: number | null;
   publication: string;
@@ -836,6 +851,7 @@ export async function createOpEd(data: {
       displayOrder: data.displayOrder ?? 0,
     })
     .returning();
+  revalidatePath("/");
   revalidatePath("/op-eds");
   revalidatePath("/admin/op-eds");
   return row;
@@ -857,10 +873,28 @@ export async function updateOpEd(
 ) {
   await requireAdmin();
   const db = getDb();
+  const [before] = await db
+    .select({ thumbnailUrl: opEds.thumbnailUrl })
+    .from(opEds)
+    .where(eq(opEds.id, id));
+
+  if (data.thumbnailUrl !== undefined) {
+    const prev = before?.thumbnailUrl ?? null;
+    const next = data.thumbnailUrl;
+    if (prev && prev !== next && isVercelBlobStorageUrl(prev)) {
+      try {
+        await del(prev);
+      } catch {
+        /* ignore missing or already deleted blob */
+      }
+    }
+  }
+
   await db
     .update(opEds)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(opEds.id, id));
+  revalidatePath("/");
   revalidatePath("/op-eds");
   revalidatePath("/admin/op-eds");
 }
@@ -868,7 +902,19 @@ export async function updateOpEd(
 export async function deleteOpEd(id: number) {
   await requireAdmin();
   const db = getDb();
+  const [row] = await db
+    .select({ thumbnailUrl: opEds.thumbnailUrl })
+    .from(opEds)
+    .where(eq(opEds.id, id));
+  if (row?.thumbnailUrl && isVercelBlobStorageUrl(row.thumbnailUrl)) {
+    try {
+      await del(row.thumbnailUrl);
+    } catch {
+      /* ignore */
+    }
+  }
   await db.delete(opEds).where(eq(opEds.id, id));
+  revalidatePath("/");
   revalidatePath("/op-eds");
   revalidatePath("/admin/op-eds");
 }
