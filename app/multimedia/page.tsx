@@ -5,7 +5,10 @@ import { getDb } from "@/db";
 import { collections, videos, collectionItems } from "@/db/schema";
 import { eq, and, asc, desc, isNull, ne } from "drizzle-orm";
 import { getFeaturedHomeVideo } from "@/lib/featured-home-video";
-import { SectionHeader } from "@/components/section-header";
+import {
+  SectionHeader,
+  SectionSubheading,
+} from "@/components/section-header";
 
 export const metadata: Metadata = { title: "Multimedia" };
 export const dynamic = "force-dynamic";
@@ -54,10 +57,10 @@ export default async function MultimediaPage() {
 
   return (
     <main className="mx-auto w-full max-w-screen-xl px-6 py-16">
-      <SectionHeader title="Multimedia" />
-      <p className="text-muted-foreground text-sm mb-10 max-w-prose">
-        Video and photography collections. Each collection is labelled as video or photo.
-      </p>
+      <SectionHeader
+        title="Multimedia"
+        description="Video and photography collections. Each collection is labelled as video or photo."
+      />
 
       {published.length === 0 && standaloneVideos.length === 0 ? (
         <p className="text-muted-foreground text-sm">No multimedia yet.</p>
@@ -65,9 +68,7 @@ export default async function MultimediaPage() {
         <div className="space-y-16">
           {published.length > 0 && (
             <section>
-              <h2 className="font-heading text-xl mb-6 text-muted-foreground tracking-wide">
-                Collections
-              </h2>
+              <SectionSubheading className="mb-6">Collections</SectionSubheading>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {published.map((coll) => (
                   <Link
@@ -111,9 +112,7 @@ export default async function MultimediaPage() {
 
           {standaloneVideos.length > 0 && (
             <section>
-              <h2 className="font-heading text-xl mb-6 text-muted-foreground tracking-wide">
-                Videos
-              </h2>
+              <SectionSubheading className="mb-6">Videos</SectionSubheading>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {standaloneVideos.map((v) => (
                   <Link

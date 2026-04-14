@@ -22,7 +22,10 @@ export default async function NewsIndexPage() {
 
   return (
     <main className="mx-auto w-full max-w-screen-md px-6 py-16">
-      <SectionHeader title="News" />
+      <SectionHeader
+        title="News"
+        description="Coverage, announcements, and updates."
+      />
       {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">No news yet.</p>
       ) : (

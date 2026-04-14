@@ -18,7 +18,10 @@ export default async function PhotographyPage() {
 
   return (
     <main className="mx-auto w-full max-w-screen-xl px-6 py-16">
-      <SectionHeader title="Photography" />
+      <SectionHeader
+        title="Photography"
+        description="Gallery images and field work."
+      />
       <PhotoGrid photos={allPhotos} />
     </main>
   );

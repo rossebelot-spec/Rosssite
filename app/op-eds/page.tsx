@@ -4,7 +4,10 @@ import Image from "next/image";
 import { getDb } from "@/db";
 import { opEdCollections, opEds } from "@/db/schema";
 import { asc, eq, isNull, desc, and } from "drizzle-orm";
-import { SectionHeader } from "@/components/section-header";
+import {
+  SectionHeader,
+  SectionSubheading,
+} from "@/components/section-header";
 import { formatPublishedDate } from "@/lib/format-published-date";
 import { OpEdMastheadImg } from "@/components/op-ed-masthead-img";
 import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
@@ -68,9 +71,7 @@ export default async function OpEdsPage() {
           {/* ── Collections ─────────────────────────────────────────────── */}
           {hasCollections && (
             <section>
-              <h2 className="font-heading text-xl mb-6 text-muted-foreground tracking-wide">
-                Collections
-              </h2>
+              <SectionSubheading className="mb-6">Collections</SectionSubheading>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {collectionsWithMeta
                   .filter((col) => col.articleCount > 0)
@@ -138,9 +139,9 @@ export default async function OpEdsPage() {
           {/* ── Standalone articles ──────────────────────────────────────── */}
           {standaloneArticles.length > 0 && (
             <section>
-              <h2 className="font-heading text-xl mb-6 text-muted-foreground tracking-wide">
-                Other Publications
-              </h2>
+              <SectionSubheading className="mb-6">
+                Other publications
+              </SectionSubheading>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {standaloneArticles.map((item) => (
                   <a

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -17,7 +18,7 @@ export default function ContactPage() {
           ← About
         </Link>
       </div>
-      <h1 className="font-heading text-4xl mb-6">Contact</h1>
+      <SectionHeader title="Contact" />
       <p className="text-muted-foreground text-sm leading-relaxed max-w-prose">
         For inquiries about writing, readings, or rights, you can reach Ross by email at{" "}
         <a

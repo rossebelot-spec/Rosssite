@@ -30,20 +30,23 @@ export default async function EssaysPage() {
 
   return (
     <main className="mx-auto w-full max-w-screen-md px-6 py-16">
-      <SectionHeader title="Essays" />
+      <SectionHeader
+        title="Essays"
+        description="Long-form essays and blog posts (excluding literary-tagged pieces)."
+      />
       {posts.length === 0 ? (
         <p className="text-muted-foreground text-sm">No essays yet.</p>
       ) : (
         <ul className="divide-y divide-border">
           {posts.map((essay) => (
-            <li key={essay.id} className="py-8">
+            <li key={essay.id} className="py-6">
               <Link href={`/essays/${essay.slug}`} className="group block">
                 <time className="text-xs tracking-widest uppercase text-muted-foreground">
                   {formatPublishedDateLong(
                     essay.publishedAt ? new Date(essay.publishedAt) : null
                   )}
                 </time>
-                <h2 className="font-heading text-2xl mt-1 group-hover:text-warm-accent transition-colors">
+                <h2 className="font-heading text-xl mt-1 group-hover:text-warm-accent transition-colors">
                   {essay.title}
                 </h2>
                 {essay.description && (

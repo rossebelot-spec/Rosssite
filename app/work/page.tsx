@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { absoluteUrl } from "@/lib/seo";
+import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = {
   title: "Works",
@@ -35,11 +36,10 @@ const cards = [
 export default function WorkHubPage() {
   return (
     <main className="mx-auto w-full max-w-screen-lg px-6 py-16">
-      <h1 className="font-heading text-4xl mb-4 text-foreground">Works</h1>
-      <p className="text-muted-foreground text-sm max-w-prose mb-12">
-        Writing organized by form: newspaper and magazine op-eds, general essays, and
-        literary publications such as books and journals.
-      </p>
+      <SectionHeader
+        title="Works"
+        description="Writing organized by form: newspaper and magazine op-eds, general essays, and literary publications such as books and journals."
+      />
       <ul className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {cards.map((c) => (
           <li key={c.href}>

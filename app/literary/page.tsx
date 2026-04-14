@@ -32,25 +32,23 @@ export default async function LiteraryPage() {
 
   return (
     <main className="mx-auto w-full max-w-screen-md px-6 py-16">
-      <SectionHeader title="Literary" />
-      <p className="text-muted-foreground text-sm mb-10 max-w-prose leading-relaxed">
-        Tag pieces with <span className="text-foreground">literary</span> in the admin editor
-        to list them here (books, journals, magazine features). Featured book hero can be
-        added later.
-      </p>
+      <SectionHeader
+        title="Literary"
+        description="Books, journals, and formally published work. Tag pieces with literary in the admin editor to list them here."
+      />
       {posts.length === 0 ? (
         <p className="text-muted-foreground text-sm">No literary items yet.</p>
       ) : (
         <ul className="divide-y divide-border">
           {posts.map((row) => (
-            <li key={row.id} className="py-8">
+            <li key={row.id} className="py-6">
               <Link href={`/essays/${row.slug}`} className="group block">
                 <time className="text-xs tracking-widest uppercase text-muted-foreground">
                   {formatPublishedDateLong(
                     row.publishedAt ? new Date(row.publishedAt) : null
                   )}
                 </time>
-                <h2 className="font-heading text-2xl mt-1 group-hover:text-warm-accent transition-colors">
+                <h2 className="font-heading text-xl mt-1 group-hover:text-warm-accent transition-colors">
                   {row.title}
                 </h2>
                 {row.description ? (

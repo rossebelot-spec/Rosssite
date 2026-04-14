@@ -3,7 +3,10 @@ import Link from "next/link";
 import { getDb } from "@/db";
 import { siteEvents } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { SectionHeader } from "@/components/section-header";
+import {
+  SectionHeader,
+  SectionSubheading,
+} from "@/components/section-header";
 
 export const metadata: Metadata = { title: "Events" };
 
@@ -74,9 +77,7 @@ export default async function AboutEventsPage() {
 
       {upcoming.length > 0 && (
         <section className="mb-12">
-          <h2 className="text-xs tracking-widest uppercase text-muted-foreground mb-4">
-            Upcoming
-          </h2>
+          <SectionSubheading className="mb-4">Upcoming</SectionSubheading>
           <ul className="divide-y divide-border">
             {upcoming.map((event) => (
               <EventItem key={event.id} event={event} />
@@ -87,9 +88,7 @@ export default async function AboutEventsPage() {
 
       {past.length > 0 && (
         <section>
-          <h2 className="text-xs tracking-widest uppercase text-muted-foreground mb-4">
-            Past
-          </h2>
+          <SectionSubheading className="mb-4">Past</SectionSubheading>
           <ul className="divide-y divide-border">
             {past.map((event) => (
               <EventItem key={event.id} event={event} />

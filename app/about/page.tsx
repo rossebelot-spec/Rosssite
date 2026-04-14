@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { absoluteUrl } from "@/lib/seo";
+import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = {
   title: "About",
@@ -36,10 +37,10 @@ const cards = [
 export default function AboutHubPage() {
   return (
     <main className="mx-auto w-full max-w-screen-lg px-6 py-16">
-      <h1 className="font-heading text-4xl mb-4 text-foreground">About</h1>
-      <p className="text-muted-foreground text-sm max-w-prose mb-12">
-        Biography, upcoming and past events, and how to reach Ross.
-      </p>
+      <SectionHeader
+        title="About"
+        description="Biography, upcoming and past events, and how to reach Ross."
+      />
       <ul className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {cards.map((c) => (
           <li key={c.href}>
