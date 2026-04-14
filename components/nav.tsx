@@ -8,7 +8,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { useNavContext } from "@/components/nav-context";
 import {
   siteHeaderTagline,
-  siteNavLinksWithAdmin,
+  siteNavLinks,
 } from "@/lib/site-nav-links";
 
 export function Nav() {
@@ -25,7 +25,7 @@ export function Nav() {
       isNavActive(href) ? "nav-link--active" : ""
     }`;
 
-  const allLinks = [...siteNavLinksWithAdmin];
+  const allLinks = [...siteNavLinks];
 
   useLayoutEffect(() => {
     /* querySelector: ref can still be null on first layout pass in some environments */

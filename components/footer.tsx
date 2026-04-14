@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Footer() {
   return (
     <footer className="border-t border-border mt-auto">
@@ -5,9 +7,17 @@ export function Footer() {
         <p className="text-xs tracking-widest uppercase text-muted-foreground">
           Ross Belot
         </p>
-        <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()}
-        </p>
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <Link
+            href="/admin"
+            className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Admin
+          </Link>
+          <p className="text-xs text-muted-foreground">
+            &copy; {new Date().getFullYear()}
+          </p>
+        </div>
       </div>
     </footer>
   );

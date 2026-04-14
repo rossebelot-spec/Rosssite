@@ -93,7 +93,7 @@ export default async function HomePage() {
 
         {/* Essays */}
         <section>
-          <h2 className="text-xs tracking-widest uppercase text-muted-foreground mb-6">
+          <h2 className="text-sm md:text-base font-medium tracking-widest uppercase text-muted-foreground mb-6">
             Recent Essays
           </h2>
           {recentEssays.length === 0 ? (
@@ -127,7 +127,7 @@ export default async function HomePage() {
 
         {/* Op-eds */}
         <section>
-          <h2 className="text-xs tracking-widest uppercase text-muted-foreground mb-6">
+          <h2 className="text-sm md:text-base font-medium tracking-widest uppercase text-muted-foreground mb-6">
             Recent Op-eds
           </h2>
           {recentOpEdRows.length === 0 ? (
@@ -159,7 +159,7 @@ export default async function HomePage() {
 
         {/* Featured video (slug: lib/featured-home-video.ts); player is in Hero */}
         <section>
-          <h2 className="text-xs tracking-widest uppercase text-muted-foreground mb-6">
+          <h2 className="text-sm md:text-base font-medium tracking-widest uppercase text-muted-foreground mb-6">
             Featured video
           </h2>
           {!featuredVideo ? (
