@@ -59,7 +59,7 @@ export default async function MultimediaPage() {
     <main className="mx-auto w-full max-w-screen-xl px-6 py-16">
       <SectionHeader
         title="Multimedia"
-        description="Video and photography collections. Each collection is labelled as video or photo."
+        description="Video and photography collections."
       />
 
       {published.length === 0 && standaloneVideos.length === 0 ? (
