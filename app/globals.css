@@ -910,23 +910,6 @@
     color: var(--color-stone-900);
     opacity: 0.85;
   }
-
-  /* Works hub (/work): cards lifted above folio paper */
-  .reading-theme .work-hub-card {
-    display: block;
-    background: color-mix(in srgb, white 88%, var(--color-folio-paper));
-    border: 1px solid var(--color-folio-border);
-    border-radius: var(--radius-lg);
-    box-shadow:
-      0 0.2rem 0.5rem color-mix(in srgb, var(--color-stone-900) 5%, transparent),
-      0 1rem 2.25rem color-mix(in srgb, var(--color-stone-900) 10%, transparent);
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
-  }
-
-  .reading-theme .work-hub-card:hover {
-    border-color: var(--color-accent);
-    box-shadow: var(--essay-folio-shadow);
-  }
 }
 
 /* ─── Base styles ────────────────────────────────────────────────────────── */
