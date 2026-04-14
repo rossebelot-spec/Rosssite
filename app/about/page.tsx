@@ -104,8 +104,9 @@ export default async function AboutPage() {
             alt={about.title}
             fill
             priority
+            quality={90}
             className="object-cover"
-            sizes="(max-width: 640px) 100vw, 320px"
+            sizes="320px"
           />
         </div>
       ) : null}
