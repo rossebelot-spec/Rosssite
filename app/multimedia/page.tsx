@@ -9,7 +9,6 @@ import {
   SectionHeader,
   SectionSubheading,
 } from "@/components/section-header";
-import { ReadingPieceShell } from "@/components/reading-piece-shell";
 
 export const metadata: Metadata = { title: "Multimedia" };
 export const dynamic = "force-dynamic";
@@ -57,104 +56,102 @@ export default async function MultimediaPage() {
   ]);
 
   return (
-    <ReadingPieceShell>
-      <main className="w-full">
-        <SectionHeader
-          title="Multimedia"
-          description="Video and photography collections."
-        />
+    <main className="mx-auto w-full max-w-screen-xl px-6 py-16">
+      <SectionHeader
+        title="Multimedia"
+        description="Video and photography collections."
+      />
 
-        {published.length === 0 && standaloneVideos.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No multimedia yet.</p>
-        ) : (
-          <div className="space-y-16">
-            {published.length > 0 && (
-              <section>
-                <SectionSubheading className="mb-6">Collections</SectionSubheading>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {published.map((coll) => (
-                    <Link
-                      key={coll.id}
-                      href={`/video/collections/${coll.slug}`}
-                      className="work-hub-card group flex flex-col gap-3 p-3"
-                    >
-                      {coll.coverImageUrl ? (
-                        <div className="relative aspect-video overflow-hidden rounded-md bg-muted">
-                          <Image
-                            src={coll.coverImageUrl}
-                            alt={coll.title}
-                            fill
-                            className="object-cover transition-transform group-hover:scale-105"
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          />
-                        </div>
-                      ) : (
-                        <div className="aspect-video rounded-md bg-muted flex items-center justify-center">
-                          <span className="text-muted-foreground text-sm">No cover</span>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-xs tracking-widest uppercase text-warm-accent mb-1">
-                          {collectionKindLabel(coll.mediaType)}
-                        </p>
-                        <p className="font-heading text-lg text-foreground group-hover:text-warm-accent transition-colors">
-                          {coll.title}
-                        </p>
-                        {coll.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {coll.description}
-                          </p>
-                        )}
+      {published.length === 0 && standaloneVideos.length === 0 ? (
+        <p className="text-muted-foreground text-sm">No multimedia yet.</p>
+      ) : (
+        <div className="space-y-16">
+          {published.length > 0 && (
+            <section>
+              <SectionSubheading className="mb-6">Collections</SectionSubheading>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {published.map((coll) => (
+                  <Link
+                    key={coll.id}
+                    href={`/video/collections/${coll.slug}`}
+                    className="group flex flex-col gap-3"
+                  >
+                    {coll.coverImageUrl ? (
+                      <div className="relative aspect-video bg-surface overflow-hidden rounded">
+                        <Image
+                          src={coll.coverImageUrl}
+                          alt={coll.title}
+                          fill
+                          className="object-cover transition-transform group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
+                    ) : (
+                      <div className="aspect-video bg-surface rounded flex items-center justify-center">
+                        <span className="text-muted-foreground text-sm">No cover</span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs tracking-widest uppercase text-warm-accent mb-1">
+                        {collectionKindLabel(coll.mediaType)}
+                      </p>
+                      <p className="font-heading text-lg group-hover:text-warm-accent transition-colors">
+                        {coll.title}
+                      </p>
+                      {coll.description && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {coll.description}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
-            {standaloneVideos.length > 0 && (
-              <section>
-                <SectionSubheading className="mb-6">Videos</SectionSubheading>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {standaloneVideos.map((v) => (
-                    <Link
-                      key={v.id}
-                      href={`/video/${v.slug}`}
-                      className="work-hub-card group flex flex-col gap-3 p-3"
-                    >
-                      {v.thumbnailUrl ? (
-                        <div className="relative aspect-video overflow-hidden rounded-md bg-muted">
-                          <Image
-                            src={v.thumbnailUrl}
-                            alt={v.thumbnailAlt || v.title}
-                            fill
-                            className="object-cover transition-transform group-hover:scale-105"
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          />
-                        </div>
-                      ) : (
-                        <div className="aspect-video rounded-md bg-muted flex items-center justify-center">
-                          <span className="text-muted-foreground text-sm">No thumbnail</span>
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-heading text-lg text-foreground group-hover:text-warm-accent transition-colors">
-                          {v.title}
-                        </p>
-                        {v.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {v.description}
-                          </p>
-                        )}
+          {standaloneVideos.length > 0 && (
+            <section>
+              <SectionSubheading className="mb-6">Videos</SectionSubheading>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {standaloneVideos.map((v) => (
+                  <Link
+                    key={v.id}
+                    href={`/video/${v.slug}`}
+                    className="group flex flex-col gap-3"
+                  >
+                    {v.thumbnailUrl ? (
+                      <div className="relative aspect-video bg-surface overflow-hidden rounded">
+                        <Image
+                          src={v.thumbnailUrl}
+                          alt={v.thumbnailAlt || v.title}
+                          fill
+                          className="object-cover transition-transform group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
-        )}
-      </main>
-    </ReadingPieceShell>
+                    ) : (
+                      <div className="aspect-video bg-surface rounded flex items-center justify-center">
+                        <span className="text-muted-foreground text-sm">No thumbnail</span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-heading text-lg group-hover:text-warm-accent transition-colors">
+                        {v.title}
+                      </p>
+                      {v.description && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {v.description}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+    </main>
   );
 }

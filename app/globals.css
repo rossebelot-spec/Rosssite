@@ -911,7 +911,7 @@
     opacity: 0.85;
   }
 
-  /* Folio hub cards (e.g. /work, /multimedia): tiles lifted above journal paper */
+  /* Works hub (/work): cards lifted above folio paper */
   .reading-theme .work-hub-card {
     display: block;
     background: color-mix(in srgb, white 88%, var(--color-folio-paper));
