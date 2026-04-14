@@ -3,13 +3,12 @@ import Link from "next/link";
 import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "About",
-  description: "Bio, events, and contact.",
-  alternates: { canonical: "/about" },
+  title: "Works",
+  description: "Op-eds, essays, and literary publications.",
+  alternates: { canonical: "/work" },
   openGraph: {
-    title: "About | Ross Belot",
-    description: "Bio, events, and contact.",
-    url: absoluteUrl("/about"),
+    title: "Works | Ross Belot",
+    url: absoluteUrl("/work"),
     locale: "en_CA",
     siteName: "Ross Belot",
   },
@@ -17,28 +16,29 @@ export const metadata: Metadata = {
 
 const cards = [
   {
-    href: "/about/bio",
-    title: "Bio",
-    description: "Background, portrait, and editorial introduction.",
+    href: "/op-eds",
+    title: "Op-eds",
+    description: "Commentary and columns by publication.",
   },
   {
-    href: "/about/events",
-    title: "Events",
-    description: "Readings, launches, and appearances.",
+    href: "/essays",
+    title: "Essays",
+    description: "Long-form essays and blog posts.",
   },
   {
-    href: "/about/contact",
-    title: "Contact",
-    description: "Get in touch.",
+    href: "/literary",
+    title: "Literary",
+    description: "Books, journals, and formally published work.",
   },
 ] as const;
 
-export default function AboutHubPage() {
+export default function WorkHubPage() {
   return (
     <main className="mx-auto w-full max-w-screen-lg px-6 py-16">
-      <h1 className="font-heading text-4xl mb-4 text-foreground">About</h1>
+      <h1 className="font-heading text-4xl mb-4 text-foreground">Works</h1>
       <p className="text-muted-foreground text-sm max-w-prose mb-12">
-        Biography, upcoming and past events, and how to reach Ross.
+        Writing organized by form: newspaper and magazine op-eds, general essays, and
+        literary publications such as books and journals.
       </p>
       <ul className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {cards.map((c) => (

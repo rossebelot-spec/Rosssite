@@ -13,6 +13,7 @@ import {
 export async function createCollection(data: {
   title: string;
   slug: string;
+  mediaType?: "video" | "photo";
   description?: string;
   introHtml?: string;
   coverImageUrl?: string | null;
@@ -22,8 +23,15 @@ export async function createCollection(data: {
 }) {
   await requireAdmin();
   const db = getDb();
-  const [collection] = await db.insert(collections).values(data).returning();
+  const [collection] = await db
+    .insert(collections)
+    .values({
+      ...data,
+      mediaType: data.mediaType ?? "video",
+    })
+    .returning();
   revalidatePath("/video");
+  revalidatePath("/multimedia");
   redirect(`/admin/collections/${collection.id}`);
 }
 
@@ -59,6 +67,7 @@ export async function createCollectionForPicker(data: {
     })
     .returning();
   revalidatePath("/video");
+  revalidatePath("/multimedia");
   return { id: collection.id, title: collection.title, slug: collection.slug };
 }
 
@@ -105,6 +114,7 @@ export async function publishCollection(id: number, publish: boolean) {
     .from(collections)
     .where(eq(collections.id, id));
   revalidatePath("/video");
+  revalidatePath("/multimedia");
   if (current) {
     revalidatePath(`/video/collections/${current.slug}`);
   }
@@ -115,6 +125,7 @@ export async function updateCollection(
   data: {
     title?: string;
     slug?: string;
+    mediaType?: "video" | "photo";
     description?: string;
     introHtml?: string;
     coverImageUrl?: string | null;
@@ -132,6 +143,7 @@ export async function updateCollection(
     .where(eq(collections.id, id));
   await db.update(collections).set(data).where(eq(collections.id, id));
   revalidatePath("/video");
+  revalidatePath("/multimedia");
   if (current) {
     revalidatePath(`/video/collections/${current.slug}`);
   }
@@ -149,6 +161,7 @@ export async function deleteCollection(id: number) {
     .where(eq(collections.id, id));
   await db.delete(collections).where(eq(collections.id, id));
   revalidatePath("/video");
+  revalidatePath("/multimedia");
   if (current) {
     revalidatePath(`/video/collections/${current.slug}`);
   }

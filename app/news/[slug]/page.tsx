@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
-import { content } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { newsItems } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
 import { AuthorBio, siteAuthorName } from "@/components/author-bio";
 import { formatPublishedDate } from "@/lib/format-published-date";
 import { articleJsonLd, articleMetadata } from "@/lib/seo";
@@ -19,53 +19,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const db = getDb();
   const [row] = await db
     .select()
-    .from(content)
-    .where(
-      and(
-        eq(content.slug, slug),
-        eq(content.type, "news"),
-        eq(content.published, true)
-      )
-    )
+    .from(newsItems)
+    .where(and(eq(newsItems.slug, slug), eq(newsItems.published, true)))
     .limit(1);
-  if (!row) return {};
+  if (!row || row.kind !== "story" || !row.bodyHtml?.trim()) return {};
   const path = `/news/${row.slug}`;
   return articleMetadata({
     title: row.title,
     description: row.description,
     path,
-    publishedAt: row.publishedAt,
-    imageUrl: row.imageUrl,
+    publishedAt: row.date ? new Date(row.date + "T12:00:00") : null,
   });
 }
 
-export default async function NewsPiecePage({ params }: Props) {
+export default async function NewsStoryPage({ params }: Props) {
   const { slug } = await params;
   const db = getDb();
   const [row] = await db
     .select()
-    .from(content)
-    .where(
-      and(
-        eq(content.slug, slug),
-        eq(content.type, "news"),
-        eq(content.published, true)
-      )
-    )
+    .from(newsItems)
+    .where(and(eq(newsItems.slug, slug), eq(newsItems.published, true)))
     .limit(1);
 
-  if (!row) notFound();
+  if (!row || row.kind !== "story" || !row.bodyHtml?.trim()) notFound();
 
-  const dateLabel = formatPublishedDate(row.publishedAt);
-  const dateIso = row.publishedAt
-    ? new Date(row.publishedAt).toISOString()
-    : undefined;
+  const dateLabel = formatPublishedDate(row.date ? new Date(row.date + "T12:00:00") : null);
+  const dateIso = row.date ? new Date(row.date + "T12:00:00").toISOString() : undefined;
 
   const jsonLd = articleJsonLd({
     title: row.title,
     description: row.description,
     path: `/news/${row.slug}`,
-    publishedAt: row.publishedAt,
+    publishedAt: row.date ? new Date(row.date + "T12:00:00") : null,
   });
 
   return (
@@ -97,10 +82,7 @@ export default async function NewsPiecePage({ params }: Props) {
         </p>
       </header>
 
-      <article
-        className="essay-body"
-        dangerouslySetInnerHTML={{ __html: row.bodyHtml }}
-      />
+      <article className="essay-body" dangerouslySetInnerHTML={{ __html: row.bodyHtml }} />
 
       <section className="essay-bio" aria-labelledby="news-bio-heading">
         <h2 id="news-bio-heading" className="essay-bio-section-heading">

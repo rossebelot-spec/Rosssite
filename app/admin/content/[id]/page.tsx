@@ -143,22 +143,9 @@ export default function AdminContentEditor() {
     setData((prev) => ({ ...prev, [field]: value }));
   }
 
-  const showsTopic =
-    data.type !== "essay" &&
-    data.type !== "blog" &&
-    data.type !== "about";
-  const topicLabel =
-    data.type === "review"
-      ? "Author"
-      : data.type === "event"
-      ? "Event Name"
-      : "Topic";
-  const topicPlaceholder =
-    data.type === "review"
-      ? "Jane Smith"
-      : data.type === "event"
-      ? "Event name"
-      : "Topic";
+  const showsTopic = data.type === "event";
+  const topicLabel = "Event detail";
+  const topicPlaceholder = "Event name or venue detail";
 
   async function handleAboutPortraitUpload(url: string) {
     const prev = data.imageUrl;
@@ -393,18 +380,13 @@ export default function AdminContentEditor() {
                     : isNew
                     ? slugify(prev.title)
                     : prev.slug,
-                topic:
-                  nextType === "review" || nextType === "event" || nextType === "news"
-                    ? prev.topic
-                    : "",
+                topic: nextType === "event" ? prev.topic : "",
               }));
             }}
             className="h-9 w-full rounded border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="essay">Essay</option>
             <option value="blog">Blog</option>
-            <option value="review">Review</option>
-            <option value="news">News</option>
             <option value="event">Event</option>
             <option value="about">About</option>
           </select>

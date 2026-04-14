@@ -2,86 +2,97 @@
 
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
-import { pressItems, siteEvents } from "@/db/schema";
+import { newsItems, siteEvents } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAdmin } from "@/lib/action-helpers";
 
-function revalidatePress() {
-  revalidatePath("/press");
-  revalidatePath("/admin/press");
+function revalidateNews() {
+  revalidatePath("/news");
+  revalidatePath("/");
+  revalidatePath("/admin/news");
 }
 
-function revalidateEvents() {
-  revalidatePath("/events");
+function revalidateSiteEvents() {
+  revalidatePath("/about/events");
   revalidatePath("/admin/events");
 }
 
-// ─── Press ─────────────────────────────────────────────────────────────────
+// ─── News items (coverage, announcements, on-site stories) ─────────────────
 
-export async function createPressItem(data: {
+export async function createNewsItem(data: {
   title: string;
-  outlet: string;
+  kind?: string;
+  outlet?: string;
   date: string;
   url?: string | null;
   description?: string;
+  bodyHtml?: string;
+  slug?: string | null;
   displayOrder?: number;
 }) {
   await requireAdmin();
   const db = getDb();
+  const kind = data.kind?.trim() || "coverage";
   const [row] = await db
-    .insert(pressItems)
+    .insert(newsItems)
     .values({
+      kind,
       title: data.title.trim(),
-      outlet: data.outlet.trim(),
+      outlet: data.outlet?.trim() ?? "",
       date: data.date.trim(),
       url: data.url?.trim() || null,
       description: data.description?.trim() ?? "",
+      bodyHtml: data.bodyHtml?.trim() ?? "",
+      slug: data.slug?.trim() || null,
       published: false,
       displayOrder: data.displayOrder ?? 0,
     })
     .returning();
-  revalidatePress();
+  revalidateNews();
   return row;
 }
 
-export async function updatePressItem(
+export async function updateNewsItem(
   id: number,
   data: {
     title?: string;
+    kind?: string;
     outlet?: string;
     date?: string;
     url?: string | null;
     description?: string;
+    bodyHtml?: string;
+    slug?: string | null;
     displayOrder?: number;
   }
 ) {
   await requireAdmin();
   const db = getDb();
   await db
-    .update(pressItems)
+    .update(newsItems)
     .set({ ...data, updatedAt: new Date() })
-    .where(eq(pressItems.id, id));
-  revalidatePress();
+    .where(eq(newsItems.id, id));
+  revalidateNews();
 }
 
-export async function publishPressItem(id: number, publish: boolean) {
+export async function publishNewsItem(id: number, publish: boolean) {
   await requireAdmin();
   const db = getDb();
   await db
-    .update(pressItems)
+    .update(newsItems)
     .set({ published: publish, updatedAt: new Date() })
-    .where(eq(pressItems.id, id));
-  revalidatePress();
+    .where(eq(newsItems.id, id));
+  revalidateNews();
 }
 
-export async function deletePressItem(id: number) {
+export async function deleteNewsItem(id: number) {
   await requireAdmin();
   const db = getDb();
-  await db.delete(pressItems).where(eq(pressItems.id, id));
-  revalidatePress();
+  await db.delete(newsItems).where(eq(newsItems.id, id));
+  revalidateNews();
 }
 
-// ─── Site events ───────────────────────────────────────────────────────────
+// ─── Site events (About → Events) ───────────────────────────────────────────
 
 export async function createSiteEvent(data: {
   title: string;
@@ -105,7 +116,7 @@ export async function createSiteEvent(data: {
       displayOrder: data.displayOrder ?? 0,
     })
     .returning();
-  revalidateEvents();
+  revalidateSiteEvents();
   return row;
 }
 
@@ -126,7 +137,7 @@ export async function updateSiteEvent(
     .update(siteEvents)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(siteEvents.id, id));
-  revalidateEvents();
+  revalidateSiteEvents();
 }
 
 export async function publishSiteEvent(id: number, publish: boolean) {
@@ -136,12 +147,12 @@ export async function publishSiteEvent(id: number, publish: boolean) {
     .update(siteEvents)
     .set({ published: publish, updatedAt: new Date() })
     .where(eq(siteEvents.id, id));
-  revalidateEvents();
+  revalidateSiteEvents();
 }
 
 export async function deleteSiteEvent(id: number) {
   await requireAdmin();
   const db = getDb();
   await db.delete(siteEvents).where(eq(siteEvents.id, id));
-  revalidateEvents();
+  revalidateSiteEvents();
 }

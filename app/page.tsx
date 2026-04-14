@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { getDb } from "@/db";
-import { content, photos, opEds } from "@/db/schema";
-import { eq, and, desc, notInArray, inArray } from "drizzle-orm";
-import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
+import { photos, opEds, newsItems } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { formatPublishedMonthYear } from "@/lib/format-published-date";
 import { getFeaturedHomeVideo } from "@/lib/featured-home-video";
 import { Hero } from "@/components/hero";
@@ -13,9 +12,6 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const db = getDb();
-  /* Essays need video-linked IDs; everything else is independent — run all four reads at
-     once, then start the essay query as soon as IDs resolve (overlaps with slower Neon rows). */
-  const videoLinkedPromise = getContentIdsLinkedToVideo();
   const featuredPromise = getFeaturedHomeVideo();
   const heroPhotosPromise = db
     .select({ blobUrl: photos.blobUrl })
@@ -33,33 +29,25 @@ export default async function HomePage() {
     .where(eq(opEds.published, true))
     .orderBy(desc(opEds.date))
     .limit(3);
-
-  const videoLinkedIds = await videoLinkedPromise;
-  const essaysPromise = db
+  const newsRowsPromise = db
     .select({
-      id: content.id,
-      title: content.title,
-      slug: content.slug,
-      publishedAt: content.publishedAt,
+      id: newsItems.id,
+      title: newsItems.title,
+      date: newsItems.date,
+      url: newsItems.url,
+      kind: newsItems.kind,
+      slug: newsItems.slug,
     })
-    .from(content)
-    .where(
-      and(
-        inArray(content.type, ["essay", "blog"]),
-        eq(content.published, true),
-        ...(videoLinkedIds.length > 0
-          ? [notInArray(content.id, videoLinkedIds)]
-          : [])
-      )
-    )
-    .orderBy(desc(content.publishedAt))
+    .from(newsItems)
+    .where(eq(newsItems.published, true))
+    .orderBy(desc(newsItems.date))
     .limit(3);
 
-  const [recentEssays, featuredVideo, heroPhotos, recentOpEdRows] = await Promise.all([
-    essaysPromise,
+  const [featuredVideo, heroPhotos, recentOpEdRows, recentNewsRows] = await Promise.all([
     featuredPromise,
     heroPhotosPromise,
     opEdRowsPromise,
+    newsRowsPromise,
   ]);
 
   const portraitUrl = heroPhotos[0]?.blobUrl ?? "";
@@ -87,99 +75,124 @@ export default async function HomePage() {
 
       <main className="relative bg-background">
         <div className="mx-auto w-full max-w-screen-xl px-6 lg:px-16 pt-12 pb-24">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            {/* News */}
+            <section>
+              <h2 className="text-sm md:text-base font-medium tracking-widest uppercase text-muted-foreground mb-6">
+                Recent news
+              </h2>
+              {recentNewsRows.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Coming soon.</p>
+              ) : (
+                <ul className="space-y-6">
+                  {recentNewsRows.map((item) => {
+                    const href =
+                      item.kind === "story" && item.slug
+                        ? `/news/${item.slug}`
+                        : item.url ?? null;
+                    const titleEl = (
+                      <span className="font-heading text-xl group-hover:text-warm-accent transition-colors">
+                        {item.title}
+                      </span>
+                    );
+                    const dateEl = item.date ? (
+                      <time className="text-xs text-muted-foreground block mt-1">
+                        {formatPublishedMonthYear(new Date(item.date + "T12:00:00"))}
+                      </time>
+                    ) : null;
+                    return (
+                      <li key={item.id}>
+                        {href ? (
+                          href.startsWith("/") ? (
+                            <Link href={href} className="group block">
+                              {titleEl}
+                              {dateEl}
+                            </Link>
+                          ) : (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group block"
+                            >
+                              {titleEl}
+                              {dateEl}
+                            </a>
+                          )
+                        ) : (
+                          <div className="block">
+                            <span className="font-heading text-xl">{item.title}</span>
+                            {dateEl}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              <Link
+                href="/news"
+                className="mt-8 inline-block text-xs tracking-widest uppercase text-warm-accent hover:text-foreground transition-colors"
+              >
+                All news &rarr;
+              </Link>
+            </section>
 
-          {/* ── Recent work grid ──────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            {/* Op-eds */}
+            <section>
+              <h2 className="text-sm md:text-base font-medium tracking-widest uppercase text-muted-foreground mb-6">
+                Recent Op-eds
+              </h2>
+              {recentOpEdRows.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Coming soon.</p>
+              ) : (
+                <ul className="space-y-6">
+                  {recentOpEdRows.map((item) => (
+                    <li key={item.id}>
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group block font-heading text-xl hover:text-warm-accent transition-colors"
+                      >
+                        {item.title}
+                      </a>
+                      <p className="text-xs text-muted-foreground">{item.publication}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Link
+                href="/op-eds"
+                className="mt-8 inline-block text-xs tracking-widest uppercase text-warm-accent hover:text-foreground transition-colors"
+              >
+                All op-eds &rarr;
+              </Link>
+            </section>
 
-        {/* Essays */}
-        <section>
-          <h2 className="text-sm md:text-base font-medium tracking-widest uppercase text-muted-foreground mb-6">
-            Recent Essays
-          </h2>
-          {recentEssays.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Coming soon.</p>
-          ) : (
-            <ul className="space-y-6">
-              {recentEssays.map((essay) => (
-                <li key={essay.id}>
-                  <Link
-                    href={`/essays/${essay.slug}`}
-                    className="group block font-heading text-xl hover:text-warm-accent transition-colors"
-                  >
-                    {essay.title}
-                  </Link>
-                  {essay.publishedAt && (
-                    <time className="text-xs text-muted-foreground">
-                      {formatPublishedMonthYear(new Date(essay.publishedAt))}
-                    </time>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link
-            href="/essays"
-            className="mt-8 inline-block text-xs tracking-widest uppercase text-warm-accent hover:text-foreground transition-colors"
-          >
-            All essays &rarr;
-          </Link>
-        </section>
-
-        {/* Op-eds */}
-        <section>
-          <h2 className="text-sm md:text-base font-medium tracking-widest uppercase text-muted-foreground mb-6">
-            Recent Op-eds
-          </h2>
-          {recentOpEdRows.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Coming soon.</p>
-          ) : (
-            <ul className="space-y-6">
-              {recentOpEdRows.map((item) => (
-                <li key={item.id}>
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group block font-heading text-xl hover:text-warm-accent transition-colors"
-                  >
-                    {item.title}
-                  </a>
-                  <p className="text-xs text-muted-foreground">{item.publication}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-          <Link
-            href="/op-eds"
-            className="mt-8 inline-block text-xs tracking-widest uppercase text-warm-accent hover:text-foreground transition-colors"
-          >
-            All op-eds &rarr;
-          </Link>
-        </section>
-
-        {/* Featured video (slug: lib/featured-home-video.ts); player is in Hero */}
-        <section>
-          <h2 className="text-sm md:text-base font-medium tracking-widest uppercase text-muted-foreground mb-6">
-            Featured video
-          </h2>
-          {!featuredVideo ? (
-            <p className="text-muted-foreground text-sm">Coming soon.</p>
-          ) : (
-            <HomeFeaturedVideoCopy
-              slug={featuredVideo.slug}
-              title={featuredVideo.title}
-              description={featuredVideo.description}
-            />
-          )}
-          <Link
-            href="/video"
-            className="mt-8 inline-block text-xs tracking-widest uppercase text-warm-accent hover:text-foreground transition-colors"
-          >
-            All video &rarr;
-          </Link>
-        </section>
-      </div>{/* end grid */}
-        </div>{/* end inner container */}
+            {/* Featured video */}
+            <section>
+              <h2 className="text-sm md:text-base font-medium tracking-widest uppercase text-muted-foreground mb-6">
+                Featured video
+              </h2>
+              {!featuredVideo ? (
+                <p className="text-muted-foreground text-sm">Coming soon.</p>
+              ) : (
+                <HomeFeaturedVideoCopy
+                  slug={featuredVideo.slug}
+                  title={featuredVideo.title}
+                  description={featuredVideo.description}
+                />
+              )}
+              <Link
+                href="/multimedia"
+                className="mt-8 inline-block text-xs tracking-widest uppercase text-warm-accent hover:text-foreground transition-colors"
+              >
+                All multimedia &rarr;
+              </Link>
+            </section>
+          </div>
+        </div>
       </main>
     </>
   );

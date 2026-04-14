@@ -1,7 +1,13 @@
 import type { MetadataRoute } from "next";
 import { getDb } from "@/db";
-import { content, videos, collections, opEdCollections } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import {
+  content,
+  videos,
+  collections,
+  opEdCollections,
+  newsItems,
+} from "@/db/schema";
+import { and, eq, isNotNull } from "drizzle-orm";
 import { getSiteUrl } from "@/lib/site-url";
 
 /** Regenerate sitemap periodically; content changes also propagate on deploy. */
@@ -14,37 +20,51 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: base, lastModified: new Date(), changeFrequency: "weekly", priority: 1 },
     { url: `${base}/about`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${base}/about/bio`, changeFrequency: "monthly", priority: 0.85 },
+    { url: `${base}/about/events`, changeFrequency: "weekly", priority: 0.75 },
+    { url: `${base}/about/contact`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${base}/work`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${base}/literary`, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${base}/multimedia`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${base}/essays`, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${base}/book-reviews`, changeFrequency: "weekly", priority: 0.85 },
     { url: `${base}/news`, changeFrequency: "weekly", priority: 0.85 },
     { url: `${base}/op-eds`, changeFrequency: "weekly", priority: 0.85 },
-    { url: `${base}/video`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${base}/photography`, changeFrequency: "monthly", priority: 0.85 },
-    { url: `${base}/press`, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${base}/events`, changeFrequency: "weekly", priority: 0.75 },
+    { url: `${base}/events`, changeFrequency: "weekly", priority: 0.65 },
   ];
 
-  const [contentRows, videoRows, collectionRows, opEdCollectionRows] = await Promise.all([
-    db
-      .select({
-        slug: content.slug,
-        type: content.type,
-        updatedAt: content.updatedAt,
-      })
-      .from(content)
-      .where(eq(content.published, true)),
-    db
-      .select({ slug: videos.slug, updatedAt: videos.updatedAt })
-      .from(videos)
-      .where(eq(videos.published, true)),
-    db
-      .select({ slug: collections.slug, updatedAt: collections.updatedAt })
-      .from(collections)
-      .where(eq(collections.published, true)),
-    db
-      .select({ slug: opEdCollections.slug, updatedAt: opEdCollections.updatedAt })
-      .from(opEdCollections),
-  ]);
+  const [contentRows, videoRows, collectionRows, opEdCollectionRows, newsStoryRows] =
+    await Promise.all([
+      db
+        .select({
+          slug: content.slug,
+          type: content.type,
+          updatedAt: content.updatedAt,
+        })
+        .from(content)
+        .where(eq(content.published, true)),
+      db
+        .select({ slug: videos.slug, updatedAt: videos.updatedAt })
+        .from(videos)
+        .where(eq(videos.published, true)),
+      db
+        .select({ slug: collections.slug, updatedAt: collections.updatedAt })
+        .from(collections)
+        .where(eq(collections.published, true)),
+      db
+        .select({ slug: opEdCollections.slug, updatedAt: opEdCollections.updatedAt })
+        .from(opEdCollections),
+      db
+        .select({ slug: newsItems.slug, updatedAt: newsItems.updatedAt })
+        .from(newsItems)
+        .where(
+          and(
+            eq(newsItems.published, true),
+            eq(newsItems.kind, "story"),
+            isNotNull(newsItems.slug)
+          )
+        ),
+    ]);
 
   const fromContent: MetadataRoute.Sitemap = [];
 
@@ -60,22 +80,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority: 0.8,
         });
         break;
-      case "review":
-        fromContent.push({
-          url: `${base}/book-reviews/${row.slug}`,
-          lastModified: lm,
-          changeFrequency: "monthly",
-          priority: 0.75,
-        });
-        break;
-      case "news":
-        fromContent.push({
-          url: `${base}/news/${row.slug}`,
-          lastModified: lm,
-          changeFrequency: "monthly",
-          priority: 0.75,
-        });
-        break;
       case "event":
         fromContent.push({
           url: `${base}/events/${row.slug}`,
@@ -85,12 +89,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         });
         break;
       case "about":
-        // Canonical listing page is /about, not /about/from-slug
         break;
       default:
         break;
     }
   }
+
+  const fromNewsStories: MetadataRoute.Sitemap = newsStoryRows
+    .filter((r) => r.slug)
+    .map((r) => ({
+      url: `${base}/news/${r.slug}`,
+      lastModified: r.updatedAt ?? new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.75,
+    }));
 
   const fromVideos: MetadataRoute.Sitemap = videoRows.map((v) => ({
     url: `${base}/video/${v.slug}`,
@@ -113,5 +125,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...fromContent, ...fromVideos, ...fromCollections, ...fromOpEdCols];
+  return [
+    ...staticRoutes,
+    ...fromContent,
+    ...fromNewsStories,
+    ...fromVideos,
+    ...fromCollections,
+    ...fromOpEdCols,
+  ];
 }

@@ -23,6 +23,7 @@ interface CollectionData {
   id?: number;
   title: string;
   slug: string;
+  mediaType: "video" | "photo";
   introHtml: string;
   description: string;
   coverImageUrl: string;
@@ -47,6 +48,7 @@ interface CollectionItem {
 const empty: CollectionData = {
   title: "",
   slug: "",
+  mediaType: "video",
   introHtml: "",
   description: "",
   coverImageUrl: "",
@@ -73,6 +75,7 @@ export default function AdminCollectionEditor() {
       id: coll.id,
       title: coll.title,
       slug: coll.slug,
+      mediaType: coll.mediaType === "photo" ? "photo" : "video",
       introHtml: coll.introHtml,
       description: coll.description,
       coverImageUrl: coll.coverImageUrl ?? "",
@@ -89,7 +92,10 @@ export default function AdminCollectionEditor() {
     if (!isNew) fetchCollection();
   }, [isNew, fetchCollection]);
 
-  function set(field: keyof CollectionData, value: string | boolean) {
+  function set(
+    field: keyof CollectionData,
+    value: string | boolean | CollectionData["mediaType"]
+  ) {
     setData((prev) => ({ ...prev, [field]: value }));
   }
 
@@ -98,6 +104,7 @@ export default function AdminCollectionEditor() {
     const payload = {
       title: data.title,
       slug: data.slug,
+      mediaType: data.mediaType,
       introHtml: data.introHtml,
       description: data.description,
       coverImageUrl: data.coverImageUrl || null,
@@ -226,6 +233,28 @@ export default function AdminCollectionEditor() {
             onChange={(e) => set("slug", e.target.value)}
             placeholder="url-friendly-slug"
           />
+        </div>
+
+        <div>
+          <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">
+            Media type
+          </label>
+          <select
+            className="h-8 w-full max-w-xs rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+            value={data.mediaType}
+            onChange={(e) =>
+              set(
+                "mediaType",
+                e.target.value === "photo" ? "photo" : "video"
+              )
+            }
+          >
+            <option value="video">Video</option>
+            <option value="photo">Photo</option>
+          </select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Photo collections are labeled as photo on the Multimedia page.
+          </p>
         </div>
 
         <div>

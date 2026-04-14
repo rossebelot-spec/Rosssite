@@ -32,12 +32,6 @@ export function contentPrimaryPaths(type: string, slug: string): string[] {
   if (type === "essay" || type === "blog") {
     return ["/essays", `/essays/${slug}`];
   }
-  if (type === "review") {
-    return ["/book-reviews", `/book-reviews/${slug}`];
-  }
-  if (type === "news") {
-    return ["/news", `/news/${slug}`];
-  }
   if (type === "event") {
     return ["/events", `/events/${slug}`];
   }

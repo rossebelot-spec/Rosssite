@@ -48,6 +48,8 @@ export const collections = pgTable("collections", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   slug: text("slug").notNull().unique(),
+  /** `video` = video poems; `photo` = photography sets — same listing UX, labelled on multimedia. */
+  mediaType: text("media_type").notNull().default("video"),
   introHtml: text("intro_html").notNull().default(""),
   description: text("description").notNull().default(""),
   coverImageUrl: text("cover_image_url"),
@@ -92,7 +94,7 @@ export const content = pgTable(
   "content",
   {
     id: serial("id").primaryKey(),
-    type: text("type").notNull(), // essay | blog | review | news | event | about
+    type: text("type").notNull(), // essay | blog | event | about
     title: text("title").notNull(),
     slug: text("slug").notNull().unique(),
     topic: text("topic").notNull().default(""),
@@ -219,16 +221,20 @@ export const opEdsRelations = relations(opEds, ({ one }) => ({
   }),
 }));
 
-// ─── Press & events (editorial lists; admin-managed like op-eds) ────────────
+// ─── News (coverage, announcements, optional on-site stories) & site events ─
 
-export const pressItems = pgTable("press_items", {
+export const newsItems = pgTable("news_items", {
   id: serial("id").primaryKey(),
+  /** coverage = external clip; announcement = launch/book note; story = on-site HTML body */
+  kind: text("kind").notNull().default("coverage"),
   title: text("title").notNull(),
-  outlet: text("outlet").notNull(),
+  slug: text("slug").unique(),
+  outlet: text("outlet").notNull().default(""),
   /** ISO date string YYYY-MM-DD */
   date: text("date").notNull(),
   url: text("url"),
   description: text("description").notNull().default(""),
+  bodyHtml: text("body_html").notNull().default(""),
   published: boolean("published").notNull().default(false),
   displayOrder: integer("display_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -266,14 +272,8 @@ export type OpEdCollection = typeof opEdCollections.$inferSelect;
 export type NewOpEdCollection = typeof opEdCollections.$inferInsert;
 export type OpEd = typeof opEds.$inferSelect;
 export type NewOpEd = typeof opEds.$inferInsert;
-export type PressItemRow = typeof pressItems.$inferSelect;
+export type NewsItemRow = typeof newsItems.$inferSelect;
 export type SiteEventRow = typeof siteEvents.$inferSelect;
 
-export type ContentType =
-  | "essay"
-  | "blog"
-  | "review"
-  | "news"
-  | "event"
-  | "about";
+export type ContentType = "essay" | "blog" | "event" | "about";
 export type CollectionItemLinkedType = "video" | "photo";

@@ -19,27 +19,18 @@ const sections = [
   { label: "Collections", href: "/admin/collections" },
   { label: "Op-eds", href: "/admin/op-eds" },
   { label: "Op-ed collections", href: "/admin/op-ed-collections" },
-  { label: "Press", href: "/admin/press" },
+  { label: "News", href: "/admin/news" },
   { label: "Events", href: "/admin/events" },
 ];
 
 const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   essay: "Essays",
   blog: "Blog",
-  review: "Reviews",
-  news: "News",
   event: "Events",
   about: "About",
 };
 
-const CONTENT_TYPE_ORDER: ContentType[] = [
-  "essay",
-  "blog",
-  "review",
-  "news",
-  "event",
-  "about",
-];
+const CONTENT_TYPE_ORDER: ContentType[] = ["essay", "blog", "event", "about"];
 
 export default async function AdminDashboard() {
   const db = getDb();

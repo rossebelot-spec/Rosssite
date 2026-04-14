@@ -12,20 +12,11 @@ const TYPE_FILTERS: { label: string; value: ContentType | "all" }[] = [
   { label: "All", value: "all" },
   { label: "Essay", value: "essay" },
   { label: "Blog", value: "blog" },
-  { label: "Review", value: "review" },
-  { label: "News", value: "news" },
   { label: "Event", value: "event" },
   { label: "About", value: "about" },
 ];
 
-const VALID_TYPES = new Set<ContentType>([
-  "essay",
-  "blog",
-  "review",
-  "news",
-  "event",
-  "about",
-]);
+const VALID_TYPES = new Set<ContentType>(["essay", "blog", "event", "about"]);
 
 function isContentType(value: string | undefined): value is ContentType {
   return !!value && VALID_TYPES.has(value as ContentType);

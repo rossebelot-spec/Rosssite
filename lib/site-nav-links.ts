@@ -5,14 +5,9 @@ export const siteHeaderTagline =
 /** Shared site navigation links for `Nav` and collection reader menu overlay. */
 export const siteNavLinks = [
   { href: "/", label: "Home" },
-  { href: "/essays", label: "Essays" },
+  { href: "/multimedia", label: "Multimedia" },
+  { href: "/work", label: "Works" },
   { href: "/news", label: "News" },
-  { href: "/op-eds", label: "Op-eds" },
-  { href: "/book-reviews", label: "Books" },
-  { href: "/photography", label: "Photography" },
-  { href: "/video", label: "Video" },
-  { href: "/press", label: "Press" },
-  { href: "/events", label: "Events" },
   { href: "/about", label: "About" },
 ] as const;
 

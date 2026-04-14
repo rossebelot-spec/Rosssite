@@ -143,9 +143,8 @@ export async function deleteContent(id: number) {
   }
   await db.delete(content).where(eq(content.id, id));
   revalidatePath("/essays");
-  revalidatePath("/book-reviews");
   revalidatePath("/about");
-  revalidatePath("/news");
+  revalidatePath("/literary");
   revalidatePath("/events");
   redirect("/admin/content");
 }

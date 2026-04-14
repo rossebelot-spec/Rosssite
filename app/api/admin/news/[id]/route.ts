@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/api-auth";
 import { getDb } from "@/db";
-import { pressItems } from "@/db/schema";
+import { newsItems } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(
@@ -16,8 +16,8 @@ export async function GET(
 
   const [row] = await db
     .select()
-    .from(pressItems)
-    .where(eq(pressItems.id, Number(id)));
+    .from(newsItems)
+    .where(eq(newsItems.id, Number(id)));
 
   if (!row)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
