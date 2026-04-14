@@ -39,6 +39,22 @@ interface CellSpec {
   rowSpan: number;
 }
 
+/**
+ * Deterministic shuffle: fixed (n−1) calls to `rand` in a fixed order.
+ * Do not use `Array.prototype.sort` with a random comparator — it is neither
+ * valid (comparator must be stable per pair) nor consistent between SSR and the client.
+ */
+function fisherYatesShuffle<T>(items: T[], rand: () => number): T[] {
+  const a = [...items];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    const t = a[i]!;
+    a[i] = a[j]!;
+    a[j] = t;
+  }
+  return a;
+}
+
 /** Assign grid spans based on aspect ratio + seeded random value (0–1). */
 function computeSpan(photo: GalleryPhoto, rand: number): { colSpan: number; rowSpan: number } {
   const ratio =
@@ -77,7 +93,7 @@ export function GalleryMosaic({ photos, featuredPhoto }: GalleryMosaicProps) {
     const pool = photos.filter((p) => p.id !== featuredPhoto?.id);
     const seed = pool.reduce((acc, p) => acc + p.id, epoch * 1_000_007);
     const rand = seededRand(seed);
-    const shuffled = [...pool].sort(() => rand() - 0.5);
+    const shuffled = fisherYatesShuffle(pool, rand);
     const page = shuffled.slice(0, featuredPhoto ? PAGE_SIZE - 1 : PAGE_SIZE);
     return page.map((photo) => ({
       photo,
