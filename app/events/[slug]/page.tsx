@@ -70,10 +70,7 @@ export default async function EventPiecePage({ params }: Props) {
 
   return (
     <main id="main" className="essay-layout">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="essay-toolbar">
         <Link href="/events" className="essay-back-link">
           Back to Events

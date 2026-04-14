@@ -73,7 +73,11 @@ export default async function MultimediaPage() {
                 {published.map((coll) => (
                   <li key={coll.id}>
                     <Link
-                      href={`/video/collections/${coll.slug}`}
+                      href={
+                        coll.mediaType === "photo"
+                          ? `/photography/collections/${coll.slug}`
+                          : `/video/collections/${coll.slug}`
+                      }
                       className="group flex gap-6 py-7 hover:bg-surface transition-colors -mx-4 px-4 rounded"
                     >
                       <div className="shrink-0 w-36 h-24 relative overflow-hidden bg-muted rounded">

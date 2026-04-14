@@ -254,6 +254,43 @@ export const siteEvents = pgTable("site_events", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// ─── Gallery Photos ──────────────────────────────────────────────────────────
+
+export const galleryPhotos = pgTable(
+  "gallery_photos",
+  {
+    id: serial("id").primaryKey(),
+    /** Original source ID (e.g. Flickr photo ID). Generic for future batch imports. */
+    sourceId: text("source_id").notNull(),
+    /** Source system: "flickr", future: "lightroom", etc. */
+    source: text("source").notNull().default("flickr"),
+    /** Public R2 URL — https://pub-xxx.r2.dev/photos/{filename}.webp */
+    r2Url: text("r2_url").notNull(),
+    title: text("title").notNull().default(""),
+    description: text("description").notNull().default(""),
+    dateTaken: timestamp("date_taken"),
+    views: integer("views").notNull().default(0),
+    faves: integer("faves").notNull().default(0),
+    /** views + faves + comments — used to rank top 500 */
+    interestingnessScore: integer("interestingness_score").notNull().default(0),
+    /** Stored from Sharp processing for mosaic aspect-ratio layout */
+    width: integer("width"),
+    height: integer("height"),
+    /** At most one photo true — pinned prominently, never shuffled */
+    isFeatured: boolean("is_featured").notNull().default(false),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("gallery_photos_source_unique").on(table.source, table.sourceId),
+    index("gallery_photos_active_score_idx").on(table.isActive, table.interestingnessScore),
+    index("gallery_photos_featured_idx").on(table.isFeatured),
+  ]
+);
+
+export const galleryPhotosRelations = relations(galleryPhotos, () => ({}));
+
 // ─── Inferred Types ─────────────────────────────────────────────────────────
 
 export type Photo = typeof photos.$inferSelect;
@@ -274,6 +311,9 @@ export type OpEd = typeof opEds.$inferSelect;
 export type NewOpEd = typeof opEds.$inferInsert;
 export type NewsItemRow = typeof newsItems.$inferSelect;
 export type SiteEventRow = typeof siteEvents.$inferSelect;
+
+export type GalleryPhoto = typeof galleryPhotos.$inferSelect;
+export type NewGalleryPhoto = typeof galleryPhotos.$inferInsert;
 
 export type ContentType = "essay" | "blog" | "event" | "about";
 export type CollectionItemLinkedType = "video" | "photo";

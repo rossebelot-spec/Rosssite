@@ -4,3 +4,4 @@ export * from "./server-actions/videos";
 export * from "./server-actions/collections";
 export * from "./server-actions/op-eds";
 export * from "./server-actions/news-site-events";
+export * from "./server-actions/gallery";
