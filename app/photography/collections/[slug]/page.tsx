@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
+import { randomInt } from "node:crypto";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
 import { collections, galleryPhotos } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { GalleryMosaic } from "@/components/gallery/gallery-mosaic";
-import { SectionHeader } from "@/components/section-header";
 import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -71,14 +71,17 @@ export default async function PhotoCollectionPage({ params }: Props) {
   if (!result) notFound();
 
   const { collection, photos, featuredPhoto } = result;
+  const shuffleSalt = randomInt(0, 0x80000000);
 
   return (
     <main className="mx-auto w-full max-w-screen-xl px-6 py-16">
-      <SectionHeader
-        title={collection.title}
-        description={collection.description || undefined}
+      <GalleryMosaic
+        photos={photos}
+        featuredPhoto={featuredPhoto}
+        shuffleSalt={shuffleSalt}
+        collectionTitle={collection.title}
+        collectionDescription={collection.description || undefined}
       />
-      <GalleryMosaic photos={photos} featuredPhoto={featuredPhoto} />
     </main>
   );
 }

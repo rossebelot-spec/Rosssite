@@ -79,9 +79,24 @@ function computeSpan(photo: GalleryPhoto, rand: number): { colSpan: number; rowS
 interface GalleryMosaicProps {
   photos: GalleryPhoto[];
   featuredPhoto: GalleryPhoto | null;
+  /**
+   * Mixed into the shuffle seed on each server render so a full page reload can
+   * show a different slice/order than the last visit (still deterministic for
+   * SSR + first client paint).
+   */
+  shuffleSalt: number;
+  /** When set, title row (SectionHeader layout) includes the refresh control on the right. */
+  collectionTitle?: string;
+  collectionDescription?: string;
 }
 
-export function GalleryMosaic({ photos, featuredPhoto }: GalleryMosaicProps) {
+export function GalleryMosaic({
+  photos,
+  featuredPhoto,
+  shuffleSalt,
+  collectionTitle,
+  collectionDescription,
+}: GalleryMosaicProps) {
   const [epoch, setEpoch] = useState(0);
   const [fading, setFading] = useState(false);
   const labelIndexRef = useRef(0);
@@ -91,7 +106,8 @@ export function GalleryMosaic({ photos, featuredPhoto }: GalleryMosaicProps) {
   // for the same epoch, eliminating the SSR/hydration mismatch.
   const cells = useMemo((): CellSpec[] => {
     const pool = photos.filter((p) => p.id !== featuredPhoto?.id);
-    const seed = pool.reduce((acc, p) => acc + p.id, epoch * 1_000_007);
+    const base = pool.reduce((acc, p) => acc + p.id, epoch * 1_000_007);
+    const seed = (base ^ shuffleSalt ^ Math.imul(shuffleSalt | 1, 265_443_5761)) >>> 0;
     const rand = seededRand(seed);
     const shuffled = fisherYatesShuffle(pool, rand);
     const page = shuffled.slice(0, featuredPhoto ? PAGE_SIZE - 1 : PAGE_SIZE);
@@ -100,7 +116,7 @@ export function GalleryMosaic({ photos, featuredPhoto }: GalleryMosaicProps) {
       ...computeSpan(photo, rand()),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photos, featuredPhoto, epoch]);
+  }, [photos, featuredPhoto, epoch, shuffleSalt]);
 
   const poolLength = photos.filter((p) => p.id !== featuredPhoto?.id).length;
   /** Reshuffle / reload mosaic whenever there is at least one tile outside the featured slot. */
@@ -119,8 +135,34 @@ export function GalleryMosaic({ photos, featuredPhoto }: GalleryMosaicProps) {
     return <p className="text-muted-foreground text-sm">No photos yet.</p>;
   }
 
+  const refreshButton = showRefresh ? (
+    <button
+      type="button"
+      onClick={refresh}
+      className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground border border-border hover:border-foreground/30 rounded px-6 py-2.5 transition-colors shrink-0 self-start sm:mt-1"
+    >
+      {REFRESH_LABELS[labelIndexRef.current]}
+    </button>
+  ) : null;
+
   return (
     <div className="space-y-6">
+      {collectionTitle !== undefined && (
+        <div className="mb-12 border-b border-border pb-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between gap-x-8">
+            <div className="min-w-0 flex-1">
+              <h1 className="font-heading text-4xl tracking-wide">{collectionTitle}</h1>
+              {collectionDescription ? (
+                <p className="mt-2 text-muted-foreground text-sm leading-relaxed max-w-prose">
+                  {collectionDescription}
+                </p>
+              ) : null}
+            </div>
+            {refreshButton}
+          </div>
+        </div>
+      )}
+
       <div
         className="transition-opacity duration-200"
         style={{ opacity: fading ? 0 : 1 }}
@@ -189,17 +231,8 @@ export function GalleryMosaic({ photos, featuredPhoto }: GalleryMosaicProps) {
         </div>
       </div>
 
-      {/* Reshuffle (same page) or paginate when there are more photos than fit one page */}
-      {showRefresh && (
-        <div className="flex justify-center pt-2 pb-8">
-          <button
-            type="button"
-            onClick={refresh}
-            className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground border border-border hover:border-foreground/30 rounded px-6 py-2.5 transition-colors"
-          >
-            {REFRESH_LABELS[labelIndexRef.current]}
-          </button>
-        </div>
+      {collectionTitle === undefined && showRefresh && (
+        <div className="flex justify-center pt-2 pb-8">{refreshButton}</div>
       )}
     </div>
   );
