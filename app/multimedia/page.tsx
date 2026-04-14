@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { getDb } from "@/db";
-import { collections, videos, collectionItems } from "@/db/schema";
+import {
+  collections,
+  videos,
+  collectionItems,
+  galleryPhotos,
+} from "@/db/schema";
 import { eq, and, asc, desc, isNull, ne } from "drizzle-orm";
 import { getFeaturedHomeVideo } from "@/lib/featured-home-video";
 import {
@@ -21,7 +26,7 @@ export default async function MultimediaPage() {
   const db = getDb();
   const featuredHome = await getFeaturedHomeVideo();
 
-  const [published, standaloneVideos] = await Promise.all([
+  const [published, standaloneVideos, featuredGalleryRow] = await Promise.all([
     db
       .select()
       .from(collections)
@@ -53,7 +58,14 @@ export default async function MultimediaPage() {
         )
       )
       .orderBy(desc(videos.publishedAt)),
+    db
+      .select({ r2Url: galleryPhotos.r2Url })
+      .from(galleryPhotos)
+      .where(eq(galleryPhotos.isFeatured, true))
+      .limit(1),
   ]);
+
+  const featuredGalleryCover = featuredGalleryRow[0]?.r2Url ?? null;
 
   return (
     <main className="mx-auto w-full max-w-screen-xl px-6 py-16">
@@ -70,7 +82,12 @@ export default async function MultimediaPage() {
             <section>
               <SectionSubheading className="mb-6">Collections</SectionSubheading>
               <ul className="divide-y divide-border">
-                {published.map((coll) => (
+                {published.map((coll) => {
+                  const cardCoverUrl =
+                    coll.mediaType === "photo"
+                      ? coll.coverImageUrl ?? featuredGalleryCover
+                      : coll.coverImageUrl;
+                  return (
                   <li key={coll.id}>
                     <Link
                       href={
@@ -81,9 +98,9 @@ export default async function MultimediaPage() {
                       className="group flex gap-6 py-7 hover:bg-surface transition-colors -mx-4 px-4 rounded"
                     >
                       <div className="shrink-0 w-36 h-24 relative overflow-hidden bg-muted rounded">
-                        {coll.coverImageUrl ? (
+                        {cardCoverUrl ? (
                           <Image
-                            src={coll.coverImageUrl}
+                            src={cardCoverUrl}
                             alt={coll.title}
                             fill
                             className="object-cover transition-transform group-hover:scale-105"
@@ -110,7 +127,8 @@ export default async function MultimediaPage() {
                       </div>
                     </Link>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             </section>
           )}

@@ -102,7 +102,9 @@ export function GalleryMosaic({ photos, featuredPhoto }: GalleryMosaicProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photos, featuredPhoto, epoch]);
 
-  const hasMore = photos.filter((p) => p.id !== featuredPhoto?.id).length > PAGE_SIZE;
+  const poolLength = photos.filter((p) => p.id !== featuredPhoto?.id).length;
+  /** Reshuffle / reload mosaic whenever there is at least one tile outside the featured slot. */
+  const showRefresh = poolLength > 0;
 
   const refresh = useCallback(() => {
     labelIndexRef.current = (labelIndexRef.current + 1) % REFRESH_LABELS.length;
@@ -187,10 +189,11 @@ export function GalleryMosaic({ photos, featuredPhoto }: GalleryMosaicProps) {
         </div>
       </div>
 
-      {/* New set button */}
-      {hasMore && (
+      {/* Reshuffle (same page) or paginate when there are more photos than fit one page */}
+      {showRefresh && (
         <div className="flex justify-center pt-2 pb-8">
           <button
+            type="button"
             onClick={refresh}
             className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground border border-border hover:border-foreground/30 rounded px-6 py-2.5 transition-colors"
           >
