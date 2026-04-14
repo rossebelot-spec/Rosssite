@@ -143,9 +143,9 @@
 /* ─── Homepage hero (in-flow photo + stacked main — no curtain overlap) ───
    All layout values are tokens — adjust here, not in components.
    Hero band height uses remaining viewport below the sticky header.
-   `lib/site-header-height-bootstrap.ts` + Nav ResizeObserver inject
-   #site-header-height-live (:root { --site-header-height: Npx }) before/after
-   hydration. This rem fallback is only until that runs (e.g. first paint edge).
+   Nav's ResizeObserver injects #site-header-height-live
+   (:root { --site-header-height: Npx }) on mount. This rem fallback is the
+   value until that runs (i.e. on first paint before hydration).
    Do not define hero min-height on :root — var() there resolves on <html> only.
    ─────────────────────────────────────────────────────────────────────────── */
 :root {

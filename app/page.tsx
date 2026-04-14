@@ -7,7 +7,6 @@ import { getFeaturedHomeVideo } from "@/lib/featured-home-video";
 import { Hero } from "@/components/hero";
 import { HomeFeaturedVideoCopy } from "@/components/home-featured-video";
 import { websiteJsonLd } from "@/lib/seo";
-import { JsonLd } from "@/components/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +54,10 @@ export default async function HomePage() {
 
   return (
     <>
-      <JsonLd data={websiteJsonLd()} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd()).replace(/</g, "\\u003c") }}
+      />
       <Hero
         portraitUrl={portraitUrl}
         featuredVideo={
