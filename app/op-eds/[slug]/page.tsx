@@ -8,6 +8,7 @@ import { asc, eq, desc, and } from "drizzle-orm";
 import { formatPublishedDate } from "@/lib/format-published-date";
 import { OpEdMastheadImg } from "@/components/op-ed-masthead-img";
 import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
+import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -44,9 +45,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const result = await getCollectionWithArticles(slug);
   if (!result) return {};
   const { collection } = result;
+  const path = `/op-eds/${slug}`;
+  const title = `${collection.publication} — Op-eds`;
+  const desc = collection.description?.trim() || undefined;
   return {
-    title: `${collection.publication} — Op-eds`,
-    description: collection.description || undefined,
+    title,
+    description: desc,
+    alternates: { canonical: path },
+    openGraph: {
+      type: "website",
+      locale: "en_CA",
+      siteName: "Ross Belot",
+      title,
+      description: desc,
+      url: absoluteUrl(path),
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description: desc,
+    },
   };
 }
 

@@ -6,6 +6,7 @@ import { content } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { AuthorBio, siteAuthorName } from "@/components/author-bio";
 import { formatPublishedDate } from "@/lib/format-published-date";
+import { articleJsonLd, articleMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     )
     .limit(1);
   if (!row) return {};
-  return { title: row.title, description: row.description };
+  const path = `/news/${row.slug}`;
+  return articleMetadata({
+    title: row.title,
+    description: row.description,
+    path,
+    publishedAt: row.publishedAt,
+    imageUrl: row.imageUrl,
+  });
 }
 
 export default async function NewsPiecePage({ params }: Props) {
@@ -53,8 +61,19 @@ export default async function NewsPiecePage({ params }: Props) {
     ? new Date(row.publishedAt).toISOString()
     : undefined;
 
+  const jsonLd = articleJsonLd({
+    title: row.title,
+    description: row.description,
+    path: `/news/${row.slug}`,
+    publishedAt: row.publishedAt,
+  });
+
   return (
     <main id="main" className="essay-layout">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="essay-toolbar">
         <Link href="/news" className="essay-back-link">
           Back to News

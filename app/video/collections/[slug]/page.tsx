@@ -7,6 +7,7 @@ import {
   CollectionReader,
   type CollectionVideoItem,
 } from "@/components/video/collection-reader";
+import { absoluteUrl, videoPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -119,22 +120,37 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     const video = items.find((i) => i.slug === poemSlug);
     if (video) {
       const tabTitle = (video.essayTitle ?? "").trim() || video.title;
-      return {
+      const path = `/video/collections/${slug}?poem=${encodeURIComponent(poemSlug)}`;
+      return videoPageMetadata({
         title: tabTitle,
         description: video.description,
-        openGraph: video.thumbnailUrl
-          ? { images: [{ url: video.thumbnailUrl }] }
-          : undefined,
-      };
+        path,
+        thumbnailUrl: video.thumbnailUrl,
+      });
     }
   }
 
+  const path = `/video/collections/${slug}`;
+  const desc = collection.description?.trim() || undefined;
   return {
     title: collection.title,
-    description: collection.description,
-    openGraph: collection.coverImageUrl
-      ? { images: [{ url: collection.coverImageUrl }] }
-      : undefined,
+    description: desc,
+    alternates: { canonical: path },
+    openGraph: {
+      type: "website",
+      title: collection.title,
+      description: desc,
+      url: absoluteUrl(path),
+      locale: "en_CA",
+      siteName: "Ross Belot",
+      ...(collection.coverImageUrl && { images: [{ url: collection.coverImageUrl }] }),
+    },
+    twitter: {
+      card: collection.coverImageUrl ? "summary_large_image" : "summary",
+      title: collection.title,
+      description: desc,
+      ...(collection.coverImageUrl && { images: [collection.coverImageUrl] }),
+    },
   };
 }
 

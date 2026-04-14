@@ -5,6 +5,7 @@ import { getDb } from "@/db";
 import { videos, content, contentLinks, collections, collectionItems } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { VideoMain } from "@/components/video/video-main";
+import { videoObjectJsonLd, videoPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -60,13 +61,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const result = await getVideo(slug);
   if (!result) return {};
   const { video, linkedEssay } = result;
-  return {
-    title: (linkedEssay?.essayTitle ?? "").trim() || video.title,
+  const title = (linkedEssay?.essayTitle ?? "").trim() || video.title;
+  return videoPageMetadata({
+    title,
     description: video.description,
-    openGraph: video.thumbnailUrl
-      ? { images: [{ url: video.thumbnailUrl }] }
-      : undefined,
-  };
+    path: `/video/${slug}`,
+    thumbnailUrl: video.thumbnailUrl,
+  });
 }
 
 export default async function VideoSlugPage({ params }: Props) {
@@ -75,8 +76,21 @@ export default async function VideoSlugPage({ params }: Props) {
   if (!result) notFound();
   const { video, linkedEssay, memberCollections } = result;
 
+  const displayTitle = (linkedEssay?.essayTitle ?? "").trim() || video.title;
+  const jsonLd = videoObjectJsonLd({
+    name: displayTitle,
+    description: video.description,
+    path: `/video/${slug}`,
+    thumbnailUrl: video.thumbnailUrl,
+    publishedAt: video.publishedAt,
+  });
+
   return (
     <div className="reading-theme essay-reading-shell">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="journal-folio-paper essay-reading-paper">
         <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
           <Link href="/video" className="hover:text-foreground transition-colors">

@@ -7,6 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { AuthorBio, siteAuthorName } from "@/components/author-bio";
 import { formatPublishedDate } from "@/lib/format-published-date";
 import { blobImageUrl } from "@/lib/blob";
+import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +23,31 @@ export async function generateMetadata(): Promise<Metadata> {
       and(eq(content.type, "about"), eq(content.slug, "about"), eq(content.published, true))
     )
     .limit(1);
-  if (!row) return { title: "About" };
-  return { title: row.title, description: row.description || undefined };
+  if (!row) {
+    return {
+      title: "About",
+      alternates: { canonical: "/about" },
+      openGraph: { url: absoluteUrl("/about"), title: "About | Ross Belot" },
+    };
+  }
+  const desc = row.description?.trim() || undefined;
+  return {
+    title: row.title,
+    description: desc,
+    alternates: { canonical: "/about" },
+    openGraph: {
+      title: row.title,
+      description: desc,
+      url: absoluteUrl("/about"),
+      locale: "en_CA",
+      siteName: "Ross Belot",
+    },
+    twitter: {
+      card: "summary",
+      title: row.title,
+      description: desc,
+    },
+  };
 }
 
 export default async function AboutPage() {

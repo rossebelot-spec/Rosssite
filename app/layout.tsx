@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, JetBrains_Mono, Lora, Inter } from "next/font/google";
 import { NavProvider } from "@/components/nav-context";
 import { SiteShell } from "@/components/site-shell";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -30,13 +31,33 @@ const inter = Inter({
   weight: ["400", "500", "600"],
 });
 
+const siteDescription =
+  "Poet, journalist, and environmental writer. Essays, op-eds, photography, and more.";
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Ross Belot",
     template: "%s | Ross Belot",
   },
-  description:
-    "Poet, journalist, and environmental writer. Essays, op-eds, photography, and more.",
+  description: siteDescription,
+  applicationName: "Ross Belot",
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    locale: "en_CA",
+    siteName: "Ross Belot",
+    title: "Ross Belot",
+    description: siteDescription,
+    url: siteUrl,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ross Belot",
+    description: siteDescription,
+  },
 };
 
 export default function RootLayout({

@@ -6,6 +6,7 @@ import { content } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { AuthorBio, siteAuthorName } from "@/components/author-bio";
 import { formatPublishedDate } from "@/lib/format-published-date";
+import { articleJsonLd, articleMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     )
     .limit(1);
   if (!essay) return {};
-  return { title: essay.title, description: essay.description };
+  const path = `/essays/${essay.slug}`;
+  return articleMetadata({
+    title: essay.title,
+    description: essay.description,
+    path,
+    publishedAt: essay.publishedAt,
+    imageUrl: essay.imageUrl,
+  });
 }
 
 export default async function EssayPage({ params }: Props) {
@@ -52,8 +60,19 @@ export default async function EssayPage({ params }: Props) {
   const dateIso = essay.publishedAt ? new Date(essay.publishedAt).toISOString() : undefined;
   const kicker = essay.type === "blog" ? "Blog" : "Essay";
 
+  const jsonLd = articleJsonLd({
+    title: essay.title,
+    description: essay.description,
+    path: `/essays/${essay.slug}`,
+    publishedAt: essay.publishedAt,
+  });
+
   return (
     <main id="main" className="essay-layout">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="essay-toolbar">
         <Link href="/essays" className="essay-back-link">
           Back to Essays

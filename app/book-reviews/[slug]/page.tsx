@@ -6,6 +6,7 @@ import { content } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { AuthorBio, siteAuthorName } from "@/components/author-bio";
 import { formatPublishedDate } from "@/lib/format-published-date";
+import { articleJsonLd, articleMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     )
     .limit(1);
   if (!review) return {};
-  return { title: review.title, description: review.description };
+  const path = `/book-reviews/${review.slug}`;
+  return articleMetadata({
+    title: review.title,
+    description: review.description,
+    path,
+    publishedAt: review.publishedAt,
+    imageUrl: review.imageUrl,
+  });
 }
 
 export default async function BookReviewPage({ params }: Props) {
@@ -53,8 +61,19 @@ export default async function BookReviewPage({ params }: Props) {
     ? new Date(review.publishedAt).toISOString()
     : undefined;
 
+  const jsonLd = articleJsonLd({
+    title: review.title,
+    description: review.description,
+    path: `/book-reviews/${review.slug}`,
+    publishedAt: review.publishedAt,
+  });
+
   return (
     <main id="main" className="essay-layout">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="essay-toolbar">
         <Link href="/book-reviews" className="essay-back-link">
           Back to Book Reviews

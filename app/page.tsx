@@ -7,6 +7,7 @@ import { formatPublishedMonthYear } from "@/lib/format-published-date";
 import { getFeaturedHomeVideo } from "@/lib/featured-home-video";
 import { Hero } from "@/components/hero";
 import { HomeFeaturedVideoCopy } from "@/components/home-featured-video";
+import { websiteJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,10 @@ export default async function HomePage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd()) }}
+      />
       <Hero
         portraitUrl={portraitUrl}
         featuredVideo={
