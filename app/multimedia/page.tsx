@@ -69,85 +69,87 @@ export default async function MultimediaPage() {
           {published.length > 0 && (
             <section>
               <SectionSubheading className="mb-6">Collections</SectionSubheading>
-              <div className="flex flex-col gap-10">
+              <ul className="divide-y divide-border">
                 {published.map((coll) => (
-                  <Link
-                    key={coll.id}
-                    href={`/video/collections/${coll.slug}`}
-                    className="group flex flex-col gap-3"
-                  >
-                    {coll.coverImageUrl ? (
-                      <div className="relative aspect-video bg-surface overflow-hidden rounded">
-                        <Image
-                          src={coll.coverImageUrl}
-                          alt={coll.title}
-                          fill
-                          className="object-cover transition-transform group-hover:scale-105"
-                          sizes="(max-width: 1280px) 100vw, 1152px"
-                        />
+                  <li key={coll.id}>
+                    <Link
+                      href={`/video/collections/${coll.slug}`}
+                      className="group flex gap-6 py-7 hover:bg-surface transition-colors -mx-4 px-4 rounded"
+                    >
+                      <div className="shrink-0 w-36 h-24 relative overflow-hidden bg-muted rounded">
+                        {coll.coverImageUrl ? (
+                          <Image
+                            src={coll.coverImageUrl}
+                            alt={coll.title}
+                            fill
+                            className="object-cover transition-transform group-hover:scale-105"
+                            sizes="144px"
+                          />
+                        ) : (
+                          <span className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs px-1 text-center">
+                            No cover
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <div className="aspect-video bg-surface rounded flex items-center justify-center">
-                        <span className="text-muted-foreground text-sm">No cover</span>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-xs tracking-widest uppercase text-warm-accent mb-1">
-                        {collectionKindLabel(coll.mediaType)}
-                      </p>
-                      <p className="font-heading text-lg group-hover:text-warm-accent transition-colors">
-                        {coll.title}
-                      </p>
-                      {coll.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {coll.description}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs tracking-widest uppercase text-warm-accent mb-1">
+                          {collectionKindLabel(coll.mediaType)}
                         </p>
-                      )}
-                    </div>
-                  </Link>
+                        <h2 className="font-heading text-xl group-hover:text-warm-accent transition-colors leading-snug">
+                          {coll.title}
+                        </h2>
+                        {coll.description && (
+                          <p className="text-sm text-muted-foreground mt-2 leading-relaxed line-clamp-2">
+                            {coll.description}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </section>
           )}
 
           {standaloneVideos.length > 0 && (
             <section>
               <SectionSubheading className="mb-6">Videos</SectionSubheading>
-              <div className="flex flex-col gap-10">
+              <ul className="divide-y divide-border">
                 {standaloneVideos.map((v) => (
-                  <Link
-                    key={v.id}
-                    href={`/video/${v.slug}`}
-                    className="group flex flex-col gap-3"
-                  >
-                    {v.thumbnailUrl ? (
-                      <div className="relative aspect-video bg-surface overflow-hidden rounded">
-                        <Image
-                          src={v.thumbnailUrl}
-                          alt={v.thumbnailAlt || v.title}
-                          fill
-                          className="object-cover transition-transform group-hover:scale-105"
-                          sizes="(max-width: 1280px) 100vw, 1152px"
-                        />
+                  <li key={v.id}>
+                    <Link
+                      href={`/video/${v.slug}`}
+                      className="group flex gap-6 py-7 hover:bg-surface transition-colors -mx-4 px-4 rounded"
+                    >
+                      <div className="shrink-0 w-36 h-24 relative overflow-hidden bg-muted rounded">
+                        {v.thumbnailUrl ? (
+                          <Image
+                            src={v.thumbnailUrl}
+                            alt={v.thumbnailAlt || v.title}
+                            fill
+                            className="object-cover transition-transform group-hover:scale-105"
+                            sizes="144px"
+                          />
+                        ) : (
+                          <span className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs px-1 text-center">
+                            No thumbnail
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <div className="aspect-video bg-surface rounded flex items-center justify-center">
-                        <span className="text-muted-foreground text-sm">No thumbnail</span>
+                      <div className="flex-1 min-w-0">
+                        <h2 className="font-heading text-xl group-hover:text-warm-accent transition-colors leading-snug">
+                          {v.title}
+                        </h2>
+                        {v.description && (
+                          <p className="text-sm text-muted-foreground mt-2 leading-relaxed line-clamp-2">
+                            {v.description}
+                          </p>
+                        )}
                       </div>
-                    )}
-                    <div>
-                      <p className="font-heading text-lg group-hover:text-warm-accent transition-colors">
-                        {v.title}
-                      </p>
-                      {v.description && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {v.description}
-                        </p>
-                      )}
-                    </div>
-                  </Link>
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </section>
           )}
         </div>
