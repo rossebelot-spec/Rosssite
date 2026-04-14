@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { getDb } from "@/db";
 import { content } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -63,12 +62,6 @@ export default async function AboutPage() {
   if (!about) {
     return (
       <main id="main" className="essay-layout">
-        <div className="essay-toolbar">
-          <Link href="/" className="essay-back-link">
-            Home
-          </Link>
-          <div className="essay-pdf-slot" aria-hidden="true" />
-        </div>
         <header className="essay-header">
           <p className="essay-kicker">About</p>
           <h1 className="essay-title">About</h1>
@@ -88,13 +81,6 @@ export default async function AboutPage() {
 
   return (
     <main id="main" className="essay-layout">
-      <div className="essay-toolbar">
-        <Link href="/" className="essay-back-link">
-          Home
-        </Link>
-        <div className="essay-pdf-slot" aria-hidden="true" />
-      </div>
-
       <header className="essay-header">
         <p className="essay-kicker">About</p>
         <h1 className="essay-title">{about.title}</h1>

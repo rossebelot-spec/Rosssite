@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getDb } from "@/db";
 import { siteEvents } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -65,14 +64,6 @@ export default async function AboutEventsPage() {
 
   return (
     <main className="mx-auto w-full max-w-screen-md px-6 py-16">
-      <div className="mb-8">
-        <Link
-          href="/about"
-          className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
-        >
-          ← About
-        </Link>
-      </div>
       <SectionHeader title="Events" />
 
       {upcoming.length > 0 && (
