@@ -1,14 +1,16 @@
-/* Transform-only motion; flat color lives in Tailwind on the element */
-.motion {
+/* Flat print red + transform motion — colors here so globals/base can’t strip them */
+.shakeIt {
+  background-color: #d62828;
+  color: #fafafa;
   transform: translateZ(0);
   transition: transform 150ms ease-out;
 }
 
-.motion:hover {
+.shakeIt:hover {
   transform: translateZ(0) rotate(-2.5deg) scale(1.02);
 }
 
-.motion:active {
+.shakeIt:active {
   transform: translateZ(0) scale(1.02, 0.92);
   transition-duration: 90ms;
 }

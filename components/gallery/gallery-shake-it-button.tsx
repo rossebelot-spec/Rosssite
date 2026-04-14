@@ -21,10 +21,10 @@ export function GalleryShakeItButton({
       type="button"
       onClick={onClick}
       className={cn(
-        styles.motion,
+        styles.shakeIt,
         "inline-flex cursor-pointer select-none items-center justify-center",
         "border-0 px-6 py-2.5",
-        "rounded-[5px] bg-[#D62828] text-[#FAFAFA]",
+        "rounded-md",
         "text-xs font-medium uppercase tracking-[0.18em]",
         "will-change-transform",
         className
