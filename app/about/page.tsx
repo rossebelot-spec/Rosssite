@@ -103,9 +103,9 @@ export default async function AboutPage() {
             src={blobImageUrl(about.imageUrl)}
             alt={about.title}
             fill
+            priority
             className="object-cover"
             sizes="(max-width: 640px) 100vw, 320px"
-            unoptimized
           />
         </div>
       ) : null}
