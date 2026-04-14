@@ -12,6 +12,7 @@ import {
   getCollectionSlugsForVideo,
   isVercelBlobStorageUrl,
 } from "@/lib/action-helpers";
+import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
 
 export async function createContent(data: {
   type: ContentType;
@@ -147,6 +148,46 @@ export async function deleteContent(id: number) {
   revalidatePath("/literary");
   revalidatePath("/events");
   redirect("/admin/content");
+}
+
+/** Link an existing essay/blog to a video (video must be unlinked; content must not already be linked to any video). */
+export async function linkEssayToVideo({
+  videoId,
+  contentId,
+}: {
+  videoId: number;
+  contentId: number;
+}) {
+  await requireAdmin();
+  const db = getDb();
+
+  const [existingVideoLink] = await db
+    .select({ id: contentLinks.id })
+    .from(contentLinks)
+    .where(eq(contentLinks.videoId, videoId))
+    .limit(1);
+  if (existingVideoLink) {
+    throw new Error("This video already has a linked essay.");
+  }
+
+  const linkedIds = await getContentIdsLinkedToVideo();
+  if (linkedIds.includes(contentId)) {
+    throw new Error("This piece is already linked to a video.");
+  }
+
+  const [c] = await db
+    .select({ type: content.type })
+    .from(content)
+    .where(eq(content.id, contentId))
+    .limit(1);
+  if (!c) {
+    throw new Error("Content not found.");
+  }
+  if (c.type !== "essay" && c.type !== "blog") {
+    throw new Error("Only essays and blog posts can be linked to a video.");
+  }
+
+  await addContentLink({ contentId, videoId });
 }
 
 export async function addContentLink({

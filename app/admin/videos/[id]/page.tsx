@@ -16,6 +16,7 @@ import {
   setVideoCollections,
   setFeaturedHomeVideo,
   clearFeaturedHomeVideo,
+  linkEssayToVideo,
 } from "@/lib/actions";
 import {
   CollectionAssignment,
@@ -27,6 +28,13 @@ interface LinkedEssay {
   linkId: number;
   contentId: number;
   title: string;
+  type: string;
+}
+
+interface UnlinkedEssayOption {
+  id: number;
+  title: string;
+  slug: string;
   type: string;
 }
 
@@ -69,6 +77,9 @@ export default function AdminVideoEditor() {
   const [publishing, setPublishing] = useState(false);
   const [featuredAction, setFeaturedAction] = useState(false);
   const [featuredError, setFeaturedError] = useState<string | null>(null);
+  const [unlinkedEssays, setUnlinkedEssays] = useState<UnlinkedEssayOption[]>([]);
+  const [essayPicker, setEssayPicker] = useState("");
+  const [linkingEssay, setLinkingEssay] = useState(false);
   const isFormValid =
     data.title.trim() !== "" &&
     data.slug.trim() !== "" &&
@@ -102,6 +113,26 @@ export default function AdminVideoEditor() {
       .then((r) => r.json())
       .then((rows) => { if (Array.isArray(rows)) setAllCollections(rows); });
   }, [id, isNew]);
+
+  useEffect(() => {
+    if (isNew || !data.id || data.linkedEssay) {
+      setUnlinkedEssays([]);
+      return;
+    }
+    let cancelled = false;
+    fetch("/api/admin/content/unlinked-for-video")
+      .then((r) => r.json())
+      .then((payload: { items?: UnlinkedEssayOption[] }) => {
+        if (cancelled) return;
+        if (Array.isArray(payload.items)) setUnlinkedEssays(payload.items);
+      })
+      .catch(() => {
+        if (!cancelled) setUnlinkedEssays([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isNew, data.id, data.linkedEssay]);
 
   function set<K extends keyof VideoData>(field: K, value: VideoData[K]) {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -418,16 +449,73 @@ export default function AdminVideoEditor() {
               </Button>
             </div>
           ) : (
-            <div className="flex items-center justify-between gap-4 py-2">
+            <div className="space-y-3 max-w-md">
               <p className="text-xs text-muted-foreground">
-                No essay linked yet.
+                No essay linked yet. Create a new piece or choose an existing essay that is
+                not already attached to a video.
               </p>
-              <Link
-                href={`/admin/content/new?linkType=video&linkId=${data.id}`}
-                className="text-xs tracking-widest uppercase px-4 py-2 border border-border hover:border-warm-accent hover:text-warm-accent transition-colors"
-              >
-                Create Linked Essay
-              </Link>
+              <div>
+                <label
+                  htmlFor="video-essay-picker"
+                  className="text-xs tracking-widest uppercase text-muted-foreground block mb-2"
+                >
+                  Link or create
+                </label>
+                <select
+                  id="video-essay-picker"
+                  className="h-9 w-full max-w-md rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 disabled:opacity-50"
+                  value={essayPicker}
+                  disabled={linkingEssay}
+                  onChange={async (e) => {
+                    const v = e.target.value;
+                    setEssayPicker("");
+                    if (!v || !data.id) return;
+                    if (v === "new") {
+                      router.push(
+                        `/admin/content/new?linkType=video&linkId=${data.id}`
+                      );
+                      return;
+                    }
+                    const contentId = parseInt(v, 10);
+                    if (!Number.isFinite(contentId)) return;
+                    setLinkingEssay(true);
+                    try {
+                      await linkEssayToVideo({
+                        videoId: data.id,
+                        contentId,
+                      });
+                      const video = await fetch(`/api/admin/videos/${data.id}`).then(
+                        (r) => r.json()
+                      );
+                      setData((prev) => ({
+                        ...prev,
+                        linkedEssay: video.linkedEssay ?? null,
+                      }));
+                      router.refresh();
+                    } catch (err) {
+                      alert(
+                        err instanceof Error
+                          ? err.message
+                          : "Could not link essay."
+                      );
+                    } finally {
+                      setLinkingEssay(false);
+                    }
+                  }}
+                >
+                  <option value="">Choose…</option>
+                  <option value="new">Create new essay…</option>
+                  {unlinkedEssays.map((row) => (
+                    <option key={row.id} value={String(row.id)}>
+                      {row.title}
+                      {row.type === "blog" ? " (blog)" : ""}
+                    </option>
+                  ))}
+                </select>
+                {linkingEssay ? (
+                  <p className="text-xs text-muted-foreground mt-2">Linking…</p>
+                ) : null}
+              </div>
             </div>
           )}
         </div>
