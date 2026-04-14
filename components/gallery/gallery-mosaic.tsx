@@ -133,7 +133,10 @@ export function GalleryMosaic({
   return (
     <div className="space-y-6">
       {collectionTitle !== undefined && (
-        <div className="mb-12 border-b border-border pb-6">
+        <div
+          className="sticky z-30 -mx-6 mb-12 border-b border-border bg-background px-6 pb-6 pt-3"
+          style={{ top: "var(--site-header-height)" }}
+        >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between gap-x-8">
             <div className="min-w-0 flex-1">
               <h1 className="font-heading text-4xl tracking-wide">{collectionTitle}</h1>
