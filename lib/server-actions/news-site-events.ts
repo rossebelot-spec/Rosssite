@@ -8,11 +8,14 @@ import { requireAdmin } from "@/lib/action-helpers";
 
 function revalidateNews() {
   revalidatePath("/news");
+  revalidatePath("/happenings");
   revalidatePath("/");
   revalidatePath("/admin/news");
 }
 
 function revalidateSiteEvents() {
+  revalidatePath("/events");
+  revalidatePath("/happenings");
   revalidatePath("/about/events");
   revalidatePath("/admin/events");
 }
@@ -92,7 +95,7 @@ export async function deleteNewsItem(id: number) {
   revalidateNews();
 }
 
-// ─── Site events (About → Events) ───────────────────────────────────────────
+// ─── Site events (public `/events` + Happenings tab) ─────────────────────────
 
 export async function createSiteEvent(data: {
   title: string;

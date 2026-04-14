@@ -20,16 +20,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: base, lastModified: new Date(), changeFrequency: "weekly", priority: 1 },
     { url: `${base}/about`, changeFrequency: "monthly", priority: 0.9 },
-    { url: `${base}/about/events`, changeFrequency: "weekly", priority: 0.75 },
     { url: `${base}/about/contact`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${base}/happenings`, changeFrequency: "weekly", priority: 0.88 },
     { url: `${base}/work`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${base}/literary`, changeFrequency: "weekly", priority: 0.85 },
     { url: `${base}/multimedia`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${base}/essays`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${base}/news`, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${base}/events`, changeFrequency: "weekly", priority: 0.75 },
     { url: `${base}/op-eds`, changeFrequency: "weekly", priority: 0.85 },
     { url: `${base}/photography`, changeFrequency: "monthly", priority: 0.85 },
-    { url: `${base}/events`, changeFrequency: "weekly", priority: 0.65 },
   ];
 
   const [contentRows, videoRows, collectionRows, opEdCollectionRows, newsStoryRows] =

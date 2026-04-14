@@ -131,10 +131,10 @@ export default async function HomePage() {
                 </ul>
               )}
               <Link
-                href="/news"
+                href="/happenings"
                 className="mt-8 inline-block text-xs tracking-widest uppercase text-warm-accent hover:text-foreground transition-colors"
               >
-                All news &rarr;
+                Happenings &rarr;
               </Link>
             </section>
 
