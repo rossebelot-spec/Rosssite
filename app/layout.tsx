@@ -3,6 +3,7 @@ import { Cormorant_Garamond, JetBrains_Mono, Lora, Inter } from "next/font/googl
 import { NavProvider } from "@/components/nav-context";
 import { SiteShell } from "@/components/site-shell";
 import { getSiteUrl } from "@/lib/site-url";
+import { SITE_HEADER_HEIGHT_BOOTSTRAP } from "@/lib/site-header-height-bootstrap";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -74,6 +75,12 @@ export default function RootLayout({
         <NavProvider>
           <SiteShell>{children}</SiteShell>
         </NavProvider>
+        {/*
+          Placed after SiteShell so <header> is already in the DOM when this
+          inline script executes. Root-layout <body> is not reconciled by
+          React's component tree, so no React 19 "script tag" warning fires.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: SITE_HEADER_HEIGHT_BOOTSTRAP }} />
       </body>
     </html>
   );

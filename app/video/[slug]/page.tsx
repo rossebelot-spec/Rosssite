@@ -6,6 +6,7 @@ import { videos, content, contentLinks, collections, collectionItems } from "@/d
 import { eq, and, inArray } from "drizzle-orm";
 import { VideoMain } from "@/components/video/video-main";
 import { videoObjectJsonLd, videoPageMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,7 @@ export default async function VideoSlugPage({ params }: Props) {
 
   return (
     <div className="reading-theme essay-reading-shell">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={jsonLd} />
       <div className="journal-folio-paper essay-reading-paper">
         <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
           <Link href="/video" className="hover:text-foreground transition-colors">

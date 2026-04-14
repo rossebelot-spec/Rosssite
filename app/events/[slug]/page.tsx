@@ -7,6 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { AuthorBio, siteAuthorName } from "@/components/author-bio";
 import { formatPublishedDate } from "@/lib/format-published-date";
 import { articleJsonLd, articleMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +71,7 @@ export default async function EventPiecePage({ params }: Props) {
 
   return (
     <main id="main" className="essay-layout">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={jsonLd} />
       <div className="essay-toolbar">
         <Link href="/events" className="essay-back-link">
           Back to Events
