@@ -1,22 +1,12 @@
 "use client";
 
-import { useMemo, useState, useCallback, useRef } from "react";
+import { useMemo, useState, useCallback } from "react";
 import Image from "next/image";
 import type { GalleryPhoto } from "@/db/schema";
+import { GalleryShakeItButton } from "@/components/gallery/gallery-shake-it-button";
 
 const PAGE_SIZE  = 24;
 const CELL_HEIGHT = 260; // px — base row unit
-
-const REFRESH_LABELS = [
-  "New set →",
-  "Show me more →",
-  "Surprise me →",
-  "Again →",
-  "Keep going →",
-  "Different light →",
-  "One more →",
-  "Go on →",
-];
 
 /**
  * Tiny seeded PRNG (mulberry32). Given the same seed, produces the same
@@ -99,7 +89,6 @@ export function GalleryMosaic({
 }: GalleryMosaicProps) {
   const [epoch, setEpoch] = useState(0);
   const [fading, setFading] = useState(false);
-  const labelIndexRef = useRef(0);
 
   // Shuffle + assign spans in one pass so both change together on refresh.
   // Seed from epoch + sum of photo IDs → same result on server and client
@@ -123,7 +112,6 @@ export function GalleryMosaic({
   const showRefresh = poolLength > 0;
 
   const refresh = useCallback(() => {
-    labelIndexRef.current = (labelIndexRef.current + 1) % REFRESH_LABELS.length;
     setFading(true);
     setTimeout(() => {
       setEpoch((e) => e + 1);
@@ -136,13 +124,10 @@ export function GalleryMosaic({
   }
 
   const refreshButton = showRefresh ? (
-    <button
-      type="button"
+    <GalleryShakeItButton
       onClick={refresh}
-      className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground border border-border hover:border-foreground/30 rounded px-6 py-2.5 transition-colors shrink-0 self-start sm:mt-1"
-    >
-      {REFRESH_LABELS[labelIndexRef.current]}
-    </button>
+      className="shrink-0 self-start sm:mt-1"
+    />
   ) : null;
 
   return (
