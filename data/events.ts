@@ -1,11 +1,4 @@
-export interface Event {
-  title: string;
-  date: string;
-  location: string;
-  description?: string;
-  link?: string;
-}
-
-export const events: Event[] = [
-  // Populate from WordPress events section
-];
+/**
+ * Events live in Postgres (`site_events`) and are edited at `/admin/events`.
+ */
+export type { SiteEventRow } from "@/db/schema";

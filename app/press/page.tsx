@@ -1,23 +1,30 @@
 import type { Metadata } from "next";
-import { pressItems } from "@/data/press";
+import { getDb } from "@/db";
+import { pressItems } from "@/db/schema";
+import { desc, eq } from "drizzle-orm";
 import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = { title: "Press" };
 
-export default function PressPage() {
-  const sorted = [...pressItems].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+export const dynamic = "force-dynamic";
+
+export default async function PressPage() {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(pressItems)
+    .where(eq(pressItems.published, true))
+    .orderBy(desc(pressItems.date));
 
   return (
     <main className="mx-auto w-full max-w-screen-md px-6 py-16">
       <SectionHeader title="Press" />
-      {sorted.length === 0 ? (
+      {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">No press items yet.</p>
       ) : (
         <ul className="divide-y divide-border">
-          {sorted.map((item, i) => (
-            <li key={i} className="py-6">
+          {rows.map((item) => (
+            <li key={item.id} className="py-6">
               <div className="flex items-baseline gap-4">
                 <time className="text-xs tracking-widest uppercase text-muted-foreground shrink-0">
                   {new Date(item.date).toLocaleDateString("en-CA", {
@@ -41,6 +48,11 @@ export default function PressPage() {
               ) : (
                 <p className="font-heading text-xl mt-1">{item.title}</p>
               )}
+              {item.description ? (
+                <p className="text-muted-foreground text-sm mt-2 max-w-prose leading-relaxed">
+                  {item.description}
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>

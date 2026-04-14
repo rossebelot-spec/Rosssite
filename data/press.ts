@@ -1,10 +1,5 @@
-export interface PressItem {
-  title: string;
-  outlet: string;
-  date: string;
-  url?: string;
-}
-
-export const pressItems: PressItem[] = [
-  // Populate from WordPress press section
-];
+/**
+ * Press clippings live in Postgres (`press_items`) and are edited at `/admin/press`.
+ * Types are exported from the schema for occasional use outside Drizzle queries.
+ */
+export type { PressItemRow } from "@/db/schema";

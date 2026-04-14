@@ -165,8 +165,10 @@
   --hero-name-optical-shift: clamp(-0.65rem, -1.25vh, -0.2rem);
   /* Gap between name+roles block and featured video player in hero */
   --hero-featured-after-roles-gap: clamp(0.85rem, 2.25vh, 1.75rem);
-  /* Wider than the name column: min() caps size; % extends left into the photo seam (matches pre-revert featured player size) */
-  --hero-featured-player-width: min(132%, min(54vw, 42rem));
+  /* Wider than the name stack — same ~136%×column intent, but NO percentage width:
+     min(136%, …) used flex’s used width; that % base can be tiny/cyclic on first layout
+     after refresh (fullscreen exit forces reflow). Pure vw+rem is stable. */
+  --hero-featured-player-width: min(36.25vw, 44rem);
   /* Push the typographic block lower in the right column */
   --hero-text-stack-margin-top: clamp(2.25rem, 11vh, 6.5rem);
   /* Pin crop + zoom to the left edge so the subject sits left in the frame, not centered */
@@ -329,6 +331,7 @@
     align-items: flex-end;
     justify-content: flex-start;
     box-sizing: border-box;
+    min-width: 0;
     min-height: 100%;
     height: 100%;
     padding-block: var(--hero-name-panel-padding-block);
@@ -373,6 +376,7 @@
     width: 100%;
     max-width: 100%;
     margin-top: var(--hero-text-stack-margin-top);
+    min-width: 0;
     min-height: 0;
     flex: 1 1 auto;
   }
@@ -415,6 +419,7 @@
   /* Featured player: wider than name stack, anchored right; overall hero band unchanged (see --hero-split-min-height) */
   .home-hero-featured-player {
     align-self: flex-end;
+    flex: 0 0 auto;
     width: var(--hero-featured-player-width);
     max-width: none;
     position: relative;

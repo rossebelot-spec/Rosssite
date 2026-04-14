@@ -219,6 +219,35 @@ export const opEdsRelations = relations(opEds, ({ one }) => ({
   }),
 }));
 
+// ─── Press & events (editorial lists; admin-managed like op-eds) ────────────
+
+export const pressItems = pgTable("press_items", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  outlet: text("outlet").notNull(),
+  /** ISO date string YYYY-MM-DD */
+  date: text("date").notNull(),
+  url: text("url"),
+  description: text("description").notNull().default(""),
+  published: boolean("published").notNull().default(false),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const siteEvents = pgTable("site_events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  date: text("date").notNull(),
+  location: text("location").notNull(),
+  description: text("description").notNull().default(""),
+  link: text("link"),
+  published: boolean("published").notNull().default(false),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // ─── Inferred Types ─────────────────────────────────────────────────────────
 
 export type Photo = typeof photos.$inferSelect;
@@ -237,6 +266,8 @@ export type OpEdCollection = typeof opEdCollections.$inferSelect;
 export type NewOpEdCollection = typeof opEdCollections.$inferInsert;
 export type OpEd = typeof opEds.$inferSelect;
 export type NewOpEd = typeof opEds.$inferInsert;
+export type PressItemRow = typeof pressItems.$inferSelect;
+export type SiteEventRow = typeof siteEvents.$inferSelect;
 
 export type ContentType =
   | "essay"

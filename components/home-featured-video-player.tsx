@@ -23,7 +23,7 @@ export function HomeFeaturedVideoPlayer({
           src={r2}
           controls
           preload="metadata"
-          className="absolute inset-0 h-full w-full object-contain"
+          className="absolute inset-0 h-full w-full object-cover"
           poster={poster}
           aria-label={`Play video: ${title}`}
         />
