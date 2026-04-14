@@ -7,12 +7,18 @@ alwaysApply: true
 
 Changing `db/schema.ts` or adding files under `db/migrations/` **does not** update the remote Neon database. The app will throw at runtime (e.g. `Failed query: select ... from "some_table"`) until SQL has been applied.
 
+## Agent: run migrations yourself (do not punt to the user)
+
+When the workspace has database credentials (typically `DATABASE_URL` / `DATABASE_URL_UNPOOLED` in `.env.local`), **run `npm run db:migrate` in the agent environment** after schema/migration changes and report the result (`OK: applied N` or `Migrations up to date.`). **Do not** ask the user to run local migrations by default — that duplicates `debugging-and-commands.mdc` (“run it yourself”).
+
+**Only** mention user-side steps when the agent genuinely cannot apply SQL here: missing/unreadable env, a **different** DB than the one Cursor uses (e.g. production Neon only in Vercel), or CI/deploy pipelines the repo does not run from this shell. In those cases, state what was verified locally (if anything) and what environment still needs the migration.
+
 ## After any schema or migration change
 
-1. **Run migrations** locally (same DB as `.env.local` if testing): `npm run db:migrate`  
+1. **Run migrations** via `npm run db:migrate` (same DB as `.env.local` when testing).  
    This runs `scripts/db-migrate.mjs` (uses the **`pg`** driver over **TCP/SSL** via `DATABASE_URL_UNPOOLED` / `DATABASE_URL`). Use `generate` / introspect with `drizzle-kit`; **apply** SQL with `npm run db:migrate`, not `drizzle-kit migrate` (the latter can exit 1 on some multi-statement files without a clear error).
-2. If the live schema is ahead of **`drizzle.__drizzle_migrations`** (e.g. only the first rows recorded) but tables/columns already exist, run **`npm run db:repair-journal`** to backfill missing journal rows for all migrations **except the last**, then **`npm run db:migrate`** again. If you still see **`relation … already exists`**, repair or apply SQL manually (Neon SQL Editor).
-3. Before declaring the task done on a schema task: **confirm the migration has been run** or tell the user explicitly they must run `npm run db:migrate` / deploy with migrations on Vercel.
+2. If the live schema is ahead of **`drizzle.__drizzle_migrations`** (e.g. only the first rows recorded) but tables/columns already exist, run **`npm run db:repair-journal`** to backfill missing journal rows for all migrations **except the last**, then **`npm run db:migrate`** again. If you still see **`relation … already exists`**, repair or apply SQL manually (Neon SQL Editor, or guide the user only if the agent has no DB access).
+3. Before declaring the task done on a schema task: **migrations have been run** against the DB the agent can reach, or state clearly which environment still needs them (and why the agent did not run it).
 
 ## When the user reports a failed query / missing column / missing table
 

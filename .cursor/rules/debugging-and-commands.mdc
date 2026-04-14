@@ -15,3 +15,4 @@ alwaysApply: true
 
 - If a command is **safe to run in this environment** (build, lint, tests, `node` scripts, `npm run …`, starting a local server for probes), **run it yourself** — do not hand the user a list of commands unless there is a **good reason** (needs their secrets, destructive git, production DB, network they must approve, or their machine-only paths).
 - If a command **fails** (permissions, missing env), try alternatives or report the error clearly; still avoid “please run X” when you can run X.
+- **`npm run db:migrate`** — same rule: the agent runs it when `DATABASE_URL` / `DATABASE_URL_UNPOOLED` is available (e.g. project `.env.local`). See **`database-migrations.mdc`** — do not default to asking the user to migrate locally.

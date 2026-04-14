@@ -12,40 +12,53 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const db = getDb();
-  const videoLinkedIds = await getContentIdsLinkedToVideo();
-  const [recentEssays, featuredVideo, heroPhotos, recentOpEdRows] = await Promise.all([
-    db
-      .select({
-        id: content.id,
-        title: content.title,
-        slug: content.slug,
-        publishedAt: content.publishedAt,
-      })
-      .from(content)
-      .where(
-        and(
-          inArray(content.type, ["essay", "blog"]),
-          eq(content.published, true),
-          ...(videoLinkedIds.length > 0
-            ? [notInArray(content.id, videoLinkedIds)]
-            : [])
-        )
+  /* Essays need video-linked IDs; everything else is independent — run all four reads at
+     once, then start the essay query as soon as IDs resolve (overlaps with slower Neon rows). */
+  const videoLinkedPromise = getContentIdsLinkedToVideo();
+  const featuredPromise = getFeaturedHomeVideo();
+  const heroPhotosPromise = db
+    .select({ blobUrl: photos.blobUrl })
+    .from(photos)
+    .where(eq(photos.isHero, true))
+    .limit(1);
+  const opEdRowsPromise = db
+    .select({
+      id: opEds.id,
+      title: opEds.title,
+      publication: opEds.publication,
+      url: opEds.url,
+    })
+    .from(opEds)
+    .where(eq(opEds.published, true))
+    .orderBy(desc(opEds.date))
+    .limit(3);
+
+  const videoLinkedIds = await videoLinkedPromise;
+  const essaysPromise = db
+    .select({
+      id: content.id,
+      title: content.title,
+      slug: content.slug,
+      publishedAt: content.publishedAt,
+    })
+    .from(content)
+    .where(
+      and(
+        inArray(content.type, ["essay", "blog"]),
+        eq(content.published, true),
+        ...(videoLinkedIds.length > 0
+          ? [notInArray(content.id, videoLinkedIds)]
+          : [])
       )
-      .orderBy(desc(content.publishedAt))
-      .limit(3),
-    getFeaturedHomeVideo(),
-    db.select({ blobUrl: photos.blobUrl }).from(photos).where(eq(photos.isHero, true)).limit(1),
-    db
-      .select({
-        id: opEds.id,
-        title: opEds.title,
-        publication: opEds.publication,
-        url: opEds.url,
-      })
-      .from(opEds)
-      .where(eq(opEds.published, true))
-      .orderBy(desc(opEds.date))
-      .limit(3),
+    )
+    .orderBy(desc(content.publishedAt))
+    .limit(3);
+
+  const [recentEssays, featuredVideo, heroPhotos, recentOpEdRows] = await Promise.all([
+    essaysPromise,
+    featuredPromise,
+    heroPhotosPromise,
+    opEdRowsPromise,
   ]);
 
   const portraitUrl = heroPhotos[0]?.blobUrl ?? "";
