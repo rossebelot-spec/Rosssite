@@ -157,8 +157,13 @@ export function GalleryMosaic({
           producing a tight, irregular mosaic rather than leaving holes.
           2 cols on mobile, 3 on sm+.
         */}
+        {/*
+          bg-background (not bg-border): empty implicit grid tracks must read as “holes”
+          in the page, not solid tiles. Hairline separations still come from gap-px between
+          figures (surface) and this backdrop.
+        */}
         <div
-          className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-border"
+          className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-background"
           style={{
             gridAutoRows: `${CELL_HEIGHT}px`,
             gridAutoFlow: "dense",
