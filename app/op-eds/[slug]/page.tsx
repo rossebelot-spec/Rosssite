@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!result) return {};
   const { collection } = result;
   const path = `/op-eds/${slug}`;
-  const title = `${collection.publication} — Op-eds`;
+  const title = `${collection.publication} — Commentary and Analysis`;
   const desc = collection.description?.trim() || undefined;
   return {
     title,
@@ -95,7 +95,7 @@ export default async function OpEdCollectionPage({ params }: Props) {
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
         </svg>
-        Op-eds
+        Commentary and Analysis
       </Link>
 
       {/* Masthead */}

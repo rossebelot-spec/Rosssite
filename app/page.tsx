@@ -138,10 +138,10 @@ export default async function HomePage() {
               </Link>
             </section>
 
-            {/* Op-eds */}
+            {/* Commentary & analysis (op-eds route) */}
             <section>
               <h2 className="text-sm md:text-base font-medium tracking-widest uppercase text-muted-foreground mb-6">
-                Recent Op-eds
+                Recent commentary & analysis
               </h2>
               {recentOpEdRows.length === 0 ? (
                 <p className="text-muted-foreground text-sm">Coming soon.</p>
@@ -166,7 +166,7 @@ export default async function HomePage() {
                 href="/op-eds"
                 className="mt-8 inline-block text-xs tracking-widest uppercase text-warm-accent hover:text-foreground transition-colors"
               >
-                All op-eds &rarr;
+                All commentary & analysis &rarr;
               </Link>
             </section>
 

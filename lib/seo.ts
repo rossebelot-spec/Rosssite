@@ -10,7 +10,7 @@ export function absoluteUrl(path: string): string {
 }
 
 const defaultDescription =
-  "Poet, journalist, and environmental writer. Essays, op-eds, photography, and more.";
+  "Poet, journalist, and environmental writer. Essays, commentary and analysis, photography, and more.";
 
 type ArticleMetaInput = {
   title: string;

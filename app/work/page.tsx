@@ -5,7 +5,7 @@ import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = {
   title: "Works",
-  description: "Op-eds, essays, and literary publications.",
+  description: "Commentary and analysis, essays, and literary publications.",
   alternates: { canonical: "/work" },
   openGraph: {
     title: "Works | Ross Belot",
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 const cards = [
   {
     href: "/op-eds",
-    title: "Op-eds",
-    description: "Commentary and columns by publication.",
+    title: "Commentary and Analysis",
+    description: "Magazine and policy writing by publication.",
   },
   {
     href: "/essays",
@@ -38,7 +38,7 @@ export default function WorkHubPage() {
     <main className="mx-auto w-full max-w-screen-lg px-6 py-16">
       <SectionHeader
         title="Works"
-        description="Writing organized by form: newspaper and magazine op-eds, general essays, and literary publications such as books and journals."
+        description="Writing organized by form: commentary and analysis in magazines and policy outlets, general essays, and literary publications such as books and journals."
       />
       <ul className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {cards.map((c) => (

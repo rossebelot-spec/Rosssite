@@ -13,7 +13,11 @@ import { OpEdMastheadImg } from "@/components/op-ed-masthead-img";
 import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Op-eds" };
+export const metadata: Metadata = {
+  title: "Commentary and Analysis",
+  description:
+    "Commentary and analysis on energy, climate, and the environment.",
+};
 
 export default async function OpEdsPage() {
   const db = getDb();
@@ -60,12 +64,14 @@ export default async function OpEdsPage() {
   return (
     <main className="mx-auto w-full max-w-screen-xl px-6 py-16">
       <SectionHeader
-        title="Op-eds"
-        description="Published opinion and analysis on energy, climate, and the environment."
+        title="Commentary and Analysis"
+        description="Commentary and analysis on energy, climate, and the environment."
       />
 
       {!hasCollections && standaloneArticles.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No op-eds published yet.</p>
+        <p className="text-muted-foreground text-sm">
+          No commentary and analysis published yet.
+        </p>
       ) : (
         <div className="space-y-16">
           {/* ── Collections ─────────────────────────────────────────────── */}

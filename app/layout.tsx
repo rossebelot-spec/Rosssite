@@ -32,7 +32,7 @@ const inter = Inter({
 });
 
 const siteDescription =
-  "Poet, journalist, and environmental writer. Essays, op-eds, photography, and more.";
+  "Poet, journalist, and environmental writer. Essays, commentary and analysis, photography, and more.";
 const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
