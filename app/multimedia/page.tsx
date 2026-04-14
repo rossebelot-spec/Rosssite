@@ -69,7 +69,7 @@ export default async function MultimediaPage() {
           {published.length > 0 && (
             <section>
               <SectionSubheading className="mb-6">Collections</SectionSubheading>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="flex flex-col gap-10">
                 {published.map((coll) => (
                   <Link
                     key={coll.id}
@@ -83,7 +83,7 @@ export default async function MultimediaPage() {
                           alt={coll.title}
                           fill
                           className="object-cover transition-transform group-hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          sizes="(max-width: 1280px) 100vw, 1152px"
                         />
                       </div>
                     ) : (
@@ -113,7 +113,7 @@ export default async function MultimediaPage() {
           {standaloneVideos.length > 0 && (
             <section>
               <SectionSubheading className="mb-6">Videos</SectionSubheading>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="flex flex-col gap-10">
                 {standaloneVideos.map((v) => (
                   <Link
                     key={v.id}
@@ -127,7 +127,7 @@ export default async function MultimediaPage() {
                           alt={v.thumbnailAlt || v.title}
                           fill
                           className="object-cover transition-transform group-hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          sizes="(max-width: 1280px) 100vw, 1152px"
                         />
                       </div>
                     ) : (
