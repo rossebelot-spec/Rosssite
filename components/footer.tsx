@@ -9,6 +9,12 @@ export function Footer() {
         </p>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
           <Link
+            href="/about/contact"
+            className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Contact
+          </Link>
+          <Link
             href="/admin"
             className="text-xs tracking-widest uppercase text-muted-foreground hover:text-foreground transition-colors"
           >

@@ -8,6 +8,7 @@ export const siteNavLinks = [
   { href: "/multimedia", label: "Multimedia" },
   { href: "/work", label: "Works" },
   { href: "/news", label: "News" },
+  { href: "/about/events", label: "Events" },
   { href: "/about", label: "About" },
 ] as const;
 
