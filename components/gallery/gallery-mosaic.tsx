@@ -1,8 +1,11 @@
 "use client";
 
 import { useMemo, useState, useCallback } from "react";
+import type { KeyboardEvent } from "react";
 import Image from "next/image";
 import type { GalleryPhoto } from "@/db/schema";
+import { cn } from "@/lib/utils";
+import { GalleryLightbox } from "@/components/gallery/gallery-lightbox";
 import { GalleryShakeItButton } from "@/components/gallery/gallery-shake-it-button";
 
 const PAGE_SIZE  = 24;
@@ -89,6 +92,37 @@ export function GalleryMosaic({
 }: GalleryMosaicProps) {
   const [epoch, setEpoch] = useState(0);
   const [fading, setFading] = useState(false);
+  const [lightboxPhoto, setLightboxPhoto] = useState<GalleryPhoto | null>(null);
+
+  const openLightbox = useCallback((p: GalleryPhoto) => {
+    setLightboxPhoto(p);
+  }, []);
+
+  const closeLightbox = useCallback(() => {
+    setLightboxPhoto(null);
+  }, []);
+
+  const photoTileProps = useCallback(
+    (photo: GalleryPhoto, extraClass?: string) => ({
+      className: cn(
+        "cursor-pointer outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        extraClass
+      ),
+      onClick: () => openLightbox(photo),
+      onKeyDown: (e: KeyboardEvent<HTMLElement>) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openLightbox(photo);
+        }
+      },
+      tabIndex: 0,
+      role: "button" as const,
+      "aria-label": photo.title
+        ? `Open larger: ${photo.title}`
+        : "Open photograph larger",
+    }),
+    [openLightbox]
+  );
 
   // Shuffle + assign spans in one pass so both change together on refresh.
   // Seed from epoch + sum of photo IDs → same result on server and client
@@ -132,6 +166,9 @@ export function GalleryMosaic({
 
   return (
     <div className="space-y-6">
+      {lightboxPhoto ? (
+        <GalleryLightbox photo={lightboxPhoto} onClose={closeLightbox} />
+      ) : null}
       {collectionTitle !== undefined && (
         <div
           className="sticky z-30 -mx-6 mb-12 border-b border-border bg-background px-6 pb-6 pt-3"
@@ -175,7 +212,10 @@ export function GalleryMosaic({
           {/* Featured — anchored top-left, 2×2, always first in DOM */}
           {featuredPhoto && (
             <figure
-              className="col-span-2 row-span-2 relative overflow-hidden bg-surface group"
+              {...photoTileProps(
+                featuredPhoto,
+                "col-span-2 row-span-2 relative overflow-hidden bg-surface group"
+              )}
             >
               <Image
                 src={featuredPhoto.r2Url}
@@ -197,7 +237,7 @@ export function GalleryMosaic({
           {cells.map(({ photo, colSpan, rowSpan }) => (
             <figure
               key={`${epoch}-${photo.id}`}
-              className="relative overflow-hidden bg-surface group"
+              {...photoTileProps(photo, "relative overflow-hidden bg-surface group")}
               style={{
                 gridColumn: colSpan > 1 ? `span ${colSpan}` : undefined,
                 gridRow:    rowSpan > 1 ? `span ${rowSpan}` : undefined,
