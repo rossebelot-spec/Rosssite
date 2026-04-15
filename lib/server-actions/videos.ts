@@ -10,6 +10,7 @@ import {
   getCollectionSlugsForVideo,
   reindexCollectionItemPositions,
 } from "@/lib/action-helpers";
+import { requireHostedVideoUrl } from "@/lib/hosted-video-url";
 
 export async function setVideoCollections({
   videoId,
@@ -80,8 +81,7 @@ export async function setVideoCollections({
 export async function createVideo(data: {
   title: string;
   slug: string;
-  vimeoId: string;
-  r2Url?: string | null;
+  r2Url: string;
   thumbnailUrl?: string;
   thumbnailAlt?: string;
   description?: string;
@@ -92,21 +92,21 @@ export async function createVideo(data: {
 
   const title = data.title.trim();
   const slug = data.slug.trim();
-  const vimeoId = data.vimeoId.trim();
-  if (!title || !slug || !vimeoId) {
-    throw new Error("Title, slug, and Vimeo ID are required before saving.");
+  if (!title || !slug) {
+    throw new Error("Title and slug are required before saving.");
   }
   if (slug === "collections") {
     throw new Error('"collections" is a reserved slug and cannot be used.');
   }
 
+  const r2Norm = requireHostedVideoUrl(data.r2Url);
+
   const db = getDb();
-  const { collectionIds, r2Url, ...rest } = data;
-  const r2Norm = r2Url?.trim() ? r2Url.trim() : null;
+  const { collectionIds, r2Url: _, ...rest } = data;
   const insertData = { ...rest, r2Url: r2Norm };
   const [video] = await db
     .insert(videos)
-    .values({ ...insertData, title, slug, vimeoId })
+    .values({ ...insertData, title, slug })
     .returning();
   revalidatePath("/video");
   revalidatePath(`/video/${slug}`);
@@ -121,7 +121,6 @@ export async function updateVideo(
   data: {
     title?: string;
     slug?: string;
-    vimeoId?: string;
     r2Url?: string | null;
     thumbnailUrl?: string;
     thumbnailAlt?: string;
@@ -136,12 +135,19 @@ export async function updateVideo(
   if (data.slug === "collections") {
     throw new Error('"collections" is a reserved slug and cannot be used.');
   }
+  const payload: typeof data = { ...data };
+  if (payload.r2Url !== undefined) {
+    if (payload.r2Url === null || String(payload.r2Url).trim() === "") {
+      throw new Error("Hosted video URL cannot be empty.");
+    }
+    payload.r2Url = requireHostedVideoUrl(payload.r2Url);
+  }
   const db = getDb();
   const [before] = await db
     .select({ slug: videos.slug })
     .from(videos)
     .where(eq(videos.id, id));
-  await db.update(videos).set(data).where(eq(videos.id, id));
+  await db.update(videos).set(payload).where(eq(videos.id, id));
   revalidatePath("/video");
   if (before) revalidatePath(`/video/${before.slug}`);
   if (data.slug && data.slug !== before?.slug) {
@@ -157,9 +163,16 @@ export async function publishVideo(id: number, publish: boolean) {
   await requireAdmin();
   const db = getDb();
   const [before] = await db
-    .select({ slug: videos.slug, featured: videos.isFeaturedForHome })
+    .select({
+      slug: videos.slug,
+      featured: videos.isFeaturedForHome,
+      r2Url: videos.r2Url,
+    })
     .from(videos)
     .where(eq(videos.id, id));
+  if (publish && before && !(before.r2Url ?? "").trim()) {
+    throw new Error("Set a hosted video URL (HTTPS MP4) before publishing.");
+  }
   await db
     .update(videos)
     .set({

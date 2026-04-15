@@ -12,7 +12,7 @@ This split keeps the hero visually connected to the film while essays / op-eds s
 |--------|----------|
 | Which row is “featured” | DB: `videos.is_featured_for_home` (at most one `true`; set in **`/admin/videos/[id]`**). `getFeaturedHomeVideo()` selects `is_featured_for_home AND published`. |
 | Hero shell + optional player | `components/hero.tsx` — `featuredVideo` prop; `data-hero-featured-video="true\|false"` |
-| Player markup only | `components/home-featured-video-player.tsx` — R2 `<video>` or Vimeo iframe (same rules as `VideoMain`) |
+| Player markup only | `components/home-featured-video-player.tsx` — R2 `<video>` (same rules as `VideoMain`) |
 | Third column | `components/home-featured-video.tsx` — `HomeFeaturedVideoCopy` |
 | Wiring | `app/page.tsx` — loads featured row, passes props to `Hero` + `HomeFeaturedVideoCopy` |
 | Size / spacing | `app/globals.css` — tokens below + `.home-hero-featured-player` |

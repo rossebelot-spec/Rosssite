@@ -42,7 +42,6 @@ interface VideoData {
   id?: number;
   title: string;
   slug: string;
-  vimeoId: string;
   r2Url: string;
   thumbnailUrl: string;
   thumbnailAlt: string;
@@ -54,7 +53,6 @@ interface VideoData {
 const empty: VideoData = {
   title: "",
   slug: "",
-  vimeoId: "",
   r2Url: "",
   thumbnailUrl: "",
   thumbnailAlt: "",
@@ -83,7 +81,7 @@ export default function AdminVideoEditor() {
   const isFormValid =
     data.title.trim() !== "" &&
     data.slug.trim() !== "" &&
-    data.vimeoId.trim() !== "";
+    data.r2Url.trim() !== "";
 
   useEffect(() => {
     if (!isNew) {
@@ -94,7 +92,6 @@ export default function AdminVideoEditor() {
             id: video.id,
             title: video.title,
             slug: video.slug,
-            vimeoId: video.vimeoId,
             r2Url: video.r2Url ?? "",
             thumbnailUrl: video.thumbnailUrl,
             thumbnailAlt: video.thumbnailAlt,
@@ -144,8 +141,7 @@ export default function AdminVideoEditor() {
       const payload = {
         title: data.title,
         slug: data.slug,
-        vimeoId: data.vimeoId,
-        r2Url: data.r2Url.trim() || null,
+        r2Url: data.r2Url.trim(),
         thumbnailUrl: data.thumbnailUrl,
         thumbnailAlt: data.thumbnailAlt,
         description: data.description,
@@ -279,50 +275,33 @@ export default function AdminVideoEditor() {
 
         <div>
           <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">
-            Vimeo ID
-          </label>
-          <Input
-            value={data.vimeoId}
-            onChange={(e) => set("vimeoId", e.target.value)}
-            placeholder="Bare numeric ID only (e.g. 123456789)"
-          />
-        </div>
-
-        <div>
-          <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">
-            R2 URL (optional — overrides Vimeo)
+            Hosted video URL (HTTPS MP4)
           </label>
           <Input
             value={data.r2Url}
             onChange={(e) => set("r2Url", e.target.value)}
-            placeholder="https://…"
+            placeholder="https://… (Cloudflare R2 public URL or other HTTPS MP4)"
           />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Paste the public URL after uploading the compressed MP4 to R2 (or run the migrate script locally).
+          </p>
         </div>
 
-        {(data.r2Url.trim() || data.vimeoId) && (
+        {data.r2Url.trim() ? (
           <div>
             <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-2">
               Preview
             </label>
             <div className="relative w-full aspect-video rounded overflow-hidden border border-border bg-black">
-              {data.r2Url.trim() ? (
-                <video
-                  src={data.r2Url.trim()}
-                  controls
-                  preload="metadata"
-                  className="absolute inset-0 h-full w-full object-contain"
-                />
-              ) : (
-                <iframe
-                  src={`https://player.vimeo.com/video/${data.vimeoId}?dnt=1&title=0&byline=0&portrait=0`}
-                  className="absolute inset-0 h-full w-full"
-                  allow="autoplay; fullscreen; picture-in-picture"
-                  allowFullScreen
-                />
-              )}
+              <video
+                src={data.r2Url.trim()}
+                controls
+                preload="metadata"
+                className="absolute inset-0 h-full w-full object-contain"
+              />
             </div>
           </div>
-        )}
+        ) : null}
 
         <div>
           <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">

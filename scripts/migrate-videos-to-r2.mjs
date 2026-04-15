@@ -9,7 +9,8 @@
  *
  * Env:
  *   DATABASE_URL — required (from .env.local)
- *   COMPRESSED_DIR — override folder (default: /Volumes/Archive/VimeoMasters/Compressed)
+ *   COMPRESSED_DIR — override folder (default: /Volumes/Archive/VideoMasters/Compressed)
+ *   R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY — if both set, skip interactive prompts (CI / automation)
  */
 
 import { fileURLToPath } from "node:url";
@@ -26,7 +27,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 config({ path: path.resolve(__dirname, "../.env.local") });
 
-const DEFAULT_COMPRESSED = "/Volumes/Archive/VimeoMasters/Compressed";
+const DEFAULT_COMPRESSED = "/Volumes/Archive/VideoMasters/Compressed";
 
 const R2_ACCOUNT_ID = "87e1212f0dca896abd2b40062520b511";
 const R2_ENDPOINT = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
@@ -203,13 +204,18 @@ async function main() {
     process.exit(1);
   }
 
-  const rl = readline.createInterface({ input, output });
-  const accessKeyId = (await rl.question("R2 Access Key ID: ")).trim();
-  const secretAccessKey = (await rl.question("R2 Secret Access Key: ")).trim();
-  await rl.close();
+  let accessKeyId = (process.env.R2_ACCESS_KEY_ID ?? "").trim();
+  let secretAccessKey = (process.env.R2_SECRET_ACCESS_KEY ?? "").trim();
 
   if (!accessKeyId || !secretAccessKey) {
-    console.error("Access Key ID and Secret Access Key are required.");
+    const rl = readline.createInterface({ input, output });
+    accessKeyId = (await rl.question("R2 Access Key ID: ")).trim();
+    secretAccessKey = (await rl.question("R2 Secret Access Key: ")).trim();
+    await rl.close();
+  }
+
+  if (!accessKeyId || !secretAccessKey) {
+    console.error("Set R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY, or enter keys when prompted.");
     process.exit(1);
   }
 

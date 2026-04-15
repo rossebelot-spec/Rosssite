@@ -1,15 +1,15 @@
 /**
- * Transcode local Vimeo archive files for published `videos` rows (HandBrake VideoToolbox).
+ * Transcode local master video files for published `videos` rows (HandBrake VideoToolbox).
  *
- * Read-only against Neon. Source masters: scan ARCHIVE (default VimeoMasters) for video files;
- * match each DB row by slug basename and/or numeric vimeo id in the filename (no .info.json required).
- * Writes under ARCHIVE/Compressed and ARCHIVE/missing_videos.log.
+ * Read-only against Neon. Scans ARCHIVE (default: /Volumes/Archive/VideoMasters) for video files;
+ * matches each DB row by slug basename and/or fuzzy title/slug match.
+ * Writes under ARCHIVE/Compressed and ARCHIVE/missing_video_encode.log.
  *
  * First run (one video):
- *   npm run compress:vimeo-archive:one
+ *   npm run compress:video-archive:one
  *
- * All published with a vimeo id:
- *   npm run compress:vimeo-archive
+ * All published rows:
+ *   npm run compress:video-archive
  *
  * Output: Compressed/{slug}.mp4 (slug from DB; filesystem-safe). CQ from HANDBRAKE_Q — for vt_h264,
  * higher -q = less compression / larger files (opposite of x264 RF; see constant below).
@@ -18,7 +18,7 @@
  *   --limit N     Process at most N rows (after DB query order by id)
  *   --dry-run     Print actions only; no HandBrake, no log append
  *   --force       Re-encode even if output file already exists (replaces file)
- *   --archive PATH  Override archive root (default /Volumes/Archive/VimeoMasters)
+ *   --archive PATH  Override archive root (default /Volumes/Archive/VideoMasters)
  */
 
 import { fileURLToPath } from "node:url";
@@ -32,7 +32,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const { config } = await import("dotenv");
 config({ path: path.resolve(__dirname, "../.env.local") });
 
-const DEFAULT_ARCHIVE = "/Volumes/Archive/VimeoMasters";
+const DEFAULT_ARCHIVE = "/Volumes/Archive/VideoMasters";
 /**
  * HandBrake VideoToolbox H.264 constant quality (-q): scale is ~0–100 (higher = higher quality / less compression).
  * Unlike x264 RF, larger values mean gentler encodes and bigger files. ~35–50 = stronger compression / smaller files;
@@ -58,23 +58,15 @@ function parseArgs(argv) {
   return { limit, dryRun, force, archiveRoot };
 }
 
-/** Safe basename for output .mp4 (uses DB slug; falls back to vimeo id). */
-function outputBasename(slug, vimeoId) {
-  const raw = (slug && String(slug).trim()) || `vimeo-${vimeoId}`;
+/** Safe basename for output .mp4 (uses DB slug; falls back to db id). */
+function outputBasename(slug, rowId) {
+  const raw = (slug && String(slug).trim()) || `video-${rowId}`;
   const safe = raw
     .replace(/[/\\?%*:|"<>]/g, "-")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
-  return (safe.length > 0 ? safe : `vimeo-${vimeoId}`) + ".mp4";
-}
-
-/** Normalize Vimeo numeric id for map keys. */
-function normalizeVimeoId(raw) {
-  if (raw == null) return "";
-  const s = String(raw).trim();
-  const digits = s.replace(/\D/g, "");
-  return digits.length > 0 ? digits : s;
+  return (safe.length > 0 ? safe : `video-${rowId}`) + ".mp4";
 }
 
 function isMasterVideoFile(filePath) {
@@ -119,9 +111,9 @@ function titleWordScore(filePath, title) {
 }
 
 /**
- * Find a master file: exact slug basename, vimeo id in name, [vimeo id], or best title/slug fuzzy match.
+ * Find a master file: exact slug basename, or best title/slug fuzzy match.
  */
-function findMasterForRow(masterFiles, row, vid) {
+function findMasterForRow(masterFiles, row) {
   const slug = String(row.slug || "").trim().toLowerCase();
   const title = row.title;
 
@@ -130,28 +122,6 @@ function findMasterForRow(masterFiles, row, vid) {
       if (basenameNoExt(f) === slug) {
         return { path: f, reason: "basename=slug" };
       }
-    }
-  }
-
-  if (vid && vid.length >= 7) {
-    const hits = [];
-    for (const f of masterFiles) {
-      if (path.basename(f).includes(vid)) hits.push(f);
-    }
-    if (hits.length === 1) return { path: hits[0], reason: "filename-contains-vimeo-id" };
-    if (hits.length > 1) {
-      hits.sort((a, b) => a.length - b.length);
-      console.warn(
-        `WARN: ${hits.length} files contain vimeo id ${vid}; using shortest path:\n  ${hits[0]}`
-      );
-      return { path: hits[0], reason: "filename-contains-vimeo-id" };
-    }
-  }
-
-  if (vid) {
-    const re = new RegExp(`\\[vimeo\\s*${vid}\\]`, "i");
-    for (const f of masterFiles) {
-      if (re.test(path.basename(f))) return { path: f, reason: "[vimeo id] in filename" };
     }
   }
 
@@ -236,7 +206,7 @@ function formatBytes(n) {
 async function main() {
   const { limit, dryRun, force, archiveRoot } = parseArgs(process.argv.slice(2));
   const compressedDir = path.join(archiveRoot, "Compressed");
-  const missingLog = path.join(archiveRoot, "missing_videos.log");
+  const missingLog = path.join(archiveRoot, "missing_video_encode.log");
 
   const url = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
   if (!url) {
@@ -265,16 +235,15 @@ async function main() {
   const sql = neon(url);
 
   const rows = await sql`
-    SELECT id, title, slug, vimeo_id
+    SELECT id, title, slug
     FROM videos
     WHERE published = true
-      AND trim(vimeo_id) <> ''
     ORDER BY id ASC
   `;
 
   const toProcess = rows.slice(0, limit);
   console.log(
-    `DB: ${rows.length} published row(s) with vimeo_id; processing ${toProcess.length} (limit=${limit === Infinity ? "none" : limit}).`
+    `DB: ${rows.length} published row(s); processing ${toProcess.length} (limit=${limit === Infinity ? "none" : limit}).`
   );
 
   const appendLog = (line) => {
@@ -287,20 +256,12 @@ async function main() {
   let failed = 0;
 
   for (const row of toProcess) {
-    const vid = normalizeVimeoId(row.vimeo_id);
-    const outName = outputBasename(row.slug, vid);
+    const outName = outputBasename(row.slug, row.id);
     const outPath = path.join(compressedDir, outName);
 
-    if (!vid) {
-      const msg = `NO_ID\tdb_id=${row.id}\tslug=${row.slug}\ttitle=${row.title}`;
-      console.log(`SKIP: ${msg}`);
-      appendLog(msg);
-      continue;
-    }
-
-    const found = findMasterForRow(masterFiles, row, vid);
+    const found = findMasterForRow(masterFiles, row);
     if (!found) {
-      const msg = `MISSING_FILE\tvimeo_id=${vid}\tdb_id=${row.id}\tslug=${row.slug}\ttitle=${row.title}`;
+      const msg = `MISSING_FILE\tdb_id=${row.id}\tslug=${row.slug}\ttitle=${row.title}`;
       console.log(msg);
       appendLog(msg);
       continue;
@@ -345,14 +306,14 @@ async function main() {
       continue;
     }
 
-    console.log(`\nENCODE vimeo_id=${vid}\n  in:  ${inputPath}\n  out: ${outPath}`);
+    console.log(`\nENCODE slug=${row.slug}\n  in:  ${inputPath}\n  out: ${outPath}`);
     const r = spawnSync("HandBrakeCLI", hbArgs, {
       stdio: "inherit",
       env: process.env,
     });
     if (r.status !== 0) {
       failed++;
-      const msg = `FAILED_ENCODE\tvimeo_id=${vid}\tdb_id=${row.id}\tstatus=${r.status}`;
+      const msg = `FAILED_ENCODE\tdb_id=${row.id}\tslug=${row.slug}\tstatus=${r.status}`;
       console.error(msg);
       appendLog(msg);
       continue;

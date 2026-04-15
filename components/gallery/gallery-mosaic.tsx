@@ -165,13 +165,13 @@ export function GalleryMosaic({
   ) : null;
 
   return (
-    <div className="space-y-6">
+    <div className="relative isolate space-y-6">
       {lightboxPhoto ? (
         <GalleryLightbox photo={lightboxPhoto} onClose={closeLightbox} />
       ) : null}
       {collectionTitle !== undefined && (
         <div
-          className="sticky z-30 -mx-6 mb-12 border-b border-border bg-background px-6 pb-6 pt-3"
+          className="sticky z-40 -mx-6 mb-12 border-b border-border bg-background px-6 pb-6 pt-3"
           style={{ top: "var(--site-header-height)" }}
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between gap-x-8">
@@ -189,7 +189,7 @@ export function GalleryMosaic({
       )}
 
       <div
-        className="transition-opacity duration-200"
+        className="relative z-0 transition-opacity duration-200"
         style={{ opacity: fading ? 0 : 1 }}
       >
         {/*

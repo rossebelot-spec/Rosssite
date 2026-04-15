@@ -5,7 +5,6 @@ import { VideoMain } from "./video-main";
 import { VideoEssay } from "./video-essay";
 
 export interface CollectionVideoItem extends SidebarItem {
-  vimeoId: string;
   r2Url?: string | null;
   essayTitle: string;
   essayHtml: string;
@@ -56,8 +55,7 @@ export function CollectionReader({
               <VideoMain
                 videoTitle={activeVideo.title}
                 essayTitle={activeVideo.essayTitle}
-                vimeoId={activeVideo.vimeoId}
-                r2Url={activeVideo.r2Url}
+                r2Url={activeVideo.r2Url ?? null}
                 thumbnailUrl={activeVideo.thumbnailUrl}
                 essayHtml={activeVideo.essayHtml}
               />

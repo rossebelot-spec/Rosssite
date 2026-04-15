@@ -27,8 +27,7 @@ export const videos = pgTable("videos", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   slug: text("slug").notNull().unique(),
-  vimeoId: text("vimeo_id").notNull(),
-  /** Optional Cloudflare R2 (or other) direct MP4 URL; when set, collection/single video UI prefers this over Vimeo. */
+  /** Public HTTPS URL for the MP4 (e.g. Cloudflare R2). Required for playback. */
   r2Url: text("r2_url"),
   thumbnailUrl: text("thumbnail_url").notNull().default(""),
   thumbnailAlt: text("thumbnail_alt").notNull().default(""),

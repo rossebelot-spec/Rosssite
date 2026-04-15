@@ -1,0 +1,33 @@
+# Plan-only check: connects to Neon and runs `migrate-videos-to-r2.mjs` without uploading.
+# Full upload + DB update still runs locally: `node scripts/migrate-videos-to-r2.mjs --execute`
+# with R2 keys (or set R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY in the environment).
+#
+# Required repo secret: DATABASE_URL (Neon connection string for the target DB).
+
+name: Video — R2 migrate plan
+
+on:
+  workflow_dispatch:
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create empty COMPRESSED_DIR
+        run: mkdir -p ./.ci-compressed-empty
+
+      - name: Run migrate plan (no upload)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          COMPRESSED_DIR: ${{ github.workspace }}/.ci-compressed-empty
+        run: node scripts/migrate-videos-to-r2.mjs

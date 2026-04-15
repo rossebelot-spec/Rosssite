@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useNavContext } from "@/components/nav-context";
 import {
   siteHeaderTagline,
@@ -15,7 +15,27 @@ export function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { contextLine } = useNavContext();
-  const headerRef = useRef<HTMLElement>(null);
+  const headerHeightObserverRef = useRef<ResizeObserver | null>(null);
+
+  const setHeaderRef = useCallback((el: HTMLElement | null) => {
+    headerHeightObserverRef.current?.disconnect();
+    headerHeightObserverRef.current = null;
+    if (!el) return;
+
+    let styleEl = document.getElementById("site-header-height-live");
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = "site-header-height-live";
+      document.head.appendChild(styleEl);
+    }
+    const setHeight = () => {
+      styleEl!.textContent = `:root { --site-header-height: ${el.offsetHeight}px; }`;
+    };
+    setHeight();
+    const ro = new ResizeObserver(setHeight);
+    ro.observe(el);
+    headerHeightObserverRef.current = ro;
+  }, []);
 
   const isNavActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -27,30 +47,9 @@ export function Nav() {
 
   const allLinks = [...siteNavLinks];
 
-  useLayoutEffect(() => {
-    /* querySelector: ref can still be null on first layout pass in some environments */
-    const el = headerRef.current ?? document.querySelector("body > header");
-    if (!el) return;
-    let styleEl = document.getElementById("site-header-height-live");
-    if (!styleEl) {
-      styleEl = document.createElement("style");
-      styleEl.id = "site-header-height-live";
-      document.head.appendChild(styleEl);
-    }
-    const setHeight = () => {
-      styleEl.textContent = `:root { --site-header-height: ${el.offsetHeight}px; }`;
-    };
-    setHeight();
-    const ro = new ResizeObserver(setHeight);
-    ro.observe(el);
-    return () => {
-      ro.disconnect();
-    };
-  }, [contextLine]);
-
   return (
     <header
-      ref={headerRef}
+      ref={setHeaderRef}
       className="sticky top-0 left-0 right-0 z-50 border-b border-border bg-surface"
     >
       <div className="mx-auto flex max-w-screen-xl flex-col gap-2 px-6 py-4">

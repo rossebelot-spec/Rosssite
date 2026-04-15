@@ -326,7 +326,7 @@ async function main() {
         'Most Interesting',
         'most-interesting',
         'photo',
-        'Top photographs ranked by Flickr interestingness — views, faves, and comments.',
+        'A curated collection of some of my best photos — press SHAKE IT to change it up, or select a photo for a closer view.',
         true,
         NOW(),
         10,

@@ -39,7 +39,7 @@ interface CollectionItem {
   linkedId: number;
   title: string;
   slug: string;
-  vimeoId: string;
+  r2Url: string | null;
   thumbnailUrl: string;
   thumbnailAlt: string;
   durationSeconds: number | null;

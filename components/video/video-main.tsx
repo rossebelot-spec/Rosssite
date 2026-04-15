@@ -5,10 +5,9 @@ interface VideoMainProps {
   videoTitle: string;
   /** `content.title` for the linked published essay (may be absent). */
   essayTitle?: string | null;
-  vimeoId: string;
-  /** When set, a native video element is used instead of the Vimeo iframe. */
-  r2Url?: string | null;
-  /** Still shown before play when using R2/native `<video>` (`videos.thumbnail_url`). */
+  /** Public HTTPS URL for the MP4 (e.g. Cloudflare R2). */
+  r2Url: string | null;
+  /** Poster when using native `<video>` (`videos.thumbnail_url`). */
   thumbnailUrl?: string | null;
   essayHtml: string;
 }
@@ -16,13 +15,13 @@ interface VideoMainProps {
 export function VideoMain({
   videoTitle,
   essayTitle,
-  vimeoId,
   r2Url,
   thumbnailUrl,
   essayHtml,
 }: VideoMainProps) {
   const essayTitleTrimmed = (essayTitle ?? "").trim();
   const poster = thumbnailUrl?.trim() || undefined;
+  const src = r2Url?.trim() ?? "";
 
   return (
     <div className="flex flex-col gap-8">
@@ -43,21 +42,18 @@ export function VideoMain({
           {videoTitle}
         </h1>
         <div className="relative w-full aspect-video bg-black">
-          {r2Url?.trim() ? (
+          {src ? (
             <video
-              src={r2Url.trim()}
+              src={src}
               controls
               preload="metadata"
               className="absolute inset-0 h-full w-full object-contain"
               poster={poster}
             />
           ) : (
-            <iframe
-              src={`https://player.vimeo.com/video/${vimeoId}?dnt=1&title=0&byline=0&portrait=0`}
-              className="absolute inset-0 h-full w-full"
-              allow="autoplay; fullscreen; picture-in-picture"
-              allowFullScreen
-            />
+            <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">
+              No hosted video URL is set for this page.
+            </div>
           )}
         </div>
       </div>

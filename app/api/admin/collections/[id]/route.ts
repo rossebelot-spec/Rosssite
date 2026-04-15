@@ -29,7 +29,7 @@ export async function GET(
       linkedId: collectionItems.linkedId,
       title: videos.title,
       slug: videos.slug,
-      vimeoId: videos.vimeoId,
+      r2Url: videos.r2Url,
       thumbnailUrl: videos.thumbnailUrl,
       thumbnailAlt: videos.thumbnailAlt,
       durationSeconds: videos.durationSeconds,

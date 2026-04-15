@@ -6,7 +6,6 @@ import { HomeFeaturedVideoPlayer } from "@/components/home-featured-video-player
 export type HeroFeaturedVideo = {
   title: string;
   slug: string;
-  vimeoId: string;
   r2Url: string | null;
   thumbnailUrl?: string | null;
 };
@@ -63,7 +62,6 @@ export function Hero({ portraitUrl, featuredVideo = null }: HeroProps) {
             {featuredVideo ? (
               <HomeFeaturedVideoPlayer
                 title={featuredVideo.title}
-                vimeoId={featuredVideo.vimeoId}
                 r2Url={featuredVideo.r2Url}
                 thumbnailUrl={featuredVideo.thumbnailUrl}
               />

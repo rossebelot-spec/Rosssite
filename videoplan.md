@@ -24,14 +24,14 @@ Sections below retain **historical** naming and file paths from the original pla
 
 ### `videos` (historical doc referred to this as `video_poems`)
 
-Long-form essay HTML is **not** stored on this table. It lives in **`content.body_html`** and is associated via **`content_links`** (`video_id`). The public collection reader joins those rows when building the essay pane beside the Vimeo embed.
+Long-form essay HTML is **not** stored on this table. It lives in **`content.body_html`** and is associated via **`content_links`** (`video_id`). The public collection reader joins those rows when building the essay pane beside the native video player.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | `serial` | primary key |
 | `title` | `text` | not null |
 | `slug` | `text` | not null, unique — used as `?poem=` key and in admin URLs |
-| `vimeo_id` | `text` | not null — bare numeric ID, NOT a full URL |
+| `r2_url` | `text` | nullable in DB; **required in app** — public HTTPS URL to the MP4 (e.g. Cloudflare R2) |
 | `thumbnail_url` | `text` | not null, default `""` — Vercel Blob URL, 16:9 aspect ratio |
 | `thumbnail_alt` | `text` | not null, default `""` |
 | `description` | `text` | not null, default `""` — short lede for meta/listings |
@@ -129,7 +129,7 @@ app/admin/
   videos/
     page.tsx          # list all poems, table style, link to edit, small thumbnail
     [id]/
-      page.tsx        # editor: title, slug (auto-slugified on new), vimeoId input +
+      page.tsx        # editor: title, slug (auto-slugified on new), hosted MP4 URL +
                       # live iframe preview, thumbnail (ImageUploader → Vercel Blob),
                       # description; link essay via content + content_links. id === "new" = create mode.
   collections/
@@ -149,7 +149,7 @@ app/api/admin/
 
 **`/admin/videos` (list)** — server component, `force-dynamic`. Selects all poems ordered by `created_at desc`. "New Video Poem" → `/admin/videos/new`.
 
-**`/admin/videos/[id]` (editor)** — client component. Fields: title, slug, Vimeo ID (text input, hint "bare numeric ID only"), thumbnail upload (ImageUploader → Vercel Blob, crop to 16:9), description; optional link to an existing essay (`content` row) via `content_links`. Renders a live `<iframe>` preview once `vimeo_id` is set — embed URL format: `https://player.vimeo.com/video/${vimeoId}?dnt=1&title=0&byline=0&portrait=0`. Save calls `createVideo` or `updateVideo`. Delete calls `deleteVideo`. Long-form HTML is edited under **`/admin/content`**, not inline on the video poem row.
+**`/admin/videos/[id]` (editor)** — client component. Fields: title, slug, hosted HTTPS MP4 URL (R2 or similar), thumbnail upload (ImageUploader → Vercel Blob, crop to 16:9), description; optional link to an existing essay (`content` row) via `content_links`. Renders a live `<video>` preview when `r2_url` is set. Save calls `createVideo` or `updateVideo`. Delete calls `deleteVideo`. Long-form HTML is edited under **`/admin/content`**, not inline on the video row.
 
 **`/admin/collections` (list)** — server component. Shows title, slug, item count (aggregate join), published state, `display_order`.
 
@@ -173,7 +173,7 @@ Includes `createContent`, `updateContent`, `deleteContent`, `addContentLink`, `r
 
 | Action | Inputs | Effect |
 |---|---|---|
-| `createVideo(data)` | `{ title, slug, vimeoId, thumbnailUrl?, thumbnailAlt?, description?, durationSeconds? }` | Insert row, revalidate `/video`, redirect to `/admin/videos/${id}` |
+| `createVideo(data)` | `{ title, slug, r2Url, thumbnailUrl?, thumbnailAlt?, description?, durationSeconds? }` | Insert row, revalidate `/video`, redirect to `/admin/videos/${id}` |
 | `updateVideo(id, data)` | partial of above | Update row, revalidate `/video` + every collection page containing it |
 | `deleteVideo(id)` | `id` | Look up affected collection slugs → delete row (cascade) → revalidate all → redirect to `/admin/videos` |
 
@@ -211,7 +211,7 @@ app/video/
 components/video/
   collection-reader.tsx            # client wrapper: manages active poem state
   collection-sidebar.tsx           # sticky sidebar: thumbnails + titles
-  video-main.tsx              # main pane: Vimeo iframe + title + essay
+  video-main.tsx              # main pane: native video + title + essay
   video-essay.tsx             # essay HTML renderer (reuses reading typography classes)
 ```
 
@@ -232,7 +232,7 @@ components/video/
 
 **`collection-reader.tsx`** — CSS grid layout: sticky sidebar + scrollable main area. Sidebar uses `position: sticky; top: 0; height: 100dvh` (not `position: fixed`) so it coexists with the site nav. Desktop only — below `md` sidebar stacks above main content.
 
-**`video-main.tsx`** — Vimeo embed URL always uses: `https://player.vimeo.com/video/${vimeoId}?dnt=1&title=0&byline=0&portrait=0`. 16:9 aspect ratio wrapper.
+**`video-main.tsx`** — Native `<video src={r2Url}>` for the public HTTPS MP4 URL. 16:9 aspect ratio wrapper.
 
 **`video-essay.tsx`** — renders joined **`content.body_html`** (linked essay for that poem) using the same reading typography classes as `/essays`. No TipTap on the public side — HTML only.
 
@@ -245,9 +245,9 @@ components/video/
 3. **Published state** — `videos.published` controls visibility on `/video`; collections are separate.
 4. **API route auth** — manual `await auth()` in every `/api/admin/**` handler. Middleware does not cover these routes.
 5. **Revalidation fan-out** — `updateVideo` / `deleteVideo` must revalidate all collection pages containing the poem via `getCollectionSlugsForVideo`.
-6. **Vimeo player** — always append `?dnt=1&title=0&byline=0&portrait=0` to embed URLs. Built into `<VideoMain />`, not stored in DB.
+6. **Native video** — `r2_url` is the only playback source; not an iframe embed.
 7. **Thumbnail aspect ratio** — 16:9. Enforce on upload.
-8. **Auto-fetch Vimeo metadata** — out of scope for MVP.
+8. **Auto-fetch host metadata** — out of scope for MVP.
 9. **Mobile sidebar** — below `md`, stack items list above main content.
 10. **Migration order** — schema first, migration applied, then all other files.
 11. **Retire `data/videos.ts`** — check current contents, seed DB from it if it contains MtCCH data, then delete the file.

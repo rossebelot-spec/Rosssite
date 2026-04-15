@@ -101,7 +101,7 @@ export default function AdminVideoCompressPage() {
           Pick a local master file, preview it, then transcode with HandBrake
           (VideoToolbox H.264, max height 1080). Adjust the quality value and
           compare the output until it looks acceptable. Same CQ scale as{" "}
-          <code className="text-foreground">compress:vimeo-archive</code>: for{" "}
+          <code className="text-foreground">compress:video-archive</code>: for{" "}
           <code className="text-foreground">vt_h264</code>, higher values mean
           gentler compression (larger files).
         </p>

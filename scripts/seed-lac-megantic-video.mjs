@@ -6,7 +6,6 @@
  *
  * Matches `FEATURED_HOME_VIDEO_SLUG` in `lib/featured-home-video.ts` (slug: lac-megantic).
  * Sets `is_featured_for_home` so this row is the home hero clip (clears other featured rows first).
- * Vimeo ID is a placeholder ("0") because playback uses `r2_url` in the video UI.
  */
 
 import { fileURLToPath } from "node:url";
@@ -36,7 +35,6 @@ await sql`
   INSERT INTO videos (
     title,
     slug,
-    vimeo_id,
     r2_url,
     thumbnail_url,
     thumbnail_alt,
@@ -49,7 +47,6 @@ await sql`
   VALUES (
     'Lac-Mégantic',
     'lac-megantic',
-    '0',
     ${R2_MP4},
     '',
     '',
@@ -61,7 +58,6 @@ await sql`
   )
   ON CONFLICT (slug) DO UPDATE SET
     title = EXCLUDED.title,
-    vimeo_id = EXCLUDED.vimeo_id,
     r2_url = EXCLUDED.r2_url,
     description = EXCLUDED.description,
     is_featured_for_home = true,

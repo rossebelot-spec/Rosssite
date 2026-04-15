@@ -65,7 +65,6 @@ export default async function HomePage() {
             ? {
                 title: featuredVideo.title,
                 slug: featuredVideo.slug,
-                vimeoId: featuredVideo.vimeoId,
                 r2Url: featuredVideo.r2Url,
                 thumbnailUrl: featuredVideo.thumbnailUrl,
               }

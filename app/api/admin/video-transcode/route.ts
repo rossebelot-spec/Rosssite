@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Video transcoding is disabled on Vercel. Run the site locally with `npm run dev`, install HandBrake CLI, then use this tool — or use `npm run compress:vimeo-archive` / `scripts/migrate-videos-to-r2.mjs` on your machine.",
+          "Video transcoding is disabled on Vercel. Run the site locally with `npm run dev`, install HandBrake CLI, then use this tool — or use `npm run compress:video-archive` / `scripts/migrate-videos-to-r2.mjs` on your machine.",
       },
       { status: 503 }
     );

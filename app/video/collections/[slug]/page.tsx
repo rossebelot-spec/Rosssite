@@ -39,7 +39,6 @@ async function getCollectionWithItems(slug: string) {
       videoId: videos.id,
       slug: videos.slug,
       title: videos.title,
-      vimeoId: videos.vimeoId,
       r2Url: videos.r2Url,
       thumbnailUrl: videos.thumbnailUrl,
       thumbnailAlt: videos.thumbnailAlt,
@@ -95,7 +94,6 @@ async function getCollectionWithItems(slug: string) {
     return {
       slug: item.slug,
       title: item.title,
-      vimeoId: item.vimeoId,
       r2Url: item.r2Url,
       thumbnailUrl: item.thumbnailUrl,
       thumbnailAlt: item.thumbnailAlt,

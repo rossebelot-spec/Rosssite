@@ -20,7 +20,6 @@ export type FeaturedHomeVideoRow = {
   slug: string;
   title: string;
   description: string;
-  vimeoId: string;
   r2Url: string | null;
   thumbnailUrl: string;
 };
@@ -30,7 +29,6 @@ const featuredSelect = {
   slug: videos.slug,
   title: videos.title,
   description: videos.description,
-  vimeoId: videos.vimeoId,
   r2Url: videos.r2Url,
   thumbnailUrl: videos.thumbnailUrl,
 } as const;
