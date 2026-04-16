@@ -66,3 +66,66 @@ export async function deleteGalleryPhoto(id: number) {
   revalidatePath("/photography/collections");
   revalidatePath("/admin/gallery");
 }
+
+export async function registerGalleryPhoto(data: {
+  r2Url: string;
+  title?: string;
+  sourceId?: string;
+  width?: number | null;
+  height?: number | null;
+}) {
+  await requireAdmin();
+  const db = getDb();
+  const sourceId = data.sourceId ?? data.r2Url.split("/").pop() ?? data.r2Url;
+  const [row] = await db
+    .insert(galleryPhotos)
+    .values({
+      r2Url: data.r2Url.trim(),
+      title: data.title?.trim() ?? "",
+      sourceId,
+      source: "manual",
+      width: data.width ?? null,
+      height: data.height ?? null,
+      isActive: true,
+      isFeatured: false,
+      interestingnessScore: 0,
+      views: 0,
+      faves: 0,
+    })
+    .returning();
+  revalidatePath("/photography/collections");
+  revalidatePath("/gallery");
+  revalidatePath("/admin/gallery");
+  return row;
+}
+
+export async function registerGalleryPhotoBatch(
+  photos: Array<{
+    r2Url: string;
+    title?: string;
+    sourceId?: string;
+    width?: number | null;
+    height?: number | null;
+  }>
+) {
+  await requireAdmin();
+  const db = getDb();
+  const values = photos.map((data) => ({
+    r2Url: data.r2Url.trim(),
+    title: data.title?.trim() ?? "",
+    sourceId: data.sourceId ?? data.r2Url.split("/").pop() ?? data.r2Url,
+    source: "manual" as const,
+    width: data.width ?? null,
+    height: data.height ?? null,
+    isActive: true,
+    isFeatured: false,
+    interestingnessScore: 0,
+    views: 0,
+    faves: 0,
+  }));
+  const rows = await db.insert(galleryPhotos).values(values).returning();
+  revalidatePath("/photography/collections");
+  revalidatePath("/gallery");
+  revalidatePath("/admin/gallery");
+  return rows;
+}

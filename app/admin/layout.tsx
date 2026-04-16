@@ -26,7 +26,6 @@ const adminGroups: { label: string | null; links: { href: string; label: string 
   {
     label: "Photography",
     links: [
-      { href: "/admin/photography", label: "Photo Uploads" },
       { href: "/admin/gallery", label: "Gallery" },
     ],
   },
@@ -44,13 +43,18 @@ const adminGroups: { label: string | null; links: { href: string; label: string 
   },
   {
     label: "Settings",
-    links: [{ href: "/admin/settings/works-hub", label: "Works Hub" }],
+    links: [
+      { href: "/admin/settings/works-hub", label: "Works Hub" },
+      { href: "/admin/photography", label: "Photo Library" },
+    ],
   },
 ];
 
 const utilityLinks = [
   { href: "/admin/video-compress", label: "Video Compress" },
   { href: "/admin/video-upload", label: "Upload to R2" },
+  { href: "/admin/photo-compress", label: "Photo Compress" },
+  { href: "/admin/photo-folder-upload", label: "Photo Folder Upload" },
 ];
 
 export default async function AdminLayout({

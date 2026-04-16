@@ -47,7 +47,7 @@ export function HappeningsTabs({ active }: { active: HappeningsTab }) {
             : "border-transparent text-muted-foreground hover:text-foreground"
         )}
       >
-        Readings
+        Video Readings
       </Link>
     </div>
   );

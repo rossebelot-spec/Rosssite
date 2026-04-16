@@ -3,11 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   toggleGalleryPhotoActive,
   setGalleryPhotoFeatured,
   deleteGalleryPhoto,
   updateGalleryPhotoTitle,
+  registerGalleryPhoto,
 } from "@/lib/actions";
 import type { GalleryPhoto } from "@/db/schema";
 
@@ -16,6 +18,13 @@ type Filter = "all" | "active" | "inactive";
 export default function AdminGalleryPage() {
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
+
+  // Register from URL state
+  const [registerUrl, setRegisterUrl] = useState("");
+  const [registerTitle, setRegisterTitle] = useState("");
+  const [registering, setRegistering] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [registerSuccess, setRegisterSuccess] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -70,6 +79,29 @@ export default function AdminGalleryPage() {
     await loadPhotos();
   }
 
+  async function handleRegisterUrl(e: React.FormEvent) {
+    e.preventDefault();
+    const url = registerUrl.trim();
+    if (!url) return;
+    setRegistering(true);
+    setRegisterError(null);
+    setRegisterSuccess(null);
+    try {
+      const row = await registerGalleryPhoto({
+        r2Url: url,
+        title: registerTitle.trim() || undefined,
+      });
+      setRegisterSuccess(`Registered: ${row.title || row.sourceId}`);
+      setRegisterUrl("");
+      setRegisterTitle("");
+      await loadPhotos();
+    } catch (err) {
+      setRegisterError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setRegistering(false);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -97,6 +129,43 @@ export default function AdminGalleryPage() {
           {loadError}
         </p>
       )}
+
+      {/* Register from R2 URL */}
+      <details className="border border-border rounded-md">
+        <summary className="px-4 py-3 text-xs tracking-widest uppercase text-muted-foreground cursor-pointer select-none hover:text-foreground">
+          Register photo from R2 URL
+        </summary>
+        <form onSubmit={handleRegisterUrl} className="px-4 pb-4 pt-2 space-y-3">
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground block">R2 public URL</label>
+            <Input
+              value={registerUrl}
+              onChange={(e) => setRegisterUrl(e.target.value)}
+              placeholder="https://pub-….r2.dev/my-photo.webp"
+              required
+              disabled={registering}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground block">Title (optional)</label>
+            <Input
+              value={registerTitle}
+              onChange={(e) => setRegisterTitle(e.target.value)}
+              placeholder="Photo title"
+              disabled={registering}
+            />
+          </div>
+          {registerError && (
+            <p className="text-xs text-destructive">{registerError}</p>
+          )}
+          {registerSuccess && (
+            <p className="text-xs text-warm-accent">{registerSuccess}</p>
+          )}
+          <Button type="submit" size="sm" disabled={registering || !registerUrl.trim()}>
+            {registering ? "Registering…" : "Register"}
+          </Button>
+        </form>
+      </details>
 
       {/* Filter tabs */}
       <div className="flex gap-2 border-b border-border pb-4">

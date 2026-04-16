@@ -4,10 +4,21 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { requireApiSession } from "@/lib/api-auth";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID ?? "87e1212f0dca896abd2b40062520b511";
-const R2_BUCKET = process.env.R2_BUCKET ?? "videos";
-const R2_PUBLIC_BASE =
-  process.env.R2_PUBLIC_BASE ??
-  "https://pub-d8957166d20c44e78b0fef5b4d25a13d.r2.dev";
+
+const BUCKET_CONFIG: Record<string, { bucket: string; publicBase: string }> = {
+  videos: {
+    bucket: process.env.R2_BUCKET ?? "videos",
+    publicBase:
+      process.env.R2_PUBLIC_BASE ??
+      "https://pub-d8957166d20c44e78b0fef5b4d25a13d.r2.dev",
+  },
+  photos: {
+    bucket: process.env.R2_PHOTOS_BUCKET ?? "photos",
+    publicBase:
+      process.env.R2_PHOTOS_PUBLIC_BASE ??
+      "https://pub-efa70c06434341bc8c70873dce8e61ae.r2.dev",
+  },
+};
 
 function getR2Client() {
   const accessKeyId = process.env.R2_ACCESS_KEY_ID;
@@ -30,11 +41,17 @@ export async function POST(req: NextRequest) {
 
   let filename: string;
   let contentType: string;
+  let bucketKey: string;
 
   try {
-    const body = await req.json() as { filename?: string; contentType?: string };
+    const body = await req.json() as {
+      filename?: string;
+      contentType?: string;
+      bucket?: string;
+    };
     filename = (body.filename ?? "").trim();
     contentType = (body.contentType ?? "video/mp4").trim();
+    bucketKey = (body.bucket ?? "videos").trim();
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
@@ -43,19 +60,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "filename is required" }, { status: 400 });
   }
 
-  // Sanitise the key — strip leading slashes, collapse path separators
+  const config = BUCKET_CONFIG[bucketKey];
+  if (!config) {
+    return NextResponse.json(
+      { error: `Unknown bucket "${bucketKey}". Use "videos" or "photos".` },
+      { status: 400 }
+    );
+  }
+
   const key = filename.replace(/^\/+/, "").replace(/\/+/g, "/");
-  const publicUrl = `${R2_PUBLIC_BASE.replace(/\/$/, "")}/${key}`;
+  const publicUrl = `${config.publicBase.replace(/\/$/, "")}/${key}`;
 
   let presignedUrl: string;
   try {
     const client = getR2Client();
     const command = new PutObjectCommand({
-      Bucket: R2_BUCKET,
+      Bucket: config.bucket,
       Key: key,
       ContentType: contentType,
     });
-    // Valid for 15 minutes — plenty for a browser upload
     presignedUrl = await getSignedUrl(client, command, { expiresIn: 900 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to generate presigned URL";

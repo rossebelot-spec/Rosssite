@@ -1,28 +1,52 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getDb } from "@/db";
-import { collections, collectionItems } from "@/db/schema";
-import { asc, eq, sql } from "drizzle-orm";
 import { Badge } from "@/components/ui/badge";
+import { updateCollection } from "@/lib/actions";
 
-export const dynamic = "force-dynamic";
+interface CollectionRow {
+  id: number;
+  title: string;
+  slug: string;
+  mediaType: string;
+  displayOrder: number;
+  published: boolean;
+  itemCount: number;
+}
 
-export default async function AdminCollectionsPage() {
-  const db = getDb();
+export default function AdminCollectionsPage() {
+  const [rows, setRows] = useState<CollectionRow[]>([]);
+  const [saving, setSaving] = useState<number | null>(null); // id being saved
 
-  const all = await db
-    .select()
-    .from(collections)
-    .orderBy(asc(collections.displayOrder));
+  useEffect(() => {
+    fetch("/api/admin/collections-ordered")
+      .then((r) => r.json())
+      .then((data: CollectionRow[]) => {
+        if (Array.isArray(data)) setRows(data);
+      });
+  }, []);
 
-  const counts = await db
-    .select({
-      collectionId: collectionItems.collectionId,
-      count: sql<number>`cast(count(*) as int)`,
-    })
-    .from(collectionItems)
-    .groupBy(collectionItems.collectionId);
+  async function move(index: number, direction: -1 | 1) {
+    const swapIndex = index + direction;
+    if (swapIndex < 0 || swapIndex >= rows.length) return;
 
-  const countMap = new Map(counts.map((c) => [c.collectionId, c.count]));
+    // Swap the two rows in the array, then reassign orders by position
+    const next = [...rows];
+    [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+    const reordered = next.map((row, i) => ({ ...row, displayOrder: i }));
+    setRows(reordered);
+
+    setSaving(reordered[swapIndex].id);
+    try {
+      await Promise.all([
+        updateCollection(reordered[index].id, { displayOrder: index }),
+        updateCollection(reordered[swapIndex].id, { displayOrder: swapIndex }),
+      ]);
+    } finally {
+      setSaving(null);
+    }
+  }
 
   return (
     <div>
@@ -35,31 +59,70 @@ export default async function AdminCollectionsPage() {
           New Collection
         </Link>
       </div>
+      <p className="text-muted-foreground text-sm mb-6 max-w-prose">
+        Use the ↑ ↓ arrows to set the order collections appear on the{" "}
+        <a href="/multimedia" className="text-warm-accent hover:underline" target="_blank">
+          Multimedia
+        </a>{" "}
+        page.
+      </p>
 
-      {all.length === 0 ? (
+      {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">No collections yet.</p>
       ) : (
         <ul className="divide-y divide-border">
-          {all.map((coll) => (
+          {rows.map((coll, i) => (
             <li
               key={coll.id}
-              className="py-5 flex items-start justify-between gap-4"
+              className="py-4 flex items-center gap-4"
             >
-              <div>
+              {/* Up / Down buttons */}
+              <div className="flex flex-col gap-0.5 shrink-0">
+                <button
+                  onClick={() => move(i, -1)}
+                  disabled={i === 0 || saving !== null}
+                  aria-label="Move up"
+                  className="px-1.5 py-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors text-xs leading-none"
+                >
+                  ↑
+                </button>
+                <button
+                  onClick={() => move(i, 1)}
+                  disabled={i === rows.length - 1 || saving !== null}
+                  aria-label="Move down"
+                  className="px-1.5 py-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors text-xs leading-none"
+                >
+                  ↓
+                </button>
+              </div>
+
+              {/* Position number */}
+              <span className="text-xs text-muted-foreground w-5 text-right shrink-0 tabular-nums">
+                {i + 1}
+              </span>
+
+              {/* Title + meta */}
+              <div className="flex-1 min-w-0">
                 <Link
                   href={`/admin/collections/${coll.id}`}
-                  className="font-heading text-xl hover:text-warm-accent transition-colors"
+                  className="font-heading text-lg hover:text-warm-accent transition-colors"
                 >
                   {coll.title}
                 </Link>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {coll.slug} · {countMap.get(coll.id) ?? 0} items · order{" "}
-                  {coll.displayOrder}
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {coll.slug} · {coll.itemCount} items ·{" "}
+                  {coll.mediaType === "photo" ? "Photo" : "Video"} collection
                 </p>
               </div>
-              <Badge variant={coll.published ? "default" : "secondary"}>
-                {coll.published ? "Published" : "Draft"}
-              </Badge>
+
+              <div className="flex items-center gap-3 shrink-0">
+                {saving === coll.id && (
+                  <span className="text-xs text-muted-foreground">Saving…</span>
+                )}
+                <Badge variant={coll.published ? "default" : "secondary"}>
+                  {coll.published ? "Published" : "Draft"}
+                </Badge>
+              </div>
             </li>
           ))}
         </ul>

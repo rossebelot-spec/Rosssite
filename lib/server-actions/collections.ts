@@ -132,7 +132,7 @@ export async function updateCollection(
     published?: boolean;
     publishedAt?: Date | null;
     displayOrder?: number;
-    updatedAt: Date;
+    updatedAt?: Date;
   }
 ) {
   await requireAdmin();
@@ -141,7 +141,7 @@ export async function updateCollection(
     .select({ slug: collections.slug })
     .from(collections)
     .where(eq(collections.id, id));
-  await db.update(collections).set(data).where(eq(collections.id, id));
+  await db.update(collections).set({ ...data, updatedAt: new Date() }).where(eq(collections.id, id));
   revalidatePath("/video");
   revalidatePath("/multimedia");
   if (current) {
