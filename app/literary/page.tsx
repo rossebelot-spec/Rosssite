@@ -1,66 +1,202 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Image from "next/image";
 import { getDb } from "@/db";
-import { content } from "@/db/schema";
-import { eq, and, desc, inArray, notInArray, sql } from "drizzle-orm";
-import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
-import { formatPublishedDateLong } from "@/lib/format-published-date";
+import { books, literaryPublications } from "@/db/schema";
+import { asc, eq, desc } from "drizzle-orm";
+import { absoluteUrl } from "@/lib/seo";
 import { SectionHeader } from "@/components/section-header";
 
 export const metadata: Metadata = {
   title: "Literary",
-  description: "Books, journals, and formally published work.",
+  description:
+    "Poetry collections, journal appearances, anthology inclusions, and prize shortlists.",
+  alternates: { canonical: "/literary" },
+  openGraph: {
+    title: "Literary | Ross Belot",
+    url: absoluteUrl("/literary"),
+    locale: "en_CA",
+    siteName: "Ross Belot",
+  },
 };
 
 export const dynamic = "force-dynamic";
 
+const KIND_LABELS: Record<string, string> = {
+  journal: "Journal",
+  anthology: "Anthology",
+  translation: "Translation",
+  prize: "Prize",
+  award: "Award",
+};
+
 export default async function LiteraryPage() {
   const db = getDb();
-  const videoLinkedIds = await getContentIdsLinkedToVideo();
-  const posts = await db
-    .select()
-    .from(content)
-    .where(
-      and(
-        inArray(content.type, ["essay", "blog"]),
-        eq(content.published, true),
-        sql`'literary' = ANY(${content.tags})`,
-        ...(videoLinkedIds.length > 0 ? [notInArray(content.id, videoLinkedIds)] : [])
-      )
-    )
-    .orderBy(desc(content.publishedAt));
+
+  const [bookRows, pubRows] = await Promise.all([
+    db
+      .select()
+      .from(books)
+      .where(eq(books.published, true))
+      .orderBy(asc(books.displayOrder), asc(books.year)),
+    db
+      .select()
+      .from(literaryPublications)
+      .where(eq(literaryPublications.published, true))
+      .orderBy(desc(literaryPublications.date)),
+  ]);
+
+  const firstBookCoverIndex = bookRows.findIndex((b) => b.coverImageUrl);
 
   return (
-    <main className="mx-auto w-full max-w-screen-md px-6 py-16">
+    <main className="mx-auto w-full max-w-screen-xl px-6 py-16">
       <SectionHeader
         title="Literary"
-        description="Books, journals, and formally published work. Tag pieces with literary in the admin editor to list them here."
+        description="Poetry collections, journal appearances, anthology inclusions, translations, and prize shortlists."
       />
-      {posts.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No literary items yet.</p>
-      ) : (
-        <ul className="divide-y divide-border">
-          {posts.map((row) => (
-            <li key={row.id} className="py-6">
-              <Link href={`/essays/${row.slug}`} className="group block">
-                <time className="text-xs tracking-widest uppercase text-muted-foreground">
-                  {formatPublishedDateLong(
-                    row.publishedAt ? new Date(row.publishedAt) : null
-                  )}
-                </time>
-                <h2 className="font-heading text-xl mt-1 group-hover:text-warm-accent transition-colors">
-                  {row.title}
-                </h2>
-                {row.description ? (
-                  <p className="mt-2 text-muted-foreground text-sm leading-relaxed">
-                    {row.description}
+
+      {/* ── Books ─────────────────────────────────────────────────────── */}
+      <section className="mb-20">
+        <h2 className="font-heading text-2xl mb-8">Books</h2>
+
+        {bookRows.length === 0 ? (
+          <p className="text-muted-foreground text-sm">No books listed yet.</p>
+        ) : (
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {bookRows.map((book, i) => (
+              <li key={book.id}>
+                {book.buyUrl ? (
+                  <a
+                    href={book.buyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group block"
+                  >
+                    <BookCard
+                      book={book}
+                      priority={i === firstBookCoverIndex}
+                    />
+                  </a>
+                ) : (
+                  <div className="group">
+                    <BookCard
+                      book={book}
+                      priority={i === firstBookCoverIndex}
+                    />
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* ── In Print ──────────────────────────────────────────────────── */}
+      <section>
+        <h2 className="font-heading text-2xl mb-8">In Print</h2>
+
+        {pubRows.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            No publication appearances listed yet.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {pubRows.map((pub) => (
+              <li key={pub.id} className="py-5 flex gap-4">
+                <div className="shrink-0 w-12 text-right">
+                  <time className="text-xs tracking-widest text-muted-foreground leading-relaxed">
+                    {pub.date.slice(0, 4)}
+                  </time>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start gap-2 flex-wrap">
+                    {pub.url ? (
+                      <a
+                        href={pub.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-heading text-base leading-snug hover:text-warm-accent transition-colors"
+                      >
+                        {pub.title}
+                      </a>
+                    ) : (
+                      <span className="font-heading text-base leading-snug">
+                        {pub.title}
+                      </span>
+                    )}
+                    <span className="text-[10px] tracking-widest uppercase text-muted-foreground border border-border px-1.5 py-0.5 rounded shrink-0">
+                      {KIND_LABELS[pub.kind] ?? pub.kind}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {pub.publication}
                   </p>
-                ) : null}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+                  {pub.description && (
+                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                      {pub.description}
+                    </p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
+  );
+}
+
+type BookRow = {
+  title: string;
+  subtitle: string;
+  publisher: string;
+  year: number;
+  description: string;
+  coverImageUrl: string | null;
+  buyUrl: string | null;
+};
+
+function BookCard({ book, priority = false }: { book: BookRow; priority?: boolean }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="relative w-full aspect-[2/3] bg-muted rounded overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
+        {book.coverImageUrl ? (
+          <Image
+            src={book.coverImageUrl}
+            alt={`Cover of ${book.title}`}
+            fill
+            priority={priority}
+            className="object-cover transition-transform group-hover:scale-[1.02]"
+            sizes="(min-width: 1024px) 320px, (min-width: 640px) 50vw, 100vw"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
+            <span className="font-heading text-lg text-muted-foreground leading-snug">
+              {book.title}
+            </span>
+          </div>
+        )}
+      </div>
+      <div>
+        <h3 className="font-heading text-lg leading-snug group-hover:text-warm-accent transition-colors">
+          {book.title}
+        </h3>
+        {book.subtitle && (
+          <p className="text-sm text-muted-foreground mt-0.5">{book.subtitle}</p>
+        )}
+        <p className="text-xs text-muted-foreground mt-1">
+          {book.publisher} · {book.year}
+        </p>
+        {book.description && (
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed line-clamp-4">
+            {book.description}
+          </p>
+        )}
+        {book.buyUrl && (
+          <p className="text-xs tracking-widest uppercase text-warm-accent mt-3">
+            Order →
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

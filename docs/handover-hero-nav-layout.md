@@ -18,12 +18,12 @@ Fix the homepage hero so a **tall sticky nav** does not stack an extra **fixed `
 ### 2. Nav measurement ( `components/nav.tsx` )
 
 - **Problem:** Setting `document.documentElement.style` or `document.body.style` for `--site-header-height` is unreliable — **React can reset** those nodes on hydrate/update.
-- **Approach:** `useLayoutEffect` + **`ResizeObserver`** on the `<header>`, writing a **`<style id="site-header-height-live">`** in `<head>`:
+- **Approach:** A **callback ref** on the `<header>` (`setHeaderRef`) runs when the header mounts. It creates or reuses **`<style id="site-header-height-live">`** in `<head>` and sets:
 
-  `:root { --site-header-height: <N>px; }`
+  `:root { --site-header-height: <header.offsetHeight>px; }`
 
-  React does not own that node; it persists across renders.
-- **Ref fallback:** `headerRef.current ?? document.querySelector("body > header")` — in some passes the ref was still null; without a fallback the effect could bail and never re-run until `contextLine` changed.
+  A **`ResizeObserver`** on that same header element keeps the rule updated (fonts, resize, `contextLine`, mobile sheet). React does not own the `<style>` node; it persists across renders.
+- **Why a callback ref:** An earlier `useLayoutEffect` + ref could run **after** first paint with a **null** ref, so the live rule never appeared until something else re-ran the effect. The callback ref attaches the observer **as soon as the DOM node exists**, before paint depending on timing — eliminating that race.
 
 ### 3. Playwright smoke script ( `scripts/debug-hero-dom.mjs` )
 
@@ -42,17 +42,16 @@ node scripts/debug-hero-dom.mjs http://127.0.0.1:3002
 
 After **Nav** changes, if testing against `npm run dev`, **restart the dev server** so the client bundle matches disk.
 
-## Refresh “pop” — root cause & fix (Playwright)
+## Refresh “pop” — root cause & mitigations (Playwright)
 
-**Symptom:** After a full reload, layout briefly jumped — **CLS** from `--site-header-height` staying at the **`globals.css` fallback** until React’s `Nav` injected `#site-header-height-live` after hydration.
+**Symptom:** After a full reload, layout can briefly jump — **CLS** from `--site-header-height` staying at the **`globals.css` fallback** until `#site-header-height-live` exists with the measured height.
 
-**Fix shipped (inline bootstrap + tighter fallback):**
+**What shipped:**
 
-1. **`lib/site-header-height-bootstrap.ts`** — minified IIFE inlined in **`components/site-shell.tsx`** immediately after `<Nav />`. It creates/updates `#site-header-height-live` with `:root { --site-header-height: <header.offsetHeight>px }` **as soon as the parser reaches the script** (before React hydrates).
-2. **`components/nav.tsx`** — unchanged behaviour: same `id`, `ResizeObserver` keeps the value correct when the header height changes (fonts, resize, `contextLine`).
-3. **`app/globals.css`** — `:root` fallback changed from **`4.5rem` → `4.3125rem`** (~69px) so any sub-millisecond gap before the script runs is smaller.
+1. **`components/nav.tsx`** — Callback ref + **`ResizeObserver`** on `<header>` creates/updates **`#site-header-height-live`** as soon as the header node is attached (no separate bootstrap script).
+2. **`app/globals.css`** — `:root` fallback **`4.3125rem`** (~69px) so any gap before the live rule runs matches a typical one-row nav more closely than the older `4.5rem` default.
 
-**Verification:** On `next start`, `scripts/debug-hero-refresh-timeline.mjs` now shows **`liveExists: true`** and **`rootVar: 69px`** already at **`readystate-interactive`** / **`load`** (no longer `4.5rem` through `load`).
+**Note:** An earlier experiment inlined a bootstrap script from **`components/site-shell.tsx`**; that file is now a thin shell (`Nav` + children + `Footer`) only. If you see docs elsewhere referencing `lib/site-header-height-bootstrap.ts`, they are obsolete — the implementation lives entirely in **`nav.tsx`**.
 
 **Run the probe:**
 
@@ -68,10 +67,9 @@ node scripts/debug-hero-refresh-timeline.mjs http://127.0.0.1:3010
 | Hero markup | `components/hero.tsx` |
 | Home page   | `app/page.tsx` |
 | Hero CSS    | `app/globals.css` (`.home-hero-section`, `.home-hero-split`, `.home-hero-image-zoom`, `.hero-text-stack`, `.hero-text-name-*`, roles line; tokens `--hero-*`) |
-| Nav         | `components/nav.tsx` |
-| Shell       | `components/site-shell.tsx` (inline header-height bootstrap) |
-| Bootstrap   | `lib/site-header-height-bootstrap.ts` |
-| Root layout | `app/layout.tsx` |
+| Nav         | `components/nav.tsx` (`setHeaderRef` + `#site-header-height-live`) |
+| Shell       | `components/site-shell.tsx` |
+| Root layout | `app/layout.tsx` (`data-scroll-behavior="smooth"` on `<html>`) |
 
 ## Project constraints (do not ignore)
 
@@ -80,4 +78,4 @@ node scripts/debug-hero-refresh-timeline.mjs http://127.0.0.1:3010
 
 ## Summary for the new agent
 
-The **core bug** was **CSS variable resolution on `:root`** plus **fragile inline styles on `html`/`body`**. The **fix** is **section-level hero clamp** + **injected `<style>`** for `:root --site-header-height`. The **refresh “pop”** was **CLS** until the live rule existed; **bootstrap + tighter rem fallback** applies the measured height before hydration.
+The **core bug** was **CSS variable resolution on `:root`** plus **fragile inline styles on `html`/`body`**. The **fix** is **section-level hero clamp** + **injected `<style>`** for `:root { --site-header-height: … }`. The **refresh “pop”** is **CLS** until the live rule exists; the **callback ref** attaches measurement as soon as the `<header>` mounts, and the **tighter rem fallback** shrinks the worst-case gap.

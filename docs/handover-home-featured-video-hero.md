@@ -58,7 +58,7 @@ The player is **not** `width: 100%` of the name column anymore. It is **wider th
 
   - **`132%`** is relative to the width of `.hero-text-stack` (the name column content area). So the box is up to **32% wider** than that stack; the **smallest** of the three `min()` arguments wins.
 
-  - **`54vw`** and **`42rem`** cap width on large screens so the iframe/video does not dominate the entire viewport.
+  - **`54vw`** and **`42rem`** cap width on large screens so the video does not dominate the entire viewport.
 
   If the change looks **subtle**, it is often because **`min(...)` picks the cap** (e.g. `42rem` or `54vw`) or because **132%** of a narrow stack is only a modest pixel increase. To make a **bold** difference, increase **`132%`** (e.g. `140%`) or **`54vw`** / **`42rem`** deliberately, or inspect computed width in DevTools.
 

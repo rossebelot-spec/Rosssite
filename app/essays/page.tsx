@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getDb } from "@/db";
 import { content } from "@/db/schema";
-import { eq, and, desc, notInArray, inArray, sql } from "drizzle-orm";
+import { eq, and, desc, notInArray, sql } from "drizzle-orm";
 import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
 import { formatPublishedDateLong } from "@/lib/format-published-date";
 import { SectionHeader } from "@/components/section-header";
@@ -18,7 +18,7 @@ export default async function EssaysPage() {
     .from(content)
     .where(
       and(
-        inArray(content.type, ["essay", "blog"]),
+        eq(content.type, "essay"),
         eq(content.published, true),
         sql`NOT ('literary' = ANY(${content.tags}))`,
         ...(videoLinkedIds.length > 0

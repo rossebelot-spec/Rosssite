@@ -314,5 +314,79 @@ export type SiteEventRow = typeof siteEvents.$inferSelect;
 export type GalleryPhoto = typeof galleryPhotos.$inferSelect;
 export type NewGalleryPhoto = typeof galleryPhotos.$inferInsert;
 
-export type ContentType = "essay" | "blog" | "event" | "about";
+export type ContentType = "essay" | "about";
 export type CollectionItemLinkedType = "video" | "photo";
+
+// ─── Site Settings (key/value store for site-wide config) ───────────────────
+
+export const siteSettings = pgTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: text("value"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ─── Books ───────────────────────────────────────────────────────────────────
+
+export const books = pgTable("books", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  subtitle: text("subtitle").notNull().default(""),
+  publisher: text("publisher").notNull(),
+  year: integer("year").notNull(),
+  description: text("description").notNull().default(""),
+  coverImageUrl: text("cover_image_url"),
+  buyUrl: text("buy_url"),
+  isbn: text("isbn").notNull().default(""),
+  displayOrder: integer("display_order").notNull().default(0),
+  published: boolean("published").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ─── Literary Publications ───────────────────────────────────────────────────
+
+export const literaryPublications = pgTable("literary_publications", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  publication: text("publication").notNull(),
+  date: text("date").notNull(),
+  kind: text("kind").notNull().default("journal"),
+  url: text("url"),
+  description: text("description").notNull().default(""),
+  displayOrder: integer("display_order").notNull().default(0),
+  published: boolean("published").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ─── Online Readings (YouTube, TikTok, R2-hosted video appearances) ─────────
+
+export const onlineReadings = pgTable("online_readings", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  /** ISO date string YYYY-MM-DD */
+  date: text("date").notNull(),
+  /** "youtube" | "tiktok" | "r2" */
+  platform: text("platform").notNull().default("youtube"),
+  /** YouTube / TikTok share URL for embedded or linked playback */
+  externalUrl: text("external_url"),
+  /** Cloudflare R2 public MP4 URL for self-hosted videos */
+  r2Url: text("r2_url"),
+  /** Thumbnail image URL — auto-derived for YouTube or manually supplied */
+  thumbnailUrl: text("thumbnail_url").notNull().default(""),
+  description: text("description").notNull().default(""),
+  displayOrder: integer("display_order").notNull().default(0),
+  published: boolean("published").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ─── Inferred Types (literary) ───────────────────────────────────────────────
+
+export type SiteSetting = typeof siteSettings.$inferSelect;
+export type Book = typeof books.$inferSelect;
+export type NewBook = typeof books.$inferInsert;
+export type LiteraryPublication = typeof literaryPublications.$inferSelect;
+export type NewLiteraryPublication = typeof literaryPublications.$inferInsert;
+export type OnlineReading = typeof onlineReadings.$inferSelect;
+export type NewOnlineReading = typeof onlineReadings.$inferInsert;

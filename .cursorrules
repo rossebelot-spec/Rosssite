@@ -18,7 +18,7 @@
 - Next.js 16 App Router, React 19, TypeScript
 - Drizzle ORM + `@neondatabase/serverless` (lazy `getDb()` in db/index.ts)
 - NextAuth v5 + Google provider (`lib/auth.ts`); `/admin/*` gated via `proxy.ts` + `authorized` callback; server actions call private `requireAdmin()` in `lib/actions.ts`
-- `@vercel/blob` for asset storage
+- `@vercel/blob` for typical admin uploads; **video** (`videos.r2_url`) and **gallery** (`gallery_photos.r2_url`) store public **HTTPS** URLs (often **Cloudflare R2**)
 - Tailwind v4 with design tokens in `app/globals.css` @theme block
 - shadcn/ui (`components/ui/`) + `@base-ui/react` for primitives
 - TipTap for rich text editing (admin only)
@@ -58,7 +58,7 @@ db/
 lib/
   auth.ts               → NextAuth config; exports auth(), handlers, signIn, signOut, authorized callback
   actions.ts            → re-exports server actions from `server-actions/*` (import from `@/lib/actions` unchanged)
-  server-actions/       → domain-split server actions (`content`, `photos`, `videos`, `collections`, `op-eds`); each file has `"use server"`
+  server-actions/       → domain-split server actions (`content`, `photos`, `videos`, `collections`, `gallery`, `op-eds`, …); each file has `"use server"`
   action-helpers.ts     → shared server-only helpers (requireAdmin, slug reindex, collection slugs, blob URL check)
   blob.ts               → Vercel Blob helpers
   utils.ts              → shared utilities
@@ -72,7 +72,7 @@ Two content tiers coexist:
 
 | Tier | Source | Examples |
 |------|--------|---------|
-| DB-backed | Drizzle + Neon Postgres | Unified `content` (+ `content_links` for prose tied to video/collections), photos, `videos` / `collections` / `collection_items` |
+| DB-backed | Drizzle + Neon Postgres | Unified `content` (+ `content_links` for prose tied to video/collections), photos, `gallery_photos`, `videos` / `collections` / `collection_items` |
 | Static | `data/*.ts` flat lists | Op-eds, press, events, video |
 
 Do not move static content to the DB or vice versa without asking. Do not add new DB tables for content that already has a static pattern.

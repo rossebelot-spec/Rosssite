@@ -20,7 +20,7 @@ Sections below retain **historical** naming and file paths from the original pla
 
 ## 1. Drizzle Schema
 
-`db/schema.ts` defines `photos`, **`videos`**, **`collections`**, **`collection_items`**, unified **`content`** / **`content_links`**, and op-ed tables. Run `npm run db:generate` and apply migrations when schema changes.
+`db/schema.ts` defines `photos`, **`videos`**, **`collections`**, **`collection_items`**, unified **`content`** / **`content_links`**, **`gallery_photos`**, and op-ed tables. After schema edits: `npm run db:generate`, commit generated SQL, then **`npm run db:migrate`** (see `docs/db-migrate-root-cause.md` if the journal drifts).
 
 ### `videos` (historical doc referred to this as `video_poems`)
 
@@ -36,6 +36,9 @@ Long-form essay HTML is **not** stored on this table. It lives in **`content.bod
 | `thumbnail_alt` | `text` | not null, default `""` |
 | `description` | `text` | not null, default `""` — short lede for meta/listings |
 | `duration_seconds` | `integer` | nullable |
+| `is_featured_for_home` | `boolean` | not null, default false — at most one `true`; home hero featured player |
+| `published` | `boolean` | not null, default false — gates `/video` listings and poem pages |
+| `published_at` | `timestamp` | nullable |
 | `created_at` | `timestamp` | not null, defaultNow |
 | `updated_at` | `timestamp` | not null, defaultNow |
 
@@ -77,6 +80,7 @@ At most one of `video_id` / `collection_id` may be set per product rule (enforce
 | `id` | `serial` | primary key |
 | `title` | `text` | not null |
 | `slug` | `text` | not null, unique — the URL segment, e.g. `/video/collections/mtcch` |
+| `media_type` | `text` | not null, default `video` — `video` vs `photo` sets (multimedia labelling) |
 | `intro_html` | `text` | not null, default `""` — TipTap-edited intro text |
 | `description` | `text` | not null, default `""` — short description for listing + OG meta |
 | `cover_image_url` | `text` | nullable — optional cover for collection index |
@@ -101,15 +105,15 @@ Polymorphic: one row per (collection, linked asset). **`linked_type`** is `video
 | `position` | `integer` | not null, default 0 — ordering within the collection |
 | `created_at` | `timestamp` | not null, defaultNow |
 
-Indexes include uniqueness on `(collection_id, linked_type, linked_id)` and indexes for ordered reads. **Admin collection API** currently joins **videos only** for items; photo rows are not fully wired in the editor (see audit).
+Indexes include uniqueness on `(collection_id, linked_type, linked_id)` and indexes for ordered reads. **Admin** can attach **video** or **photo** items depending on collection `media_type` and editor wiring — confirm `app/admin/collections/` and API routes for the current behaviour.
 
-### Relations to export
+### Relations (see `db/schema.ts`)
 
 - `collectionsRelations`: `items: many(collectionItems)`
-- `videoPoemsRelations`: `items: many(collectionItems)`
-- `collectionItemsRelations`: `collection: one(collections, …)`, `videoPoem: one(videoPoems, …)`
+- `collectionItemsRelations`: `collection: one(collections, …)` (videos/photos are resolved by `linked_type` + `linked_id` in queries, not separate Drizzle relations on `videos`)
 - `contentRelations`: `links: many(contentLinks)`
-- `contentLinksRelations`: `content: one(content, …)`, `videoPoem: one(videoPoems, …)`, `collection: one(collections, …)`
+- `contentLinksRelations`: `content`, `video` (→ `videos`), `collection`
+- `galleryPhotosRelations`: empty placeholder (optional future links)
 
 ### Inferred types to export
 
@@ -122,16 +126,17 @@ Indexes include uniqueness on `(collection_id, linked_type, linked_id)` and inde
 
 ## 2. Admin Page Structure and Routes
 
-Follow the same client-editor + server-action pattern as **`/admin/content`** (unified prose). The admin sidebar includes `Content`, `Video Poems`, and `Collections` (see `app/admin/layout.tsx`).
+Follow the same client-editor + server-action pattern as **`/admin/content`** (unified prose). The admin sidebar includes **Videos**, **Collections**, **Gallery**, **Photography**, and other editorial tools (see `app/admin/layout.tsx`).
 
 ```
 app/admin/
   videos/
     page.tsx          # list all poems, table style, link to edit, small thumbnail
     [id]/
-      page.tsx        # editor: title, slug (auto-slugified on new), hosted MP4 URL +
-                      # live iframe preview, thumbnail (ImageUploader → Vercel Blob),
-                      # description; link essay via content + content_links. id === "new" = create mode.
+      page.tsx        # editor: title, slug (auto-slugified on new), hosted HTTPS MP4 URL +
+                      # live <video> preview, thumbnail (ImageUploader → Vercel Blob),
+                      # description, published, featured-for-home; link essay via content + content_links.
+                      # id === "new" = create mode.
   collections/
     page.tsx          # list with item count + published badge + New Collection link
     [id]/
@@ -147,7 +152,7 @@ app/api/admin/
 
 ### What each page does
 
-**`/admin/videos` (list)** — server component, `force-dynamic`. Selects all poems ordered by `created_at desc`. "New Video Poem" → `/admin/videos/new`.
+**`/admin/videos` (list)** — server component, `force-dynamic`. Lists videos ordered by `created_at desc`. **New** → `/admin/videos/new`.
 
 **`/admin/videos/[id]` (editor)** — client component. Fields: title, slug, hosted HTTPS MP4 URL (R2 or similar), thumbnail upload (ImageUploader → Vercel Blob, crop to 16:9), description; optional link to an existing essay (`content` row) via `content_links`. Renders a live `<video>` preview when `r2_url` is set. Save calls `createVideo` or `updateVideo`. Delete calls `deleteVideo`. Long-form HTML is edited under **`/admin/content`**, not inline on the video row.
 
@@ -157,7 +162,7 @@ app/api/admin/
 1. Metadata + intro: title, slug, description, cover image (optional ImageUploader), published toggle, `display_order`, TipTap intro editor (key={`collection-intro-${id}`}).
 2. Item picker/reorder: left column = all library poems with "+ Add" buttons; right column = current ordered items with remove + up/down arrow controls. Each change calls a server action immediately.
 
-**API routes** — each handler must call `await auth()` and return 401 if no session. Do not rely on middleware for these routes.
+**API routes** — each handler must authenticate (e.g. `requireApiSession()` from `lib/api-auth.ts` or `await auth()`). **`proxy.ts` does not cover `/api/admin/*`** — handlers must check the session explicitly.
 
 ---
 
@@ -173,24 +178,24 @@ Includes `createContent`, `updateContent`, `deleteContent`, `addContentLink`, `r
 
 | Action | Inputs | Effect |
 |---|---|---|
-| `createVideo(data)` | `{ title, slug, r2Url, thumbnailUrl?, thumbnailAlt?, description?, durationSeconds? }` | Insert row, revalidate `/video`, redirect to `/admin/videos/${id}` |
-| `updateVideo(id, data)` | partial of above | Update row, revalidate `/video` + every collection page containing it |
+| `createVideo(data)` | `{ title, slug, r2Url, thumbnailUrl?, thumbnailAlt?, description?, durationSeconds?, published?, … }` | Insert row, revalidate `/video`, redirect to `/admin/videos/${id}` |
+| `updateVideo(id, data)` | partial of above (includes `published`, `isFeaturedForHome`, etc.) | Update row, revalidate `/video` + home + every collection page containing it |
 | `deleteVideo(id)` | `id` | Look up affected collection slugs → delete row (cascade) → revalidate all → redirect to `/admin/videos` |
 
 ### Collection actions
 
 | Action | Inputs | Effect |
 |---|---|---|
-| `createCollection(data)` | `{ title, slug, description, introHtml, coverImageUrl?, published, publishedAt?, displayOrder? }` | Insert, revalidate `/video`, redirect to `/admin/collections/${id}` |
-| `updateCollection(id, data)` | partial of above | Update, revalidate `/video` + `/video/collections/${slug}` |
+| `createCollection(data)` | `{ title, slug, mediaType?, description, introHtml, coverImageUrl?, published, publishedAt?, displayOrder? }` | Insert, revalidate `/video` + `/multimedia`, redirect to `/admin/collections/${id}` |
+| `updateCollection(id, data)` | partial of above | Update, revalidate `/video` + `/multimedia` + `/video/collections/${slug}` |
 | `deleteCollection(id)` | `id` | Look up slug → delete (cascade) → revalidate → redirect to `/admin/collections` |
-| `addVideoToCollection({ collectionId, videoPoemId })` | — | Insert join row with `position = max + 1`, revalidate collection page |
-| `removeVideoFromCollection({ collectionId, videoPoemId })` | — | Delete join row, re-normalize positions, revalidate collection page |
+| `addVideoToCollection({ collectionId, videoId })` | — | Insert join row with `position = max + 1`, revalidate collection page |
+| `removeVideoFromCollection({ collectionId, videoId })` | — | Delete join row, re-normalize positions, revalidate collection page |
 | `reorderCollectionItems({ collectionId, orderedVideoIds })` | `number[]` | Parallel `UPDATE`s on positions (Neon HTTP driver: no `db.transaction()`), revalidate collection page |
 
 ### Internal helper (not exported)
 
-`getCollectionSlugsForVideo(poemId)` — used by `updateVideo` and `deleteVideo` to determine which public paths to revalidate.
+`getCollectionSlugsForVideo(videoId)` — used by `updateVideo` and `deleteVideo` to determine which public paths to revalidate.
 
 ---
 
@@ -230,7 +235,7 @@ components/video/
 
 **`collection-sidebar.tsx`** — renders `<Link href={`?poem=${poem.slug}`} scroll={false}>` for each item. Highlights the active slug. Shows thumbnail (`next/image`, Vercel Blob, 16:9) + title + optional duration. On mobile (below `md`) stacks above main content.
 
-**`collection-reader.tsx`** — CSS grid layout: sticky sidebar + scrollable main area. Sidebar uses `position: sticky; top: 0; height: 100dvh` (not `position: fixed`) so it coexists with the site nav. Desktop only — below `md` sidebar stacks above main content.
+**`collection-reader.tsx`** — CSS grid layout: sticky sidebar + scrollable main area. Sidebar uses `position: sticky` with **`top: var(--site-header-height)`** (not `position: fixed`) so it sits below the site nav. Desktop only — below `md` sidebar stacks above main content.
 
 **`video-main.tsx`** — Native `<video src={r2Url}>` for the public HTTPS MP4 URL. 16:9 aspect ratio wrapper.
 
@@ -243,7 +248,7 @@ components/video/
 1. **Essay storage** — HTML in **`content.body_html`**, linked to a video poem via **`content_links`** when needed; matches site-wide `body_html` / reading CSS.
 2. **Reordering** — up/down arrow buttons for MVP. No drag-and-drop libraries.
 3. **Published state** — `videos.published` controls visibility on `/video`; collections are separate.
-4. **API route auth** — manual `await auth()` in every `/api/admin/**` handler. Middleware does not cover these routes.
+4. **API route auth** — explicit session check in every `/api/admin/**` handler. **`proxy.ts`** does not cover these routes.
 5. **Revalidation fan-out** — `updateVideo` / `deleteVideo` must revalidate all collection pages containing the poem via `getCollectionSlugsForVideo`.
 6. **Native video** — `r2_url` is the only playback source; not an iframe embed.
 7. **Thumbnail aspect ratio** — 16:9. Enforce on upload.
@@ -260,10 +265,10 @@ components/video/
 
 Files to create or modify, in implementation order (the repo may already contain many of these from earlier work):
 
-1. `db/schema.ts` — `videos`, `collections`, `collection_items`, unified `content`, `content_links`, relations, inferred types
-2. Run `npm run db:generate` and apply migration(s)
-3. `lib/actions.ts` — content CRUD + link helpers, video poem + collection actions, `getCollectionSlugsForVideo`
-4. `app/admin/layout.tsx` — nav: Dashboard, Content, Photography, Video Poems, Collections, static editorial pages
+1. `db/schema.ts` — `videos`, `collections`, `collection_items`, unified `content`, `content_links`, `gallery_photos`, relations, inferred types
+2. Run `npm run db:generate`, commit SQL, then `npm run db:migrate`
+3. `lib/actions.ts` — re-exports from `lib/server-actions/*` (content, videos, collections, etc.), including `getCollectionSlugsForVideo`
+4. `app/admin/layout.tsx` — nav: Dashboard, Content, Photography, Gallery, Videos, Video compress, Collections, static editorial pages (see file for full list)
 5. `app/admin/content/page.tsx`, `app/admin/content/[id]/page.tsx` — unified prose admin
 6. `app/api/admin/content/[id]/route.ts` — load single content row for editor
 7. `app/admin/videos/page.tsx`, `app/admin/videos/[id]/page.tsx`

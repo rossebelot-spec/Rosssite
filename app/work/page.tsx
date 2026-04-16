@@ -3,6 +3,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { absoluteUrl } from "@/lib/seo";
 import { SectionHeader } from "@/components/section-header";
+import { getDb } from "@/db";
+import { siteSettings } from "@/db/schema";
+import { inArray } from "drizzle-orm";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Works",
@@ -16,74 +21,90 @@ export const metadata: Metadata = {
   },
 };
 
-type WorkHubCard = {
-  href: string;
-  title: string;
-  description: string;
-  /** Optional cover; add under `public/` when ready. */
-  thumbnailSrc?: string;
-  thumbnailAlt?: string;
-  placeholderLabel: string;
-};
+const HUB_KEYS = [
+  "works_hub_commentary_thumbnail",
+  "works_hub_essays_thumbnail",
+  "works_hub_literary_thumbnail",
+] as const;
 
-const cards: WorkHubCard[] = [
-  {
-    href: "/op-eds",
-    title: "Commentary and Analysis",
-    description: "Magazine and policy writing by publication.",
-    placeholderLabel: "Op-eds",
-  },
-  {
-    href: "/essays",
-    title: "Essays",
-    description: "Long-form essays and blog posts.",
-    placeholderLabel: "Essays",
-  },
-  {
-    href: "/literary",
-    title: "Literary",
-    description: "Books, journals, and formally published work.",
-    placeholderLabel: "Literary",
-  },
-];
+type HubKey = (typeof HUB_KEYS)[number];
 
-export default function WorkHubPage() {
+export default async function WorkHubPage() {
+  // Fetch thumbnail URLs from site_settings
+  const db = getDb();
+  const settingRows = await db
+    .select()
+    .from(siteSettings)
+    .where(inArray(siteSettings.key, [...HUB_KEYS]));
+
+  const thumbs: Record<HubKey, string | null> = {
+    works_hub_commentary_thumbnail: null,
+    works_hub_essays_thumbnail: null,
+    works_hub_literary_thumbnail: null,
+  };
+  for (const row of settingRows) {
+    if (row.key in thumbs) {
+      thumbs[row.key as HubKey] = row.value ?? null;
+    }
+  }
+
+  const cards = [
+    {
+      href: "/op-eds",
+      title: "Commentary and Analysis",
+      description: "Magazine and policy writing by publication.",
+      placeholderLabel: "Op-eds",
+      thumbnailSrc: thumbs.works_hub_commentary_thumbnail,
+    },
+    {
+      href: "/essays",
+      title: "Essays",
+      description: "Long-form essays and blog posts.",
+      placeholderLabel: "Essays",
+      thumbnailSrc: thumbs.works_hub_essays_thumbnail,
+    },
+    {
+      href: "/literary",
+      title: "Literary",
+      description: "Books, journals, and formally published work.",
+      placeholderLabel: "Literary",
+      thumbnailSrc: thumbs.works_hub_literary_thumbnail,
+    },
+  ];
+
   return (
     <main className="mx-auto w-full max-w-screen-xl px-6 py-16">
       <SectionHeader
         title="Works"
         description="Writing organized by form: commentary and analysis in magazines and policy outlets, general essays, and literary publications such as books and journals."
       />
-      <ul className="divide-y divide-border">
+      <ul className="grid grid-cols-1 sm:grid-cols-3 gap-8">
         {cards.map((c) => (
           <li key={c.href}>
-            <Link
-              href={c.href}
-              className="group flex gap-6 py-7 hover:bg-surface transition-colors -mx-4 px-4 rounded"
-            >
-              <div className="shrink-0 w-36 h-24 relative overflow-hidden bg-muted rounded">
+            <Link href={c.href} className="group block">
+              <div className="relative w-full aspect-video bg-muted rounded overflow-hidden mb-4">
                 {c.thumbnailSrc ? (
                   <Image
                     src={c.thumbnailSrc}
-                    alt={c.thumbnailAlt ?? c.title}
+                    alt={c.title}
                     fill
-                    className="object-cover transition-transform group-hover:scale-105"
-                    sizes="144px"
+                    className="object-contain transition-transform group-hover:scale-105"
+                    sizes="(min-width: 640px) 33vw, 100vw"
+                    /* All three hub tiles are above the fold on sm+; any can be LCP (e.g. book cover). */
+                    priority
                   />
                 ) : (
-                  <span className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs px-2 text-center font-medium">
+                  <span className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm font-medium">
                     {c.placeholderLabel}
                   </span>
                 )}
               </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="font-heading text-xl group-hover:text-warm-accent transition-colors leading-snug">
-                  {c.title}
-                </h2>
-                <p className="text-sm text-muted-foreground mt-2 leading-relaxed line-clamp-2">
-                  {c.description}
-                </p>
-              </div>
+              <h2 className="font-heading text-xl group-hover:text-warm-accent transition-colors leading-snug">
+                {c.title}
+              </h2>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                {c.description}
+              </p>
             </Link>
           </li>
         ))}

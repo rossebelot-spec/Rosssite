@@ -143,9 +143,9 @@ export default function AdminContentEditor() {
     setData((prev) => ({ ...prev, [field]: value }));
   }
 
-  const showsTopic = data.type === "event";
-  const topicLabel = "Event detail";
-  const topicPlaceholder = "Event name or venue detail";
+  const showsTopic = false;
+  const topicLabel = "Topic";
+  const topicPlaceholder = "Topic or subject area";
 
   async function handleAboutPortraitUpload(url: string) {
     const prev = data.imageUrl;
@@ -380,14 +380,12 @@ export default function AdminContentEditor() {
                     : isNew
                     ? slugify(prev.title)
                     : prev.slug,
-                topic: nextType === "event" ? prev.topic : "",
+                topic: "",
               }));
             }}
             className="h-9 w-full rounded border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="essay">Essay</option>
-            <option value="blog">Blog</option>
-            <option value="event">Event</option>
             <option value="about">About</option>
           </select>
         </div>

@@ -6,31 +6,22 @@ import {
   videos,
   collections,
   opEdCollections,
-  type ContentType,
+  opEds,
+  newsItems,
+  siteEvents,
 } from "@/db/schema";
 import { count } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
-const sections = [
-  { label: "Content", href: "/admin/content" },
-  { label: "Photography", href: "/admin/photography" },
-  { label: "Videos", href: "/admin/videos" },
-  { label: "Collections", href: "/admin/collections" },
-  { label: "Op-eds", href: "/admin/op-eds" },
-  { label: "Op-ed collections", href: "/admin/op-ed-collections" },
-  { label: "News", href: "/admin/news" },
-  { label: "Events", href: "/admin/events" },
-];
+type StatCard = { label: string; count: number; href: string };
 
-const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
-  essay: "Essays",
-  blog: "Blog",
-  event: "Events",
-  about: "About",
+type StatGroup = {
+  label: string;
+  cards: StatCard[];
+  manageHref: string;
+  manageLabel: string;
 };
-
-const CONTENT_TYPE_ORDER: ContentType[] = ["essay", "blog", "event", "about"];
 
 export default async function AdminDashboard() {
   const db = getDb();
@@ -40,77 +31,116 @@ export default async function AdminDashboard() {
     [videoCount],
     [collectionCount],
     [opEdCollectionCount],
-  ] =
-    await Promise.all([
-      db
-        .select({ type: content.type, count: count() })
-        .from(content)
-        .groupBy(content.type),
-      db.select({ count: count() }).from(photos),
-      db.select({ count: count() }).from(videos),
-      db.select({ count: count() }).from(collections),
-      db.select({ count: count() }).from(opEdCollections),
-    ]);
+    [opEdCount],
+    [newsCount],
+    [eventCount],
+  ] = await Promise.all([
+    db
+      .select({ type: content.type, count: count() })
+      .from(content)
+      .groupBy(content.type),
+    db.select({ count: count() }).from(photos),
+    db.select({ count: count() }).from(videos),
+    db.select({ count: count() }).from(collections),
+    db.select({ count: count() }).from(opEdCollections),
+    db.select({ count: count() }).from(opEds),
+    db.select({ count: count() }).from(newsItems),
+    db.select({ count: count() }).from(siteEvents),
+  ]);
 
   const contentCounts = new Map<string, number>();
   for (const row of contentRows) {
     contentCounts.set(row.type, row.count);
   }
 
-  const contentStats = CONTENT_TYPE_ORDER.map((type) => ({
-    label: CONTENT_TYPE_LABELS[type],
-    count: contentCounts.get(type) ?? 0,
-    href: `/admin/content?type=${type}`,
-  }));
-
-  const stats = [
-    ...contentStats,
-    { label: "Photos", count: photoCount.count, href: "/admin/photography" },
+  const statGroups: StatGroup[] = [
     {
-      label: "Videos",
-      count: videoCount.count,
-      href: "/admin/videos",
+      label: "Multimedia",
+      manageHref: "/admin/videos",
+      manageLabel: "Videos →",
+      cards: [
+        { label: "Videos", count: videoCount.count, href: "/admin/videos" },
+        {
+          label: "Collections",
+          count: collectionCount.count,
+          href: "/admin/collections",
+        },
+      ],
     },
     {
-      label: "Collections",
-      count: collectionCount.count,
-      href: "/admin/collections",
+      label: "Works",
+      manageHref: "/admin/content",
+      manageLabel: "Essays & Blog →",
+      cards: [
+        {
+          label: "Essays",
+          count: contentCounts.get("essay") ?? 0,
+          href: "/admin/content?type=essay",
+        },
+        {
+          label: "Op-eds",
+          count: opEdCount.count,
+          href: "/admin/op-eds",
+        },
+        {
+          label: "Publications",
+          count: opEdCollectionCount.count,
+          href: "/admin/op-ed-collections",
+        },
+      ],
     },
     {
-      label: "Op-ed collections",
-      count: opEdCollectionCount.count,
-      href: "/admin/op-ed-collections",
+      label: "Photography",
+      manageHref: "/admin/photography",
+      manageLabel: "Photo Uploads →",
+      cards: [
+        { label: "Photos", count: photoCount.count, href: "/admin/photography" },
+      ],
+    },
+    {
+      label: "Happenings",
+      manageHref: "/admin/news",
+      manageLabel: "News →",
+      cards: [
+        { label: "News", count: newsCount.count, href: "/admin/news" },
+        { label: "Events", count: eventCount.count, href: "/admin/events" },
+      ],
     },
   ];
 
   return (
     <div>
-      <h1 className="font-heading text-3xl mb-8">Dashboard</h1>
+      <h1 className="font-heading text-3xl mb-10 text-stone-900">Dashboard</h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-        {stats.map((stat) => (
-          <Link
-            key={stat.href}
-            href={stat.href}
-            className="border border-border rounded-md p-6 bg-surface hover:border-warm-accent transition-colors"
-          >
-            <p className="text-2xl font-heading">{stat.count}</p>
-            <p className="text-xs tracking-widest uppercase text-muted-foreground mt-1">
-              {stat.label}
-            </p>
-          </Link>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        {sections.map((section) => (
-          <Link
-            key={section.href}
-            href={section.href}
-            className="border border-border rounded-md px-5 py-4 text-sm tracking-widest uppercase hover:text-warm-accent hover:border-warm-accent transition-colors"
-          >
-            {section.label} &rarr;
-          </Link>
+      <div className="flex flex-col gap-10">
+        {statGroups.map((group) => (
+          <div key={group.label}>
+            <div className="flex items-center justify-between mb-4 border-b border-stone-200 pb-2">
+              <p className="text-xs tracking-widest uppercase text-stone-400">
+                {group.label}
+              </p>
+              <Link
+                href={group.manageHref}
+                className="text-xs tracking-widest uppercase text-stone-400 hover:text-stone-700 transition-colors"
+              >
+                {group.manageLabel}
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {group.cards.map((stat) => (
+                <Link
+                  key={stat.href}
+                  href={stat.href}
+                  className="rounded-md p-6 bg-white border border-stone-200 hover:border-stone-400 hover:shadow-sm transition-all"
+                >
+                  <p className="text-2xl font-heading text-stone-900">{stat.count}</p>
+                  <p className="text-xs tracking-widest uppercase text-stone-400 mt-1">
+                    {stat.label}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
     </div>
