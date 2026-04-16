@@ -71,7 +71,8 @@ function computeSpan(photo: GalleryPhoto, rand: number): { colSpan: number; rowS
 
 interface GalleryMosaicProps {
   photos: GalleryPhoto[];
-  featuredPhoto: GalleryPhoto | null;
+  /** Admin “featured” row — small thumbnail beside SHAKE IT in the sticky title band (not pinned in the grid). */
+  featuredPhoto?: GalleryPhoto | null;
   /**
    * Mixed into the shuffle seed on each server render so a full page reload can
    * show a different slice/order than the last visit (still deterministic for
@@ -128,20 +129,19 @@ export function GalleryMosaic({
   // Seed from epoch + sum of photo IDs → same result on server and client
   // for the same epoch, eliminating the SSR/hydration mismatch.
   const cells = useMemo((): CellSpec[] => {
-    const pool = photos.filter((p) => p.id !== featuredPhoto?.id);
+    const pool = photos;
     const base = pool.reduce((acc, p) => acc + p.id, epoch * 1_000_007);
     const seed = (base ^ shuffleSalt ^ Math.imul(shuffleSalt | 1, 265_443_5761)) >>> 0;
     const rand = seededRand(seed);
     const shuffled = fisherYatesShuffle(pool, rand);
-    const page = shuffled.slice(0, featuredPhoto ? PAGE_SIZE - 1 : PAGE_SIZE);
+    const page = shuffled.slice(0, PAGE_SIZE);
     return page.map((photo) => ({
       photo,
       ...computeSpan(photo, rand()),
     }));
-  }, [photos, featuredPhoto, epoch, shuffleSalt]);
+  }, [photos, epoch, shuffleSalt]);
 
-  const poolLength = photos.filter((p) => p.id !== featuredPhoto?.id).length;
-  /** Reshuffle / reload mosaic whenever there is at least one tile outside the featured slot. */
+  const poolLength = photos.length;
   const showRefresh = poolLength > 0;
 
   const refresh = useCallback(() => {
@@ -152,16 +152,39 @@ export function GalleryMosaic({
     }, 180);
   }, []);
 
-  if (photos.length === 0 && !featuredPhoto) {
+  if (photos.length === 0) {
     return <p className="text-muted-foreground text-sm">No photos yet.</p>;
   }
 
   const refreshButton = showRefresh ? (
     <GalleryShakeItButton
       onClick={refresh}
-      className="shrink-0 self-start sm:mt-1"
+      className="shrink-0"
     />
   ) : null;
+
+  const featuredThumb =
+    featuredPhoto && collectionTitle !== undefined ? (
+      <button
+        type="button"
+        onClick={() => openLightbox(featuredPhoto)}
+        className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border border-border bg-muted ring-1 ring-border/60 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        aria-label={
+          featuredPhoto.title
+            ? `Open larger: ${featuredPhoto.title}`
+            : "Open featured photograph larger"
+        }
+      >
+        <Image
+          src={featuredPhoto.r2Url}
+          alt={featuredPhoto.title || "Featured photograph"}
+          width={96}
+          height={96}
+          className="h-full w-full object-cover"
+          sizes="96px"
+        />
+      </button>
+    ) : null;
 
   return (
     <div className="relative isolate space-y-6">
@@ -182,7 +205,12 @@ export function GalleryMosaic({
                 </p>
               ) : null}
             </div>
-            {refreshButton}
+            {(featuredThumb || refreshButton) && (
+              <div className="flex shrink-0 flex-row items-center gap-3 self-start sm:mt-1">
+                {featuredThumb}
+                {refreshButton}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -208,30 +236,6 @@ export function GalleryMosaic({
             gridAutoFlow: "dense",
           }}
         >
-          {/* Featured — anchored top-left, 2×2, always first in DOM */}
-          {featuredPhoto && (
-            <figure
-              {...photoTileProps(
-                featuredPhoto,
-                "col-span-2 row-span-2 relative overflow-hidden bg-surface group"
-              )}
-            >
-              <Image
-                src={featuredPhoto.r2Url}
-                alt={featuredPhoto.title || "Featured photograph"}
-                fill
-                priority
-                sizes="(max-width: 640px) 100vw, 66vw"
-                className="object-cover transition-opacity duration-500 group-hover:opacity-90"
-              />
-              {featuredPhoto.title && (
-                <figcaption className="absolute bottom-0 left-0 right-0 px-4 py-3 bg-gradient-to-t from-background/80 to-transparent text-sm text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  {featuredPhoto.title}
-                </figcaption>
-              )}
-            </figure>
-          )}
-
           {/* Mosaic cells — spans vary per photo + random */}
           {cells.map(({ photo, colSpan, rowSpan }) => (
             <figure
