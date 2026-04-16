@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, JetBrains_Mono, Lora, Inter } from "next/font/google";
+import Script from "next/script";
 import { NavProvider } from "@/components/nav-context";
 import { SiteShell } from "@/components/site-shell";
 import { getSiteUrl } from "@/lib/site-url";
@@ -75,6 +76,11 @@ export default function RootLayout({
         <NavProvider>
           <SiteShell>{children}</SiteShell>
         </NavProvider>
+        <Script
+          defer
+          src="https://umami-two-xi.vercel.app/script.js"
+          data-website-id="d83972bc-6dd8-411f-9099-5c9ebe657757"
+        />
       </body>
     </html>
   );
