@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+import { isAllowedAdminEmail } from "@/lib/admin-allowlist";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
@@ -10,18 +11,12 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async signIn({ user }) {
-      // Read fresh on each invocation — avoids module-load-time evaluation issues
-      const allowed = (process.env.ALLOWED_ADMIN_EMAILS ?? "")
-        .split(",")
-        .map((e) => e.trim().toLowerCase())
-        .filter(Boolean);
-      if (allowed.length === 0) return false;
-      return allowed.includes((user.email ?? "").toLowerCase());
+      return isAllowedAdminEmail(user.email);
     },
-    // authorized() is invoked by middleware.ts for every /admin/* request.
-    // Returns false → NextAuth redirects to sign-in automatically.
+    // Invoked by proxy (NextAuth wrapper) for every /admin/* request.
+    // Re-check allowlist so removed emails lose access without waiting for JWT expiry.
     authorized({ auth: session }) {
-      return !!session?.user;
+      return isAllowedAdminEmail(session?.user?.email);
     },
   },
   session: { strategy: "jwt" },

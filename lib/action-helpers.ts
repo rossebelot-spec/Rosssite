@@ -3,10 +3,14 @@ import { getDb } from "@/db";
 import { collections, collectionItems } from "@/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { isAllowedAdminEmail } from "@/lib/admin-allowlist";
 
 export async function requireAdmin() {
   const session = await auth();
   if (!session?.user) redirect("/api/auth/signin");
+  if (!isAllowedAdminEmail(session.user.email)) {
+    redirect("/api/auth/signin");
+  }
 }
 
 /** Renumber `position` 0..n-1 for all rows in a collection (Neon HTTP: sequential updates). */

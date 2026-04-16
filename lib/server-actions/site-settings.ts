@@ -21,6 +21,7 @@ export async function upsertSiteSetting(key: string, value: string | null) {
 }
 
 export async function getSiteSettings(keys: string[]) {
+  await requireAdmin();
   const db = getDb();
   const rows = await db
     .select()

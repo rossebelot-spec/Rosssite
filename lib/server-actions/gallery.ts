@@ -4,8 +4,10 @@ import { getDb } from "@/db";
 import { galleryPhotos, collections } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/action-helpers";
 
 export async function toggleGalleryPhotoActive(id: number, isActive: boolean) {
+  await requireAdmin();
   const db = getDb();
   await db
     .update(galleryPhotos)
@@ -16,6 +18,7 @@ export async function toggleGalleryPhotoActive(id: number, isActive: boolean) {
 }
 
 export async function setGalleryPhotoFeatured(id: number) {
+  await requireAdmin();
   const db = getDb();
   // Unset any existing featured photo first
   await db
@@ -47,6 +50,7 @@ export async function setGalleryPhotoFeatured(id: number) {
 }
 
 export async function updateGalleryPhotoTitle(id: number, title: string) {
+  await requireAdmin();
   const db = getDb();
   await db
     .update(galleryPhotos)
@@ -56,6 +60,7 @@ export async function updateGalleryPhotoTitle(id: number, title: string) {
 }
 
 export async function deleteGalleryPhoto(id: number) {
+  await requireAdmin();
   const db = getDb();
   await db.delete(galleryPhotos).where(eq(galleryPhotos.id, id));
   revalidatePath("/photography/collections");
