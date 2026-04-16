@@ -517,7 +517,7 @@ export default function AdminPhotoFolderUploadPage() {
           </pre>
           <p>
             This is the same rule already added to the videos bucket. Without it, uploads
-            will fail with "Network error (status 0)".
+            will fail with {'"'}Network error (status 0){'"'}.
           </p>
         </div>
       </details>

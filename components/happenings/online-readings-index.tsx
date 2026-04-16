@@ -68,6 +68,7 @@ function ReadingCard({ reading }: { reading: OnlineReading }) {
           tabIndex={-1}
           aria-hidden="true"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary reading thumbnails */}
           <img
             src={thumbnail}
             alt=""
@@ -77,6 +78,7 @@ function ReadingCard({ reading }: { reading: OnlineReading }) {
         </a>
       ) : thumbnail ? (
         <div className="shrink-0 w-32 h-[72px] overflow-hidden rounded-sm bg-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary reading thumbnails */}
           <img
             src={thumbnail}
             alt=""

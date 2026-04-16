@@ -29,6 +29,7 @@ Next.js **16** (App Router), **React 19**, **TypeScript**. Editorial content is 
 ```bash
 npm install
 npm run dev          # http://localhost:3000
+npm run lint         # ESLint (Next core-web-vitals)
 npm run build        # required before considering app changes done
 ```
 

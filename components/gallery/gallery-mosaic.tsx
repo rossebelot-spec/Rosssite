@@ -138,7 +138,6 @@ export function GalleryMosaic({
       photo,
       ...computeSpan(photo, rand()),
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photos, featuredPhoto, epoch, shuffleSalt]);
 
   const poolLength = photos.filter((p) => p.id !== featuredPhoto?.id).length;

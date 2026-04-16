@@ -92,10 +92,10 @@ Public `/essays` and the home “Recent Essays” block omit `content` rows that
 
 ## Access control — read carefully
 
-- **`signIn` callback** in `lib/auth.ts` enforces **`ALLOWED_ADMIN_EMAILS`** (env var) — that is how who may sign in is defined; do not hardcode email addresses. The **`authorized`** callback only checks that a session exists (`!!session?.user`) for `/admin` routes via `proxy.ts`
+- **`signIn` callback** in `lib/auth.ts` enforces **`ALLOWED_ADMIN_EMAILS`** (env var) — that is how who may sign in is defined; do not hardcode email addresses. The **`authorized`** callback (used by `proxy.ts` for `/admin/*`) also requires **`isAllowedAdminEmail(session?.user?.email)`** so removed emails lose access without waiting for JWT expiry
 - There is NO `middleware.ts` in this project — if you see comments referencing "middleware", they mean `proxy.ts`
 - `auth()` from `lib/auth.ts` is used in Route Handlers and layouts
-- `requireAdmin()` is a private function in `lib/actions.ts` — all server actions call it after `"use server"`
+- `requireAdmin()` is private in `lib/action-helpers.ts` — server actions in `lib/server-actions/*` call it after `"use server"`
 - Do not look for `requireAdmin` in `lib/auth.ts` — it is not there
 - Do not add `middleware.ts` unless explicitly asked — this project uses `proxy.ts` for `/admin` access control; before adding a middleware file, confirm current Next 16 docs for how the two interact
 

@@ -22,6 +22,7 @@ export function OpEdMastheadImg({
   const resolved = opEdMastheadImgSrc(src);
   if (!resolved) return null;
   return (
+    // eslint-disable-next-line @next/next/no-img-element -- SVGs / local paths; see module comment
     <img
       src={resolved}
       alt={alt}
