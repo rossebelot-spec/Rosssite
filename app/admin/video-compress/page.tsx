@@ -224,7 +224,7 @@ export default function AdminVideoCompressPage() {
                 <a
                   className="text-sm text-primary underline-offset-4 hover:underline inline-block"
                   href={compressedUrl}
-                  download={`compressed-q${quality.trim()}.mp4`}
+                  download={`${sourceFile?.name.replace(/\.[^.]+$/, "") ?? "video"}-compressed.mp4`}
                 >
                   Download compressed MP4
                 </a>

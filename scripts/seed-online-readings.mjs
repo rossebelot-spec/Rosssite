@@ -52,14 +52,21 @@ const readings = [
     description: "Maclean's Magazine TikTok feature.",
   },
   {
-    title: "NAC Reading — Ross Belot",
-    date: "2021-02-01",
+    title: "Moving to Climate Change Hours from 2021 Hamilton Arts Week Event",
+    date: "2021-06-11",
     platform: "youtube",
     external_url: "https://www.youtube.com/watch?v=fwEuzOALuKQ",
     description: "",
   },
-  // Note: https://vimeo.com/516494201 will be moved to Cloudflare R2 once
-  // the upload tool is configured. Add it here once the R2 URL is known.
+  {
+    title: "Ross Belot Anthology Video",
+    date: "2021-02-24",
+    platform: "vimeo",
+    external_url: "https://vimeo.com/516494201",
+    // Thumbnail from Vimeo oEmbed API
+    thumbnail_url: "https://i.vimeocdn.com/video/1069457114-64911a53189ce07c638cef1cba0e5f7ca797aec0c0bec04496c3cf20097e1c8a-d_295x166?region=us",
+    description: "Community of Writers anthology reading.",
+  },
 ];
 
 async function run() {

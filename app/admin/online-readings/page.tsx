@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 const PLATFORM_LABELS: Record<string, string> = {
   youtube: "YouTube",
+  vimeo: "Vimeo",
   tiktok: "TikTok",
   r2: "Video",
 };

@@ -35,6 +35,7 @@ function resolveThumbnail(reading: OnlineReading): string | null {
 function platformLabel(platform: string) {
   if (platform === "youtube") return "YouTube";
   if (platform === "tiktok") return "TikTok";
+  if (platform === "vimeo") return "Vimeo";
   if (platform === "r2") return "Video";
   return platform;
 }

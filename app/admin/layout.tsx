@@ -48,7 +48,10 @@ const adminGroups: { label: string | null; links: { href: string; label: string 
   },
 ];
 
-const utilityLinks = [{ href: "/admin/video-compress", label: "Video Compress" }];
+const utilityLinks = [
+  { href: "/admin/video-compress", label: "Video Compress" },
+  { href: "/admin/video-upload", label: "Upload to R2" },
+];
 
 export default async function AdminLayout({
   children,
@@ -103,19 +106,21 @@ export default async function AdminLayout({
             </Link>
           ))}
           {/* Sign-out requires a POST — cannot use a plain <Link> */}
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/" });
-            }}
-          >
-            <button
-              type="submit"
-              className="text-xs tracking-widest uppercase text-stone-500 hover:text-red-500 transition-colors"
+          <div className="border-t border-stone-200 pt-3">
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/" });
+              }}
             >
-              Sign out
-            </button>
-          </form>
+              <button
+                type="submit"
+                className="text-xs tracking-widest uppercase text-stone-500 hover:text-red-500 transition-colors"
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
       </aside>
 

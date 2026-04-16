@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import {
   createOnlineReading,
   updateOnlineReading,
@@ -13,7 +14,7 @@ import {
   publishOnlineReading,
 } from "@/lib/actions";
 
-const PLATFORMS = ["youtube", "tiktok", "r2"] as const;
+const PLATFORMS = ["youtube", "vimeo", "tiktok", "r2"] as const;
 
 interface FormData {
   id?: number;
@@ -205,7 +206,7 @@ export default function AdminOnlineReadingEditorPage() {
                   onChange={() => set("platform", p)}
                   className="accent-warm-accent"
                 />
-                <span className="text-sm capitalize">{p === "r2" ? "Self-hosted (R2)" : p.charAt(0).toUpperCase() + p.slice(1)}</span>
+                <span className="text-sm">{p === "r2" ? "Self-hosted (R2)" : p === "tiktok" ? "TikTok" : p.charAt(0).toUpperCase() + p.slice(1)}</span>
               </label>
             ))}
           </div>
@@ -214,7 +215,11 @@ export default function AdminOnlineReadingEditorPage() {
         {data.platform !== "r2" && (
           <div>
             <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">
-              {data.platform === "youtube" ? "YouTube URL" : "TikTok URL"}
+              {data.platform === "youtube"
+                ? "YouTube URL"
+                : data.platform === "vimeo"
+                  ? "Vimeo URL"
+                  : "TikTok URL"}
             </label>
             <Input
               value={data.externalUrl}
@@ -222,10 +227,12 @@ export default function AdminOnlineReadingEditorPage() {
               placeholder={
                 data.platform === "youtube"
                   ? "https://www.youtube.com/watch?v=..."
-                  : "https://www.tiktok.com/@..."
+                  : data.platform === "vimeo"
+                    ? "https://vimeo.com/..."
+                    : "https://www.tiktok.com/@..."
               }
             />
-            {data.platform === "youtube" && data.externalUrl && (
+            {data.platform === "youtube" && !data.thumbnailUrl && (
               <p className="text-xs text-muted-foreground mt-1">
                 Thumbnail auto-derived from YouTube if left blank below.
               </p>
@@ -247,14 +254,18 @@ export default function AdminOnlineReadingEditorPage() {
         )}
 
         <div>
-          <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-1">
-            Thumbnail URL (optional)
+          <label className="text-xs tracking-widest uppercase text-muted-foreground block mb-2">
+            Thumbnail (optional)
           </label>
-          <Input
-            value={data.thumbnailUrl}
-            onChange={(e) => set("thumbnailUrl", e.target.value)}
-            placeholder="Leave blank to auto-derive for YouTube"
+          <ImageUploader
+            existingUrl={data.thumbnailUrl || undefined}
+            onUpload={(url) => set("thumbnailUrl", url)}
           />
+          {data.platform === "youtube" && !data.thumbnailUrl && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Leave blank to auto-derive from the YouTube video ID.
+            </p>
+          )}
         </div>
 
         <div>
