@@ -28,6 +28,10 @@
 ipolitics/
 *.webarchive
 
+# Cowork bridge — local session state (do not commit)
+cowork-bridge/signal.json
+cowork-bridge/response.md
+
 # Claude Code — machine-specific overrides (do not commit)
 .claude/settings.local.json
 # Nested worktrees are separate git repos — do not submodule by accident

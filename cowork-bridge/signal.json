@@ -1,1 +1,0 @@
-{ "action": "task", "message": "Audit the worktrees in `.claude/worktrees/` — report which are active vs stale, and recommend which are safe to delete. Do not delete anything yet." }
