@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { absoluteUrl } from "@/lib/seo";
 import Link from "next/link";
 import Image from "next/image";
 import { getDb } from "@/db";
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
     siteName: "Ross Belot",
     title: "Multimedia | Ross Belot",
     description: "Video and photography collections by Ross Belot.",
-    url: "https://rossbelot.com/multimedia",
+    url: absoluteUrl("/multimedia"),
   },
   twitter: {
     card: "summary",

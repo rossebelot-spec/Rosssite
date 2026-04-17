@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteEventsIndex } from "@/components/happenings/site-events-index";
+import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Events",
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
     siteName: "Ross Belot",
     title: "Events | Ross Belot",
     description: "Readings, launches, and appearances.",
-    url: "https://rossbelot.com/events",
+    url: absoluteUrl("/events"),
   },
   twitter: {
     card: "summary",

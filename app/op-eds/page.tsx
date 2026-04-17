@@ -11,6 +11,7 @@ import {
 import { formatPublishedDate } from "@/lib/format-published-date";
 import { OpEdMastheadImg } from "@/components/op-ed-masthead-img";
 import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
+import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
     siteName: "Ross Belot",
     title: "Commentary and Analysis | Ross Belot",
     description: "Commentary and analysis on energy, climate, and the environment.",
-    url: "https://rossbelot.com/op-eds",
+    url: absoluteUrl("/op-eds"),
   },
   twitter: {
     card: "summary",

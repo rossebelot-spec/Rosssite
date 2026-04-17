@@ -7,6 +7,7 @@ import {
 import { NewsIndexList } from "@/components/happenings/news-index-list";
 import { SiteEventsIndex } from "@/components/happenings/site-events-index";
 import { OnlineReadingsIndex } from "@/components/happenings/online-readings-index";
+import { absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,7 @@ export async function generateMetadata({
       siteName: "Ross Belot",
       title: "Happenings | Ross Belot",
       description: desc,
-      url: "https://rossbelot.com/happenings",
+      url: absoluteUrl("/happenings"),
     },
     twitter: {
       card: "summary",

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SectionHeader } from "@/components/section-header";
 import { NewsIndexList } from "@/components/happenings/news-index-list";
+import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "News",
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
     siteName: "Ross Belot",
     title: "News | Ross Belot",
     description: "Coverage, announcements, and updates.",
-    url: "https://rossbelot.com/news",
+    url: absoluteUrl("/news"),
   },
   twitter: {
     card: "summary",
