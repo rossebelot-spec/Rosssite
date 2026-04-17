@@ -7,7 +7,24 @@ import { getContentIdsLinkedToVideo } from "@/lib/content-video-links";
 import { formatPublishedDateLong } from "@/lib/format-published-date";
 import { SectionHeader } from "@/components/section-header";
 
-export const metadata: Metadata = { title: "Essays" };
+export const metadata: Metadata = {
+  title: "Essays",
+  description: "Long-form essays by Ross Belot.",
+  alternates: { canonical: "/essays" },
+  openGraph: {
+    type: "website",
+    locale: "en_CA",
+    siteName: "Ross Belot",
+    title: "Essays | Ross Belot",
+    description: "Long-form essays by Ross Belot.",
+    url: "https://rossbelot.com/essays",
+  },
+  twitter: {
+    card: "summary",
+    title: "Essays | Ross Belot",
+    description: "Long-form essays by Ross Belot.",
+  },
+};
 export const dynamic = "force-dynamic";
 
 export default async function EssaysPage() {
@@ -32,7 +49,7 @@ export default async function EssaysPage() {
     <main className="mx-auto w-full max-w-screen-md px-6 py-16">
       <SectionHeader
         title="Essays"
-        description="Long-form essays and blog posts (excluding literary-tagged pieces)."
+        description="Long-form essays."
       />
       {posts.length === 0 ? (
         <p className="text-muted-foreground text-sm">No essays yet.</p>

@@ -17,6 +17,20 @@ export const metadata: Metadata = {
   title: "Commentary and Analysis",
   description:
     "Commentary and analysis on energy, climate, and the environment.",
+  alternates: { canonical: "/op-eds" },
+  openGraph: {
+    type: "website",
+    locale: "en_CA",
+    siteName: "Ross Belot",
+    title: "Commentary and Analysis | Ross Belot",
+    description: "Commentary and analysis on energy, climate, and the environment.",
+    url: "https://rossbelot.com/op-eds",
+  },
+  twitter: {
+    card: "summary",
+    title: "Commentary and Analysis | Ross Belot",
+    description: "Commentary and analysis on energy, climate, and the environment.",
+  },
 };
 
 export default async function OpEdsPage() {

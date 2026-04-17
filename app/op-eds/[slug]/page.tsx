@@ -47,7 +47,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { collection } = result;
   const path = `/op-eds/${slug}`;
   const title = `${collection.publication} — Commentary and Analysis`;
-  const desc = collection.description?.trim() || undefined;
+  const desc = collection.description?.trim() || "Commentary and analysis on energy, climate, and the environment.";
+  const imageUrl = collection.mastheadUrl?.trim() || undefined;
   return {
     title,
     description: desc,
@@ -59,11 +60,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description: desc,
       url: absoluteUrl(path),
+      ...(imageUrl && { images: [{ url: imageUrl }] }),
     },
     twitter: {
-      card: "summary",
+      card: imageUrl ? "summary_large_image" : "summary",
       title,
       description: desc,
+      ...(imageUrl && { images: [imageUrl] }),
     },
   };
 }

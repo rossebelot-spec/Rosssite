@@ -6,20 +6,42 @@ import { asc, eq, desc } from "drizzle-orm";
 import { absoluteUrl } from "@/lib/seo";
 import { SectionHeader } from "@/components/section-header";
 
-export const metadata: Metadata = {
-  title: "Literary",
-  description:
-    "Poetry collections, journal appearances, anthology inclusions, and prize shortlists.",
-  alternates: { canonical: "/literary" },
-  openGraph: {
-    title: "Literary | Ross Belot",
-    url: absoluteUrl("/literary"),
-    locale: "en_CA",
-    siteName: "Ross Belot",
-  },
-};
-
 export const dynamic = "force-dynamic";
+
+const literaryDesc =
+  "Poetry collections, journal appearances, anthology inclusions, and prize shortlists.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const db = getDb();
+  const firstBook = await db
+    .select({ coverImageUrl: books.coverImageUrl })
+    .from(books)
+    .where(eq(books.published, true))
+    .orderBy(asc(books.displayOrder), asc(books.year))
+    .limit(1);
+  const imageUrl = firstBook[0]?.coverImageUrl ?? undefined;
+
+  return {
+    title: "Literary",
+    description: literaryDesc,
+    alternates: { canonical: "/literary" },
+    openGraph: {
+      type: "website",
+      locale: "en_CA",
+      siteName: "Ross Belot",
+      title: "Literary | Ross Belot",
+      description: literaryDesc,
+      url: absoluteUrl("/literary"),
+      ...(imageUrl && { images: [{ url: imageUrl }] }),
+    },
+    twitter: {
+      card: imageUrl ? "summary_large_image" : "summary",
+      title: "Literary | Ross Belot",
+      description: literaryDesc,
+      ...(imageUrl && { images: [imageUrl] }),
+    },
+  };
+}
 
 const KIND_LABELS: Record<string, string> = {
   journal: "Journal",

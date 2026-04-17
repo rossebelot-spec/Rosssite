@@ -5,6 +5,20 @@ import { SectionHeader } from "@/components/section-header";
 export const metadata: Metadata = {
   title: "Contact",
   description: "Contact Ross Belot.",
+  alternates: { canonical: "/about/contact" },
+  openGraph: {
+    type: "website",
+    locale: "en_CA",
+    siteName: "Ross Belot",
+    title: "Contact | Ross Belot",
+    description: "Contact Ross Belot.",
+    url: "https://rossbelot.com/about/contact",
+  },
+  twitter: {
+    card: "summary",
+    title: "Contact | Ross Belot",
+    description: "Contact Ross Belot.",
+  },
 };
 
 export default function ContactPage() {

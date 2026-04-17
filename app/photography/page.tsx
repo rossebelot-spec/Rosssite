@@ -5,7 +5,24 @@ import { asc, eq } from "drizzle-orm";
 import { PhotoGrid } from "@/components/photo-grid";
 import { SectionHeader } from "@/components/section-header";
 
-export const metadata: Metadata = { title: "Photography" };
+export const metadata: Metadata = {
+  title: "Photography",
+  description: "Photographs by Ross Belot — landscapes, field work, and curated collections.",
+  alternates: { canonical: "/photography" },
+  openGraph: {
+    type: "website",
+    locale: "en_CA",
+    siteName: "Ross Belot",
+    title: "Photography | Ross Belot",
+    description: "Photographs by Ross Belot — landscapes, field work, and curated collections.",
+    url: "https://rossbelot.com/photography",
+  },
+  twitter: {
+    card: "summary",
+    title: "Photography | Ross Belot",
+    description: "Photographs by Ross Belot — landscapes, field work, and curated collections.",
+  },
+};
 export const dynamic = "force-dynamic";
 
 export default async function PhotographyPage() {

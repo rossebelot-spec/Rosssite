@@ -14,10 +14,17 @@ export const metadata: Metadata = {
   description: "Commentary and analysis, essays, and literary publications.",
   alternates: { canonical: "/work" },
   openGraph: {
-    title: "Works | Ross Belot",
-    url: absoluteUrl("/work"),
+    type: "website",
     locale: "en_CA",
     siteName: "Ross Belot",
+    title: "Works | Ross Belot",
+    description: "Commentary and analysis, essays, and literary publications.",
+    url: absoluteUrl("/work"),
+  },
+  twitter: {
+    card: "summary",
+    title: "Works | Ross Belot",
+    description: "Commentary and analysis, essays, and literary publications.",
   },
 };
 

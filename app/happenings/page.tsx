@@ -18,14 +18,29 @@ export async function generateMetadata({
   const { tab } = await searchParams;
   const view: HappeningsTab =
     tab === "events" ? "events" : tab === "readings" ? "readings" : "news";
+  const desc =
+    view === "events"
+      ? "Readings, launches, and appearances."
+      : view === "readings"
+        ? "Online readings and video appearances."
+        : "Coverage, announcements, and updates.";
   return {
     title: "Happenings",
-    description:
-      view === "events"
-        ? "Readings, launches, and appearances."
-        : view === "readings"
-          ? "Online readings and video appearances."
-          : "Coverage, announcements, and updates.",
+    description: desc,
+    alternates: { canonical: "/happenings" },
+    openGraph: {
+      type: "website",
+      locale: "en_CA",
+      siteName: "Ross Belot",
+      title: "Happenings | Ross Belot",
+      description: desc,
+      url: "https://rossbelot.com/happenings",
+    },
+    twitter: {
+      card: "summary",
+      title: "Happenings | Ross Belot",
+      description: desc,
+    },
   };
 }
 

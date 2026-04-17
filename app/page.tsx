@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getDb } from "@/db";
 import { photos, opEds, newsItems } from "@/db/schema";
@@ -6,9 +7,46 @@ import { formatPublishedMonthYear } from "@/lib/format-published-date";
 import { getFeaturedHomeVideo } from "@/lib/featured-home-video";
 import { Hero } from "@/components/hero";
 import { HomeFeaturedVideoCopy } from "@/components/home-featured-video";
-import { websiteJsonLd } from "@/lib/seo";
+import { websiteJsonLd, absoluteUrl } from "@/lib/seo";
+import { blobImageUrl } from "@/lib/blob";
 
 export const dynamic = "force-dynamic";
+
+const siteDesc =
+  "Poet, journalist, and environmental writer. Essays, commentary and analysis, photography, and more.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const db = getDb();
+  const heroPhotos = await db
+    .select({ blobUrl: photos.blobUrl })
+    .from(photos)
+    .where(eq(photos.isHero, true))
+    .limit(1);
+  const imageUrl = heroPhotos[0]?.blobUrl
+    ? blobImageUrl(heroPhotos[0].blobUrl)
+    : undefined;
+
+  return {
+    title: "Ross Belot",
+    description: siteDesc,
+    alternates: { canonical: "/" },
+    openGraph: {
+      type: "website",
+      locale: "en_CA",
+      siteName: "Ross Belot",
+      title: "Ross Belot",
+      description: siteDesc,
+      url: absoluteUrl("/"),
+      ...(imageUrl && { images: [{ url: imageUrl }] }),
+    },
+    twitter: {
+      card: imageUrl ? "summary_large_image" : "summary",
+      title: "Ross Belot",
+      description: siteDesc,
+      ...(imageUrl && { images: [imageUrl] }),
+    },
+  };
+}
 
 export default async function HomePage() {
   const db = getDb();

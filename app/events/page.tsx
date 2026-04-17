@@ -4,6 +4,20 @@ import { SiteEventsIndex } from "@/components/happenings/site-events-index";
 export const metadata: Metadata = {
   title: "Events",
   description: "Readings, launches, and appearances.",
+  alternates: { canonical: "/events" },
+  openGraph: {
+    type: "website",
+    locale: "en_CA",
+    siteName: "Ross Belot",
+    title: "Events | Ross Belot",
+    description: "Readings, launches, and appearances.",
+    url: "https://rossbelot.com/events",
+  },
+  twitter: {
+    card: "summary",
+    title: "Events | Ross Belot",
+    description: "Readings, launches, and appearances.",
+  },
 };
 
 export const dynamic = "force-dynamic";

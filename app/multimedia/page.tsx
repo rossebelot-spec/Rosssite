@@ -15,7 +15,24 @@ import {
   SectionSubheading,
 } from "@/components/section-header";
 
-export const metadata: Metadata = { title: "Multimedia" };
+export const metadata: Metadata = {
+  title: "Multimedia",
+  description: "Video and photography collections by Ross Belot.",
+  alternates: { canonical: "/multimedia" },
+  openGraph: {
+    type: "website",
+    locale: "en_CA",
+    siteName: "Ross Belot",
+    title: "Multimedia | Ross Belot",
+    description: "Video and photography collections by Ross Belot.",
+    url: "https://rossbelot.com/multimedia",
+  },
+  twitter: {
+    card: "summary",
+    title: "Multimedia | Ross Belot",
+    description: "Video and photography collections by Ross Belot.",
+  },
+};
 export const dynamic = "force-dynamic";
 
 function collectionKindLabel(mediaType: string) {
