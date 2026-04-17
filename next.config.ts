@@ -85,8 +85,6 @@ const nextConfig: NextConfig = {
       { source: "/mtcch-gallery/", destination: "/video/collections/moving-to-climate-change-hours", permanent: true },
       { source: "/clients",     destination: "/about",         permanent: true },
       { source: "/clients/",    destination: "/about",         permanent: true },
-      { source: "/op-eds",      destination: "/op-eds",        permanent: true },
-      { source: "/op-eds/",     destination: "/op-eds",        permanent: true },
     ];
   },
   images: {
