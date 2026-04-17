@@ -1,6 +1,6 @@
 /** Shown beside the site name in the header (main nav + minimal collection chrome). */
 export const siteHeaderTagline =
-  "Poet · Journalist · Filmmaker · Translator";
+  "Poet · Journalist · Filmmaker · Photographer · Translator";
 
 /** Shared site navigation links for `Nav` and collection reader menu overlay. */
 export const siteNavLinks = [

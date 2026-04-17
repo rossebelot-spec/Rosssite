@@ -59,7 +59,7 @@ export default async function WorkHubPage() {
     {
       href: "/essays",
       title: "Essays",
-      description: "Long-form essays and blog posts.",
+      description: "Long-form essays.",
       placeholderLabel: "Essays",
       thumbnailSrc: thumbs.works_hub_essays_thumbnail,
     },

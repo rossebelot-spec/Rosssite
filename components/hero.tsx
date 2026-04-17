@@ -56,7 +56,7 @@ export function Hero({ portraitUrl, featuredVideo = null }: HeroProps) {
                 <span className="hero-text-name-family">Belot</span>
               </h1>
               <p className="hero-text-roles">
-                Poet · Essayist · Filmmaker · Translator
+                Poet · Essayist · Filmmaker · Photographer · Translator
               </p>
             </div>
             {featuredVideo ? (
