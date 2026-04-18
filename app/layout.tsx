@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, JetBrains_Mono, Lora, Inter } from "next/font/google";
 import Script from "next/script";
+import { Suspense } from "react";
 import { NavProvider } from "@/components/nav-context";
+import { UmamiPageView } from "@/components/umami-page-view";
 import { SiteShell } from "@/components/site-shell";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
@@ -76,6 +78,9 @@ export default function RootLayout({
         <NavProvider>
           <SiteShell>{children}</SiteShell>
         </NavProvider>
+        <Suspense fallback={null}>
+          <UmamiPageView />
+        </Suspense>
         <Script
           defer
           src="https://umami-two-xi.vercel.app/script.js"
