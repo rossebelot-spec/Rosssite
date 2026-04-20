@@ -13,7 +13,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     async signIn({ user }) {
       return isAllowedAdminEmail(user.email);
     },
-    // Invoked by proxy (NextAuth wrapper) for every /admin/* request.
+    // Invoked by the NextAuth middleware chain for `/admin/*` only (see `proxy.ts`).
     // Re-check allowlist so removed emails lose access without waiting for JWT expiry.
     authorized({ auth: session }) {
       return isAllowedAdminEmail(session?.user?.email);
