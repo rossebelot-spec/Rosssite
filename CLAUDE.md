@@ -2,7 +2,7 @@
 
 ## Deployment
 
-Do not push to GitHub or deploy to Vercel unless explicitly asked. Always test locally first.
+Commit and push changes directly to main. Do not create PRs or work in separate branches unless explicitly asked. Always test locally first before pushing.
 
 ## Supervised Workflow
 
