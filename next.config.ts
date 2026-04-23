@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
       { source: "/essays/touring-the-twentieth-century-with-campbell-mcgrath/", destination: "/essays/a-review-of-xx-touring-the-twentieth-century-with-campbell-mcgrath", permanent: true },
       { source: "/essays/touring-the-twentieth-century-with-campbell-mcgrath",  destination: "/essays/a-review-of-xx-touring-the-twentieth-century-with-campbell-mcgrath", permanent: true },
 
+      // A Sparrow Came Down Resplendent (Stuart Ross review was renamed)
+      { source: "/essays/a-sparrow-came-down-resplendent/", destination: "/essays/review-of-stuart-ross-a-sparrow-came-down-resplendent", permanent: true },
+      { source: "/essays/a-sparrow-came-down-resplendent",  destination: "/essays/review-of-stuart-ross-a-sparrow-came-down-resplendent", permanent: true },
+
       // MTCCH gallery posts → exact poem (must come before the wildcard fallback)
       { source: "/blog/mtcch-gallery/on-leaving-1st-video-gallery-poem/",                              destination: "/video/collections/moving-to-climate-change-hours?poem=on-leaving",                                              permanent: true },
       { source: "/blog/mtcch-gallery/on-leaving-1st-video-gallery-poem",                               destination: "/video/collections/moving-to-climate-change-hours?poem=on-leaving",                                              permanent: true },

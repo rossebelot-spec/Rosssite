@@ -92,6 +92,7 @@ export default async function LiteraryPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group block"
+                    onClick={() => window.umami?.track({ event: 'book_click', label: book.title })}
                   >
                     <BookCard
                       book={book}
@@ -137,6 +138,7 @@ export default async function LiteraryPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-heading text-base leading-snug hover:text-warm-accent transition-colors"
+                        onClick={() => window.umami?.track({ event: 'literary_publication_click', label: pub.title })}
                       >
                         {pub.title}
                       </a>

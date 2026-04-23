@@ -58,7 +58,7 @@ export default async function EssaysPage() {
         <ul className="divide-y divide-border">
           {posts.map((essay) => (
             <li key={essay.id} className="py-6">
-              <Link href={`/essays/${essay.slug}`} className="group block">
+              <Link href={`/essays/${essay.slug}`} className="group block" onClick={() => window.umami?.track({ event: 'essay_click', label: essay.title })}>
                 <time className="text-xs tracking-widest uppercase text-muted-foreground">
                   {formatPublishedDateLong(
                     essay.publishedAt ? new Date(essay.publishedAt) : null

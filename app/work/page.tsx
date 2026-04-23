@@ -88,7 +88,7 @@ export default async function WorkHubPage() {
       <ul className="grid grid-cols-1 sm:grid-cols-3 gap-8">
         {cards.map((c) => (
           <li key={c.href}>
-            <Link href={c.href} className="group block">
+            <Link href={c.href} className="group block" onClick={() => window.umami?.track({ event: 'works_hub_click', label: c.title })}>
               <div className="relative w-full aspect-video bg-muted rounded overflow-hidden mb-4">
                 {c.thumbnailSrc ? (
                   <Image
