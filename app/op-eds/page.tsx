@@ -106,7 +106,6 @@ export default async function OpEdsPage() {
                       key={col.id}
                       href={`/op-eds/${col.slug}`}
                       className="group flex flex-col gap-3"
-                      onClick={() => window.umami?.track({ event: 'op_ed_collection_click', label: col.publication })}
                     >
                       {/* Cover: article thumbnail only (masthead sits under the title below) */}
                       {col.coverUrl ? (
@@ -172,7 +171,6 @@ export default async function OpEdsPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group flex flex-col gap-3"
-                    onClick={() => window.umami?.track({ event: 'op_ed_standalone_click', label: item.title })}
                   >
                     {item.thumbnailUrl ? (
                       <div className="relative aspect-video bg-surface overflow-hidden rounded">
