@@ -90,6 +90,7 @@ export default function RootLayout({
           defer
           src="https://umami-two-xi.vercel.app/script.js"
           data-website-id="d83972bc-6dd8-411f-9099-5c9ebe657757"
+          data-auto-track="false"
         />
       </body>
     </html>
