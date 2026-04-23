@@ -83,6 +83,8 @@ export default async function VideoSlugPage({ params }: Props) {
     path: `/video/${slug}`,
     thumbnailUrl: video.thumbnailUrl,
     publishedAt: video.publishedAt,
+    durationSeconds: video.durationSeconds ?? undefined,
+    contentUrl: video.r2Url ?? undefined,
   });
 
   return (

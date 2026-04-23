@@ -138,8 +138,25 @@ export function videoObjectJsonLd(input: {
   path: string;
   thumbnailUrl?: string | null;
   publishedAt?: Date | string | null;
+  durationSeconds?: number | null;
+  contentUrl?: string | null;
 }) {
   const url = absoluteUrl(input.path);
+
+  // Convert seconds to ISO 8601 duration format (e.g., "PT5M30S")
+  const formatDuration = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    let duration = "PT";
+    if (hours > 0) duration += `${hours}H`;
+    if (minutes > 0) duration += `${minutes}M`;
+    if (secs > 0) duration += `${secs}S`;
+
+    return duration || "PT0S";
+  };
+
   return {
     "@context": "https://schema.org",
     "@type": "VideoObject",
@@ -149,6 +166,8 @@ export function videoObjectJsonLd(input: {
     ...(input.publishedAt && {
       uploadDate: new Date(input.publishedAt).toISOString(),
     }),
+    ...(input.durationSeconds && { duration: formatDuration(input.durationSeconds) }),
+    ...(input.contentUrl?.trim() && { contentUrl: input.contentUrl.trim() }),
     url,
   };
 }
