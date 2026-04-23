@@ -6,7 +6,7 @@ import { newsItems } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { AuthorBio, siteAuthorName } from "@/components/author-bio";
 import { formatPublishedDate } from "@/lib/format-published-date";
-import { articleJsonLd, articleMetadata } from "@/lib/seo";
+import { newsArticleJsonLd, articleMetadata, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -46,18 +46,28 @@ export default async function NewsStoryPage({ params }: Props) {
   const dateLabel = formatPublishedDate(row.date ? new Date(row.date + "T12:00:00") : null);
   const dateIso = row.date ? new Date(row.date + "T12:00:00").toISOString() : undefined;
 
-  const jsonLd = articleJsonLd({
+  const jsonLd = newsArticleJsonLd({
     title: row.title,
     description: row.description,
     path: `/news/${row.slug}`,
     publishedAt: row.date ? new Date(row.date + "T12:00:00") : null,
   });
 
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+    { name: "News", url: absoluteUrl("/happenings") },
+    { name: row.title, url: absoluteUrl(`/news/${row.slug}`) },
+  ]);
+
   return (
     <main id="main" className="essay-layout">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs).replace(/</g, "\\u003c") }}
       />
       <div className="essay-toolbar">
         <Link href="/news" className="essay-back-link">

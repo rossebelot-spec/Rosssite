@@ -115,6 +115,44 @@ export function articleJsonLd(input: {
   };
 }
 
+export function newsArticleJsonLd(input: {
+  title: string;
+  description?: string | null;
+  path: string;
+  publishedAt?: Date | string | null;
+}) {
+  const url = absoluteUrl(input.path);
+  const publishedDate = input.publishedAt ? new Date(input.publishedAt).toISOString() : undefined;
+  return {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: input.title,
+    ...(input.description?.trim() && { description: input.description.trim() }),
+    ...(publishedDate && {
+      datePublished: publishedDate,
+      dateModified: publishedDate,
+    }),
+    author: {
+      "@type": "Person",
+      name: siteAuthorName,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Ross Belot",
+      logo: {
+        "@type": "ImageObject",
+        url: absoluteUrl("/icon-192.png"),
+        width: 192,
+        height: 192,
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+  };
+}
+
 export function websiteJsonLd() {
   const url = getSiteUrl();
   return {
@@ -129,6 +167,19 @@ export function websiteJsonLd() {
       name: siteAuthorName,
       url,
     },
+  };
+}
+
+export function breadcrumbJsonLd(items: Array<{ name: string; url: string }>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
   };
 }
 

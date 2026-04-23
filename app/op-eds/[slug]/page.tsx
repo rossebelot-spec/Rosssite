@@ -8,7 +8,7 @@ import { asc, eq, desc, and } from "drizzle-orm";
 import { formatPublishedDate } from "@/lib/format-published-date";
 import { OpEdMastheadImg } from "@/components/op-ed-masthead-img";
 import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -82,8 +82,18 @@ export default async function OpEdCollectionPage({ params }: Props) {
     collection.mastheadUrl
   );
 
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+    { name: "Commentary and Analysis", url: absoluteUrl("/op-eds") },
+    { name: collection.publication, url: absoluteUrl(`/op-eds/${slug}`) },
+  ]);
+
   return (
     <main className="mx-auto w-full max-w-screen-lg px-6 py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs).replace(/</g, "\\u003c") }}
+      />
       {/* Back link */}
       <Link
         href="/op-eds"

@@ -7,7 +7,7 @@ import {
   CollectionReader,
   type CollectionVideoItem,
 } from "@/components/video/collection-reader";
-import { absoluteUrl, videoPageMetadata } from "@/lib/seo";
+import { absoluteUrl, videoPageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -171,11 +171,23 @@ export default async function CollectionPage({ params, searchParams }: Props) {
     }
   }
 
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+    { name: "Video", url: absoluteUrl("/video") },
+    { name: collection.title, url: absoluteUrl(`/video/collections/${slug}`) },
+  ]);
+
   return (
-    <CollectionReader
-      collection={{ title: collection.title, introHtml: collection.introHtml ?? "" }}
-      items={items}
-      activeSlug={poemSlug ?? null}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs).replace(/</g, "\\u003c") }}
+      />
+      <CollectionReader
+        collection={{ title: collection.title, introHtml: collection.introHtml ?? "" }}
+        items={items}
+        activeSlug={poemSlug ?? null}
+      />
+    </>
   );
 }

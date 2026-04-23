@@ -48,6 +48,11 @@ export const metadata: Metadata = {
   applicationName: "Ross Belot",
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
   openGraph: {
     type: "website",
     locale: "en_CA",

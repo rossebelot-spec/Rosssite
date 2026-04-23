@@ -5,7 +5,7 @@ import { getDb } from "@/db";
 import { videos, content, contentLinks, collections, collectionItems } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { VideoMain } from "@/components/video/video-main";
-import { videoObjectJsonLd, videoPageMetadata } from "@/lib/seo";
+import { videoObjectJsonLd, videoPageMetadata, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -87,11 +87,21 @@ export default async function VideoSlugPage({ params }: Props) {
     contentUrl: video.r2Url ?? undefined,
   });
 
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+    { name: "Video", url: absoluteUrl("/video") },
+    { name: displayTitle, url: absoluteUrl(`/video/${slug}`) },
+  ]);
+
   return (
     <div className="reading-theme essay-reading-shell">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs).replace(/</g, "\\u003c") }}
       />
       <div className="journal-folio-paper essay-reading-paper">
         <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">

@@ -6,7 +6,7 @@ import { content } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { AuthorBio, siteAuthorName } from "@/components/author-bio";
 import { formatPublishedDate } from "@/lib/format-published-date";
-import { articleJsonLd, articleMetadata } from "@/lib/seo";
+import { articleJsonLd, articleMetadata, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -67,11 +67,21 @@ export default async function EssayPage({ params }: Props) {
     publishedAt: essay.publishedAt,
   });
 
+  const breadcrumbs = breadcrumbJsonLd([
+    { name: "Home", url: absoluteUrl("/") },
+    { name: "Essays", url: absoluteUrl("/essays") },
+    { name: essay.title, url: absoluteUrl(`/essays/${essay.slug}`) },
+  ]);
+
   return (
     <main id="main" className="essay-layout">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs).replace(/</g, "\\u003c") }}
       />
       <div className="essay-toolbar">
         <Link href="/essays" className="essay-back-link">
