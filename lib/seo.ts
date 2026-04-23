@@ -141,7 +141,7 @@ export function newsArticleJsonLd(input: {
       name: "Ross Belot",
       logo: {
         "@type": "ImageObject",
-        url: absoluteUrl("/icon-192.png"),
+        url: absoluteUrl("/android-chrome-192x192.png"),
         width: 192,
         height: 192,
       },
