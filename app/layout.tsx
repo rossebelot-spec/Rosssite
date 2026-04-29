@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, JetBrains_Mono, Lora, Inter } from "next/font/google";
 import Script from "next/script";
 import { Suspense } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import { NavProvider } from "@/components/nav-context";
 import { UmamiPageView } from "@/components/umami-page-view";
 import { SiteShell } from "@/components/site-shell";
@@ -92,6 +93,7 @@ export default function RootLayout({
           data-website-id="d83972bc-6dd8-411f-9099-5c9ebe657757"
           data-auto-track="false"
         />
+        <Analytics />
       </body>
     </html>
   );
