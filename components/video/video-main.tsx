@@ -1,8 +1,13 @@
 import { VideoEssay } from "./video-essay";
+import { VideoPlayer } from "./video-player";
 
 interface VideoMainProps {
   /** `videos.title` — shown as the primary h1. */
   videoTitle: string;
+  /** `videos.slug` — used for analytics. */
+  slug: string;
+  /** Whether this video is on a standalone page or inside a collection. */
+  context: "standalone" | "collection";
   /** `content.title` for the linked published essay (may be absent). */
   essayTitle?: string | null;
   /** Public HTTPS URL for the MP4 (e.g. Cloudflare R2). */
@@ -14,6 +19,8 @@ interface VideoMainProps {
 
 export function VideoMain({
   videoTitle,
+  slug,
+  context,
   essayTitle,
   r2Url,
   thumbnailUrl,
@@ -43,12 +50,12 @@ export function VideoMain({
         </h1>
         <div className="relative w-full aspect-video bg-black">
           {src ? (
-            <video
+            <VideoPlayer
               src={src}
-              controls
-              preload="metadata"
-              className="absolute inset-0 h-full w-full object-contain"
               poster={poster}
+              title={videoTitle}
+              slug={slug}
+              context={context}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-muted-foreground">

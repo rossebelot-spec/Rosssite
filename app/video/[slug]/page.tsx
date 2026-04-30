@@ -120,6 +120,8 @@ export default async function VideoSlugPage({ params }: Props) {
         </div>
         <VideoMain
           videoTitle={video.title}
+          slug={video.slug}
+          context="standalone"
           essayTitle={linkedEssay?.essayTitle}
           r2Url={video.r2Url}
           thumbnailUrl={video.thumbnailUrl}

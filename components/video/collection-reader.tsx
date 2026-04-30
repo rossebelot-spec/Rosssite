@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { CollectionSidebar, type SidebarItem } from "./collection-sidebar";
 import { VideoMain } from "./video-main";
 import { VideoEssay } from "./video-essay";
@@ -29,6 +30,19 @@ export function CollectionReader({
     ? items.find((i) => i.slug === activeSlug) ?? items[0] ?? null
     : null;
 
+  const hasMounted = useRef(false);
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
+    if (!activeSlug) return;
+    window.umami?.track("video:collection-switch", {
+      collection: collection.title,
+      to: activeSlug,
+    });
+  }, [activeSlug, collection.title]);
+
   return (
     <div className="min-h-dvh bg-[var(--color-reading-bg)]">
       <div className="grid min-h-0 grid-cols-1 md:grid-cols-[18rem_1fr]">
@@ -54,6 +68,8 @@ export function CollectionReader({
             {activeVideo ? (
               <VideoMain
                 videoTitle={activeVideo.title}
+                slug={activeVideo.slug}
+                context="collection"
                 essayTitle={activeVideo.essayTitle}
                 r2Url={activeVideo.r2Url ?? null}
                 thumbnailUrl={activeVideo.thumbnailUrl}
