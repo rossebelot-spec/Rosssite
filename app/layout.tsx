@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, JetBrains_Mono, Lora, Inter } from "next/font/google";
 import Script from "next/script";
 import { Suspense } from "react";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { NavProvider } from "@/components/nav-context";
 import { UmamiPageView } from "@/components/umami-page-view";
 import { SiteShell } from "@/components/site-shell";
@@ -83,6 +85,8 @@ export default function RootLayout({
         <NavProvider>
           <SiteShell>{children}</SiteShell>
         </NavProvider>
+        <Analytics />
+        <SpeedInsights />
         <Suspense fallback={null}>
           <UmamiPageView />
         </Suspense>
