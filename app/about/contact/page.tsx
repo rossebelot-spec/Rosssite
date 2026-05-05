@@ -37,10 +37,10 @@ export default function ContactPage() {
       <p className="text-muted-foreground text-sm leading-relaxed max-w-prose">
         For inquiries about writing, readings, or rights, you can reach Ross by email at{" "}
         <a
-          href="mailto:ross@rossbelot.com"
+          href="mailto:ross.e.belot@gmail.com"
           className="text-warm-accent hover:text-foreground underline underline-offset-4"
         >
-          ross@rossbelot.com
+          ross.e.belot@gmail.com
         </a>
         .
       </p>
