@@ -9,6 +9,8 @@ import {
 } from "@/components/video/collection-reader";
 import { absoluteUrl, videoPageMetadata, breadcrumbJsonLd } from "@/lib/seo";
 
+// Dynamic by necessity: this route reads `searchParams` (?poem=) and issues a
+// per-request redirect, so it cannot be statically cached.
 export const dynamic = "force-dynamic";
 
 interface Props {

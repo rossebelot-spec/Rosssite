@@ -10,7 +10,10 @@ import { OpEdMastheadImg } from "@/components/op-ed-masthead-img";
 import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
 import { absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+// ISR — every slug (incl. ones added after build) is cached and regenerated
+// hourly; server actions also revalidate on publish.
+export const dynamic = "force-static";
+export const revalidate = 3600;
 
 interface Props {
   params: Promise<{ slug: string }>;

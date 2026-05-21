@@ -6,11 +6,13 @@ import { newsItems, siteEvents } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAdmin } from "@/lib/action-helpers";
 
-function revalidateNews() {
+function revalidateNews(slug?: string | null) {
   revalidatePath("/news");
   revalidatePath("/happenings");
   revalidatePath("/");
   revalidatePath("/admin/news");
+  // On-site news stories (kind: "story") render at /news/[slug].
+  if (slug) revalidatePath(`/news/${slug}`);
 }
 
 function revalidateSiteEvents() {
@@ -51,7 +53,7 @@ export async function createNewsItem(data: {
       displayOrder: data.displayOrder ?? 0,
     })
     .returning();
-  revalidateNews();
+  revalidateNews(row.slug);
   return row;
 }
 
@@ -75,7 +77,11 @@ export async function updateNewsItem(
     .update(newsItems)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(newsItems.id, id));
-  revalidateNews();
+  const [updated] = await db
+    .select({ slug: newsItems.slug })
+    .from(newsItems)
+    .where(eq(newsItems.id, id));
+  revalidateNews(updated?.slug);
 }
 
 export async function publishNewsItem(id: number, publish: boolean) {
@@ -85,14 +91,22 @@ export async function publishNewsItem(id: number, publish: boolean) {
     .update(newsItems)
     .set({ published: publish, updatedAt: new Date() })
     .where(eq(newsItems.id, id));
-  revalidateNews();
+  const [updated] = await db
+    .select({ slug: newsItems.slug })
+    .from(newsItems)
+    .where(eq(newsItems.id, id));
+  revalidateNews(updated?.slug);
 }
 
 export async function deleteNewsItem(id: number) {
   await requireAdmin();
   const db = getDb();
+  const [existing] = await db
+    .select({ slug: newsItems.slug })
+    .from(newsItems)
+    .where(eq(newsItems.id, id));
   await db.delete(newsItems).where(eq(newsItems.id, id));
-  revalidateNews();
+  revalidateNews(existing?.slug);
 }
 
 // ─── Site events (public `/events` + Happenings tab) ─────────────────────────

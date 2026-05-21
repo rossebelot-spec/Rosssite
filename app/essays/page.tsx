@@ -26,7 +26,8 @@ export const metadata: Metadata = {
     description: "Long-form essays by Ross Belot.",
   },
 };
-export const dynamic = "force-dynamic";
+// ISR — cached and regenerated hourly; server actions also revalidate on publish.
+export const revalidate = 3600;
 
 export default async function EssaysPage() {
   const db = getDb();

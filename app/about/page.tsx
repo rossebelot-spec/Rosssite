@@ -8,7 +8,8 @@ import { formatPublishedDate } from "@/lib/format-published-date";
 import { blobImageUrl } from "@/lib/blob";
 import { absoluteUrl } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+// ISR — cached and regenerated hourly; server actions also revalidate on publish.
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const db = getDb();

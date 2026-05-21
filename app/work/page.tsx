@@ -7,7 +7,8 @@ import { getDb } from "@/db";
 import { siteSettings } from "@/db/schema";
 import { inArray } from "drizzle-orm";
 
-export const dynamic = "force-dynamic";
+// ISR — cached and regenerated hourly; server actions also revalidate on publish.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Works",

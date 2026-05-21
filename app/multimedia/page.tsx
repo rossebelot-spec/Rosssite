@@ -34,7 +34,8 @@ export const metadata: Metadata = {
     description: "Video and photography collections by Ross Belot.",
   },
 };
-export const dynamic = "force-dynamic";
+// ISR — cached and regenerated hourly; server actions also revalidate on publish.
+export const revalidate = 3600;
 
 function collectionKindLabel(mediaType: string) {
   return mediaType === "photo" ? "Photo collection" : "Video collection";

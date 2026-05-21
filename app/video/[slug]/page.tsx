@@ -7,7 +7,10 @@ import { eq, and, inArray } from "drizzle-orm";
 import { VideoMain } from "@/components/video/video-main";
 import { videoObjectJsonLd, videoPageMetadata, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+// ISR — every slug (incl. ones added after build) is cached and regenerated
+// hourly; server actions also revalidate on publish.
+export const dynamic = "force-static";
+export const revalidate = 3600;
 
 interface Props {
   params: Promise<{ slug: string }>;

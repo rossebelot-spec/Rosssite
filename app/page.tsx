@@ -10,7 +10,8 @@ import { HomeFeaturedVideoCopy } from "@/components/home-featured-video";
 import { websiteJsonLd, absoluteUrl } from "@/lib/seo";
 import { blobImageUrl } from "@/lib/blob";
 
-export const dynamic = "force-dynamic";
+// ISR — cached and regenerated hourly; server actions also revalidate on publish.
+export const revalidate = 3600;
 
 const siteDesc =
   "Poet, journalist, and environmental writer. Essays, commentary and analysis, photography, and more.";

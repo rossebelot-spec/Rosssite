@@ -13,7 +13,8 @@ import { OpEdMastheadImg } from "@/components/op-ed-masthead-img";
 import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
 import { absoluteUrl } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+// ISR — cached and regenerated hourly; server actions also revalidate on publish.
+export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Commentary and Analysis",
   description:

@@ -8,7 +8,11 @@ import { GalleryMosaic } from "@/components/gallery/gallery-mosaic";
 import { CuratedPhotoGrid } from "@/components/photography/curated-photo-grid";
 import { absoluteUrl } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+// ISR — every slug (incl. ones added after build) is cached and regenerated
+// hourly; server actions also revalidate on publish.
+// The mosaic shuffle (randomInt) is baked in at generation, so it reshuffles each cycle.
+export const dynamic = "force-static";
+export const revalidate = 3600;
 
 interface Props {
   params: Promise<{ slug: string }>;

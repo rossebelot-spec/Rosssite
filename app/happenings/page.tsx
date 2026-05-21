@@ -9,6 +9,8 @@ import { SiteEventsIndex } from "@/components/happenings/site-events-index";
 import { OnlineReadingsIndex } from "@/components/happenings/online-readings-index";
 import { absoluteUrl } from "@/lib/seo";
 
+// Dynamic by necessity: this route selects its tab from `searchParams` (?tab=),
+// so it cannot be statically cached.
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
