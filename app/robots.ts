@@ -2,12 +2,16 @@ import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 
 /**
- * Until `NEXT_PUBLIC_SITE_LIVE=true`, the site is treated as pre-launch and
- * search engines are asked not to index (staging / preview).
+ * Production deployments are always indexable. Vercel preview and development
+ * deployments are blocked from search engines automatically via `VERCEL_ENV`,
+ * so there is no launch flag to set or forget.
+ *
+ * Escape hatch: set `NEXT_PUBLIC_SITE_LIVE=false` to force-block production.
  */
 export default function robots(): MetadataRoute.Robots {
   const base = getSiteUrl();
-  const live = process.env.NEXT_PUBLIC_SITE_LIVE === "true";
+  const forceBlocked = process.env.NEXT_PUBLIC_SITE_LIVE === "false";
+  const live = !forceBlocked && process.env.VERCEL_ENV === "production";
   if (!live) {
     return {
       rules: { userAgent: "*", disallow: "/" },

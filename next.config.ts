@@ -3,6 +3,32 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async redirects() {
     return [
+      // ── Post-migration 404 fixes ───────────────────────────────────────────
+      // These precede the generic /blog/* rules below so they win the match.
+      // Old "video essay" posts — slugs were shortened on the new site.
+      { source: "/blog/enjambment-a-video-essay/", destination: "/essays/enjambment", permanent: true },
+      { source: "/blog/enjambment-a-video-essay",  destination: "/essays/enjambment", permanent: true },
+      { source: "/blog/dream-a-video-essay/", destination: "/essays/dream", permanent: true },
+      { source: "/blog/dream-a-video-essay",  destination: "/essays/dream", permanent: true },
+      { source: "/blog/essay/magic-a-video-essay/", destination: "/essays/magic", permanent: true },
+      { source: "/blog/essay/magic-a-video-essay",  destination: "/essays/magic", permanent: true },
+      { source: "/blog/essay/move-video-essay/", destination: "/essays/move", permanent: true },
+      { source: "/blog/essay/move-video-essay",  destination: "/essays/move", permanent: true },
+      { source: "/uncategorized/scent-a-video-essay/", destination: "/essays/scent", permanent: true },
+      { source: "/uncategorized/scent-a-video-essay",  destination: "/essays/scent", permanent: true },
+      // "Personal story" post — not found on the new site; sent to the essays index.
+      { source: "/blog/personal-story-blog/i-got-picked-please-excuse-the-visual-pun/", destination: "/essays", permanent: true },
+      { source: "/blog/personal-story-blog/i-got-picked-please-excuse-the-visual-pun",  destination: "/essays", permanent: true },
+      // Old WordPress "poetry-review" category landing page.
+      { source: "/blog/poetry-review/", destination: "/essays", permanent: true },
+      { source: "/blog/poetry-review",  destination: "/essays", permanent: true },
+      // Old WordPress press page (no direct equivalent — change target if needed).
+      { source: "/press/", destination: "/news", permanent: true },
+      { source: "/press",  destination: "/news", permanent: true },
+      // Legacy WordPress RSS feed URLs (post feeds, category feeds, site feed).
+      { source: "/:path*/feed/", destination: "/essays", permanent: true },
+      { source: "/:path*/feed",  destination: "/essays", permanent: true },
+
       // ── Old WordPress blog posts → essays ──────────────────────────────────
       // /blog/essay/:slug  (with and without trailing slash)
       { source: "/blog/essay/:slug/", destination: "/essays/:slug", permanent: true },
@@ -82,8 +108,8 @@ const nextConfig: NextConfig = {
       { source: "/about-us/",   destination: "/about",         permanent: true },
       { source: "/contact-us",  destination: "/about/contact", permanent: true },
       { source: "/contact-us/", destination: "/about/contact", permanent: true },
-      { source: "/events",      destination: "/happenings",    permanent: true },
-      { source: "/events/",     destination: "/happenings",    permanent: true },
+      // /events is a real route on the new site (sitemap entry; canonical=/events).
+      // The legacy WP-era /events → /happenings redirect was making it unreachable.
       { source: "/photos",      destination: "/photography/collections/most-interesting", permanent: true },
       { source: "/photos/",     destination: "/photography/collections/most-interesting", permanent: true },
       { source: "/poetry-ii",   destination: "/literary",      permanent: true },
