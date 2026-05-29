@@ -7,13 +7,24 @@ import { eq, and, inArray } from "drizzle-orm";
 import { VideoMain } from "@/components/video/video-main";
 import { videoObjectJsonLd, videoPageMetadata, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
-// ISR — every slug (incl. ones added after build) is cached and regenerated
-// hourly; server actions also revalidate on publish.
+// Static — every published slug is pre-rendered via generateStaticParams and
+// regenerated only on publish via server-action revalidatePath (no ISR timer).
 export const dynamic = "force-static";
-export const revalidate = 3600;
+export const revalidate = false;
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+// Pre-render every published video slug at build; new slugs render on-demand
+// (dynamicParams defaults to true) and cache until the next publish revalidation.
+export async function generateStaticParams() {
+  const db = getDb();
+  const rows = await db
+    .select({ slug: videos.slug })
+    .from(videos)
+    .where(eq(videos.published, true));
+  return rows.map((r) => ({ slug: r.slug }));
 }
 
 async function getVideo(slug: string) {

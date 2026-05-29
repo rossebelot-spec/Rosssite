@@ -8,14 +8,28 @@ import { GalleryMosaic } from "@/components/gallery/gallery-mosaic";
 import { CuratedPhotoGrid } from "@/components/photography/curated-photo-grid";
 import { absoluteUrl } from "@/lib/seo";
 
-// ISR — every slug (incl. ones added after build) is cached and regenerated
-// hourly; server actions also revalidate on publish.
-// The mosaic shuffle (randomInt) is baked in at generation, so it reshuffles each cycle.
+// Static — every published slug is pre-rendered via generateStaticParams and
+// regenerated only on publish via server-action revalidatePath (no ISR timer).
+// The mosaic shuffle (randomInt) is baked in at generation; it now reshuffles only
+// when the page is revalidated on publish, not on a timer.
 export const dynamic = "force-static";
-export const revalidate = 3600;
+export const revalidate = false;
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+// Pre-render every published photo collection slug at build; new slugs render
+// on-demand (dynamicParams defaults to true) and cache until publish revalidation.
+export async function generateStaticParams() {
+  const db = getDb();
+  const rows = await db
+    .select({ slug: collections.slug })
+    .from(collections)
+    .where(
+      and(eq(collections.published, true), eq(collections.mediaType, "photo"))
+    );
+  return rows.map((r) => ({ slug: r.slug }));
 }
 
 async function getCollectionData(slug: string) {

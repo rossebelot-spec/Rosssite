@@ -6,8 +6,8 @@ import { asc, eq, desc } from "drizzle-orm";
 import { absoluteUrl } from "@/lib/seo";
 import { SectionHeader } from "@/components/section-header";
 
-// ISR — cached and regenerated hourly; server actions also revalidate on publish.
-export const revalidate = 3600;
+// Static — no ISR timer; regenerated only on publish via server-action revalidatePath.
+export const revalidate = false;
 
 const literaryDesc =
   "Poetry collections, journal appearances, anthology inclusions, and prize shortlists.";

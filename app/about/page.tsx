@@ -8,8 +8,8 @@ import { formatPublishedDate } from "@/lib/format-published-date";
 import { blobImageUrl } from "@/lib/blob";
 import { absoluteUrl } from "@/lib/seo";
 
-// ISR — cached and regenerated hourly; server actions also revalidate on publish.
-export const revalidate = 3600;
+// Static — no ISR timer; regenerated only on publish via server-action revalidatePath.
+export const revalidate = false;
 
 export async function generateMetadata(): Promise<Metadata> {
   const db = getDb();

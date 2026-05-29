@@ -24,8 +24,8 @@ export const metadata: Metadata = {
     description: "Photographs by Ross Belot — landscapes, field work, and curated collections.",
   },
 };
-// ISR — cached and regenerated hourly; server actions also revalidate on publish.
-export const revalidate = 3600;
+// Static — no ISR timer; regenerated only on publish via server-action revalidatePath.
+export const revalidate = false;
 
 export default async function PhotographyPage() {
   const db = getDb();

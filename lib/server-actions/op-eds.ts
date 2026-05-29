@@ -29,6 +29,7 @@ export async function createOpEdCollection(data: {
   revalidatePath("/op-eds");
   revalidatePath("/admin/op-eds");
   revalidatePath("/admin/op-ed-collections");
+  revalidatePath("/sitemap.xml");
   return row;
 }
 
@@ -72,6 +73,7 @@ export async function updateOpEdCollection(
   revalidatePath("/op-eds");
   revalidatePath("/admin/op-eds");
   revalidatePath("/admin/op-ed-collections");
+  revalidatePath("/sitemap.xml");
   const oldSlug = before?.slug;
   if (data.slug !== undefined && data.slug !== oldSlug && oldSlug) {
     revalidatePath(`/op-eds/${oldSlug}`);
@@ -105,6 +107,7 @@ export async function deleteOpEdCollection(id: number) {
   revalidatePath("/op-eds");
   revalidatePath("/admin/op-eds");
   revalidatePath("/admin/op-ed-collections");
+  revalidatePath("/sitemap.xml");
 }
 
 /** Deletes a Vercel Blob object (e.g. abandoned mid-edit upload). Admin-only. */

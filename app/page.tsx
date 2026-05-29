@@ -10,8 +10,8 @@ import { HomeFeaturedVideoCopy } from "@/components/home-featured-video";
 import { websiteJsonLd, absoluteUrl } from "@/lib/seo";
 import { blobImageUrl } from "@/lib/blob";
 
-// ISR — cached and regenerated hourly; server actions also revalidate on publish.
-export const revalidate = 3600;
+// Static — no ISR timer; regenerated only on publish via server-action revalidatePath.
+export const revalidate = false;
 
 const siteDesc =
   "Poet, journalist, and environmental writer. Essays, commentary and analysis, photography, and more.";

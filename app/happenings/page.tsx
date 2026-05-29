@@ -1,75 +1,50 @@
 import type { Metadata } from "next";
 import { SectionHeader } from "@/components/section-header";
-import {
-  HappeningsTabs,
-  type HappeningsTab,
-} from "@/components/happenings/happenings-tabs";
+import { HappeningsView } from "@/components/happenings/happenings-view";
 import { NewsIndexList } from "@/components/happenings/news-index-list";
 import { SiteEventsIndex } from "@/components/happenings/site-events-index";
 import { OnlineReadingsIndex } from "@/components/happenings/online-readings-index";
 import { absoluteUrl } from "@/lib/seo";
 
-// Dynamic by necessity: this route selects its tab from `searchParams` (?tab=),
-// so it cannot be statically cached.
-export const dynamic = "force-dynamic";
+// Static — all three streams are rendered into the cached HTML; the active tab
+// (?tab=) is toggled client-side, so the page never renders per request.
+export const dynamic = "force-static";
+export const revalidate = false;
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ tab?: string }>;
-}): Promise<Metadata> {
-  const { tab } = await searchParams;
-  const view: HappeningsTab =
-    tab === "events" ? "events" : tab === "readings" ? "readings" : "news";
-  const desc =
-    view === "events"
-      ? "Readings, launches, and appearances."
-      : view === "readings"
-        ? "Online readings and video appearances."
-        : "Coverage, announcements, and updates.";
-  return {
-    title: "Happenings",
-    description: desc,
-    alternates: { canonical: "/happenings" },
-    openGraph: {
-      type: "website",
-      locale: "en_CA",
-      siteName: "Ross Belot",
-      title: "Happenings | Ross Belot",
-      description: desc,
-      url: absoluteUrl("/happenings"),
-    },
-    twitter: {
-      card: "summary",
-      title: "Happenings | Ross Belot",
-      description: desc,
-    },
-  };
-}
+const description =
+  "News and appearances by Ross Belot — coverage, events, and video readings.";
 
-export default async function HappeningsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ tab?: string }>;
-}) {
-  const { tab } = await searchParams;
-  const active: HappeningsTab =
-    tab === "events" ? "events" : tab === "readings" ? "readings" : "news";
+export const metadata: Metadata = {
+  title: "Happenings",
+  description,
+  alternates: { canonical: "/happenings" },
+  openGraph: {
+    type: "website",
+    locale: "en_CA",
+    siteName: "Ross Belot",
+    title: "Happenings | Ross Belot",
+    description,
+    url: absoluteUrl("/happenings"),
+  },
+  twitter: {
+    card: "summary",
+    title: "Happenings | Ross Belot",
+    description,
+  },
+};
 
+export default async function HappeningsPage() {
   return (
     <main className="mx-auto w-full max-w-screen-md px-6 py-16">
       <SectionHeader
         title="Happenings"
         description="News and appearances — choose a stream below."
       />
-      <HappeningsTabs active={active} />
-      {active === "news" ? (
-        <NewsIndexList />
-      ) : active === "events" ? (
-        <SiteEventsIndex />
-      ) : (
-        <OnlineReadingsIndex />
-      )}
+      <HappeningsView
+        news={<NewsIndexList />}
+        events={<SiteEventsIndex />}
+        readings={<OnlineReadingsIndex />}
+      />
     </main>
   );
 }

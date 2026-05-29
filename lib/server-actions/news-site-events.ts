@@ -11,6 +11,8 @@ function revalidateNews(slug?: string | null) {
   revalidatePath("/happenings");
   revalidatePath("/");
   revalidatePath("/admin/news");
+  // News stories appear in the sitemap, so refresh it when the set/lastModified changes.
+  revalidatePath("/sitemap.xml");
   // On-site news stories (kind: "story") render at /news/[slug].
   if (slug) revalidatePath(`/news/${slug}`);
 }

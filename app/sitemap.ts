@@ -10,8 +10,8 @@ import {
 import { and, eq, isNotNull } from "drizzle-orm";
 import { getSiteUrl } from "@/lib/site-url";
 
-/** Regenerate sitemap periodically; content changes also propagate on deploy. */
-export const revalidate = 3600;
+/** Static sitemap — no timer; regenerated only on publish via revalidatePath("/sitemap.xml"). */
+export const revalidate = false;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteUrl();

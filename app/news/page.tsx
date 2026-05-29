@@ -22,8 +22,8 @@ export const metadata: Metadata = {
   },
 };
 
-// ISR — cached and regenerated hourly; server actions also revalidate on publish.
-export const revalidate = 3600;
+// Static — no ISR timer; regenerated only on publish via server-action revalidatePath.
+export const revalidate = false;
 
 export default async function NewsIndexPage() {
   return (

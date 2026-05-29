@@ -8,13 +8,26 @@ import { AuthorBio, siteAuthorName } from "@/components/author-bio";
 import { formatPublishedDate } from "@/lib/format-published-date";
 import { articleJsonLd, articleMetadata, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
-// ISR — every slug (incl. ones added after build) is cached and regenerated
-// hourly; server actions also revalidate on publish.
+// Static — every published slug is pre-rendered via generateStaticParams and
+// regenerated only on publish via server-action revalidatePath (no ISR timer).
 export const dynamic = "force-static";
-export const revalidate = 3600;
+export const revalidate = false;
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+// Pre-render every published essay/blog slug at build; new slugs render on-demand
+// (dynamicParams defaults to true) and cache until the next publish revalidation.
+export async function generateStaticParams() {
+  const db = getDb();
+  const rows = await db
+    .select({ slug: content.slug })
+    .from(content)
+    .where(
+      and(inArray(content.type, ["essay", "blog"]), eq(content.published, true))
+    );
+  return rows.map((r) => ({ slug: r.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

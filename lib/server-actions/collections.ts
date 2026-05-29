@@ -32,6 +32,7 @@ export async function createCollection(data: {
     .returning();
   revalidatePath("/video");
   revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
   redirect(`/admin/collections/${collection.id}`);
 }
 
@@ -68,6 +69,7 @@ export async function createCollectionForPicker(data: {
     .returning();
   revalidatePath("/video");
   revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
   return { id: collection.id, title: collection.title, slug: collection.slug };
 }
 
@@ -115,6 +117,7 @@ export async function publishCollection(id: number, publish: boolean) {
     .where(eq(collections.id, id));
   revalidatePath("/video");
   revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
   if (current) {
     revalidatePath(`/video/collections/${current.slug}`);
   }
@@ -144,6 +147,7 @@ export async function updateCollection(
   await db.update(collections).set({ ...data, updatedAt: new Date() }).where(eq(collections.id, id));
   revalidatePath("/video");
   revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
   if (current) {
     revalidatePath(`/video/collections/${current.slug}`);
   }
@@ -162,6 +166,7 @@ export async function deleteCollection(id: number) {
   await db.delete(collections).where(eq(collections.id, id));
   revalidatePath("/video");
   revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
   if (current) {
     revalidatePath(`/video/collections/${current.slug}`);
   }

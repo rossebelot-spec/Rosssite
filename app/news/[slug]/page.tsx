@@ -3,18 +3,38 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
 import { newsItems } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 import { AuthorBio, siteAuthorName } from "@/components/author-bio";
 import { formatPublishedDate } from "@/lib/format-published-date";
 import { newsArticleJsonLd, articleMetadata, breadcrumbJsonLd, absoluteUrl } from "@/lib/seo";
 
-// ISR — every slug (incl. ones added after build) is cached and regenerated
-// hourly; server actions also revalidate on publish.
+// Static — every published slug is pre-rendered via generateStaticParams and
+// regenerated only on publish via server-action revalidatePath (no ISR timer).
 export const dynamic = "force-static";
-export const revalidate = 3600;
+export const revalidate = false;
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+// Pre-render every published on-site news story slug at build; new slugs render
+// on-demand (dynamicParams defaults to true) and cache until publish revalidation.
+export async function generateStaticParams() {
+  const db = getDb();
+  const rows = await db
+    .select({ slug: newsItems.slug })
+    .from(newsItems)
+    .where(
+      and(
+        eq(newsItems.published, true),
+        eq(newsItems.kind, "story"),
+        isNotNull(newsItems.slug)
+      )
+    );
+  return rows
+    .map((r) => r.slug)
+    .filter((s): s is string => !!s)
+    .map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

@@ -76,6 +76,8 @@ export async function setVideoCollections({
     }
   }
   revalidatePath("/video");
+  revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
 }
 
 export async function createVideo(data: {
@@ -109,6 +111,8 @@ export async function createVideo(data: {
     .values({ ...insertData, title, slug })
     .returning();
   revalidatePath("/video");
+  revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
   revalidatePath(`/video/${slug}`);
   if (collectionIds && collectionIds.length > 0) {
     await setVideoCollections({ videoId: video.id, collectionIds });
@@ -149,6 +153,8 @@ export async function updateVideo(
     .where(eq(videos.id, id));
   await db.update(videos).set(payload).where(eq(videos.id, id));
   revalidatePath("/video");
+  revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
   if (before) revalidatePath(`/video/${before.slug}`);
   if (data.slug && data.slug !== before?.slug) {
     revalidatePath(`/video/${data.slug}`);
@@ -183,6 +189,8 @@ export async function publishVideo(id: number, publish: boolean) {
     })
     .where(eq(videos.id, id));
   revalidatePath("/video");
+  revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
   if (before) revalidatePath(`/video/${before.slug}`);
   if (!publish && before?.featured) {
     revalidatePath("/");
@@ -224,6 +232,8 @@ export async function setFeaturedHomeVideo(videoId: number) {
 
   revalidatePath("/");
   revalidatePath("/video");
+  revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
   if (previous && previous.slug !== target.slug) {
     revalidatePath(`/video/${previous.slug}`);
   }
@@ -246,6 +256,8 @@ export async function clearFeaturedHomeVideo(videoId: number) {
 
   revalidatePath("/");
   revalidatePath("/video");
+  revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
   revalidatePath(`/video/${row.slug}`);
 }
 
@@ -270,6 +282,8 @@ export async function deleteVideo(id: number) {
     );
   await db.delete(videos).where(eq(videos.id, id));
   revalidatePath("/video");
+  revalidatePath("/multimedia");
+  revalidatePath("/sitemap.xml");
   if (before?.featured) revalidatePath("/");
   if (before) revalidatePath(`/video/${before.slug}`);
   for (const slug of collSlugs) {

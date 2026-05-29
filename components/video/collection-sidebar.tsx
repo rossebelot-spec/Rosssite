@@ -1,4 +1,5 @@
-import Link from "next/link";
+"use client";
+
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +15,7 @@ interface CollectionSidebarProps {
   items: SidebarItem[];
   activeSlug: string | null;
   collectionTitle: string;
+  onSelect: (slug: string) => void;
 }
 
 function formatDuration(seconds: number): string {
@@ -26,6 +28,7 @@ export function CollectionSidebar({
   items,
   activeSlug,
   collectionTitle,
+  onSelect,
 }: CollectionSidebarProps) {
   return (
     <nav aria-label={`${collectionTitle} videos`}>
@@ -71,13 +74,13 @@ export function CollectionSidebar({
           return (
             <li key={slugKey || `item-${index}`}>
               {slugKey ? (
-                <Link
-                  href={`?poem=${encodeURIComponent(slugKey)}`}
-                  scroll={false}
-                  className={baseClass}
+                <button
+                  type="button"
+                  onClick={() => onSelect(slugKey)}
+                  className={cn(baseClass, "w-full text-left")}
                 >
                   {row}
-                </Link>
+                </button>
               ) : (
                 <div
                   className={cn(baseClass, "cursor-not-allowed opacity-70")}

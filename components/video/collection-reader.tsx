@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { CollectionSidebar, type SidebarItem } from "./collection-sidebar";
 import { VideoMain } from "./video-main";
 import { VideoEssay } from "./video-essay";
@@ -18,30 +18,42 @@ interface CollectionReaderProps {
     introHtml: string;
   };
   items: CollectionVideoItem[];
-  activeSlug: string | null;
 }
 
 export function CollectionReader({
   collection,
   items,
-  activeSlug,
 }: CollectionReaderProps) {
-  const activeVideo = activeSlug
-    ? items.find((i) => i.slug === activeSlug) ?? items[0] ?? null
-    : null;
+  const firstSlug = items.find((i) => i.slug?.trim())?.slug ?? null;
+  // Server (and the first client render) default to the first video so the static
+  // HTML carries real content; the URL's ?poem= is honored after mount.
+  const [activeSlug, setActiveSlug] = useState<string | null>(firstSlug);
 
-  const hasMounted = useRef(false);
+  // Honor ?poem= deep links on mount and on browser back/forward navigation.
   useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
-      return;
-    }
-    if (!activeSlug) return;
+    const syncFromUrl = () => {
+      const poem = new URLSearchParams(window.location.search).get("poem")?.trim();
+      setActiveSlug(poem && items.some((i) => i.slug === poem) ? poem : firstSlug);
+    };
+    syncFromUrl();
+    window.addEventListener("popstate", syncFromUrl);
+    return () => window.removeEventListener("popstate", syncFromUrl);
+  }, [items, firstSlug]);
+
+  const activeVideo =
+    (activeSlug ? items.find((i) => i.slug === activeSlug) : null) ??
+    items[0] ??
+    null;
+
+  const handleSelect = (slug: string) => {
+    setActiveSlug(slug);
+    // Reflect the selection in a shareable URL without a server round-trip.
+    window.history.pushState(null, "", `?poem=${encodeURIComponent(slug)}`);
     window.umami?.track("video:collection-switch", {
       collection: collection.title,
-      to: activeSlug,
+      to: slug,
     });
-  }, [activeSlug, collection.title]);
+  };
 
   return (
     <div className="min-h-dvh bg-[var(--color-reading-bg)]">
@@ -59,6 +71,7 @@ export function CollectionReader({
             items={items}
             activeSlug={activeVideo?.slug ?? null}
             collectionTitle={collection.title}
+            onSelect={handleSelect}
           />
         </aside>
 

@@ -60,6 +60,7 @@ export async function createContent(data: {
   for (const path of contentPrimaryPaths(row.type, row.slug)) {
     revalidatePath(path);
   }
+  revalidatePath("/sitemap.xml");
   redirect(`/admin/content/${row.id}`);
 }
 
@@ -107,6 +108,7 @@ export async function updateContent(
       revalidatePath(path);
     }
   }
+  revalidatePath("/sitemap.xml");
 
   const linkedVideos = await db
     .select({ videoId: contentLinks.videoId })
@@ -147,6 +149,7 @@ export async function deleteContent(id: number) {
   revalidatePath("/about");
   revalidatePath("/literary");
   revalidatePath("/events");
+  revalidatePath("/sitemap.xml");
   redirect("/admin/content");
 }
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getDb } from "@/db";
 import { collections, collectionItems, videos, content, contentLinks } from "@/db/schema";
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
@@ -7,24 +7,29 @@ import {
   CollectionReader,
   type CollectionVideoItem,
 } from "@/components/video/collection-reader";
-import { absoluteUrl, videoPageMetadata, breadcrumbJsonLd } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
-// Dynamic by necessity: this route reads `searchParams` (?poem=) and issues a
-// per-request redirect, so it cannot be statically cached.
-export const dynamic = "force-dynamic";
+// Static — every published video collection slug is pre-rendered via
+// generateStaticParams; poem selection (?poem=) is handled client-side in
+// CollectionReader, so the page stays statically cached and regenerates only on publish.
+export const dynamic = "force-static";
+export const revalidate = false;
 
 interface Props {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ poem?: string | string[] }>;
 }
 
-/** Empty or whitespace `?poem=` must be treated as absent to avoid redirect loops. */
-function poemParamFromSearchParams(sp: { poem?: string | string[] }): string | undefined {
-  const raw = sp.poem;
-  const s = Array.isArray(raw) ? raw[0] : raw;
-  if (typeof s !== "string") return undefined;
-  const t = s.trim();
-  return t.length > 0 ? t : undefined;
+// Pre-render every published video collection slug at build; new slugs render
+// on-demand (dynamicParams defaults to true) and cache until publish revalidation.
+export async function generateStaticParams() {
+  const db = getDb();
+  const rows = await db
+    .select({ slug: collections.slug })
+    .from(collections)
+    .where(
+      and(eq(collections.published, true), eq(collections.mediaType, "video"))
+    );
+  return rows.map((r) => ({ slug: r.slug }));
 }
 
 async function getCollectionWithItems(slug: string) {
@@ -109,26 +114,11 @@ async function getCollectionWithItems(slug: string) {
   return { collection, items };
 }
 
-export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const poemSlug = poemParamFromSearchParams(await searchParams);
   const result = await getCollectionWithItems(slug);
   if (!result) return {};
-  const { collection, items } = result;
-
-  if (poemSlug) {
-    const video = items.find((i) => i.slug === poemSlug);
-    if (video) {
-      const tabTitle = (video.essayTitle ?? "").trim() || video.title;
-      const path = `/video/collections/${slug}?poem=${encodeURIComponent(poemSlug)}`;
-      return videoPageMetadata({
-        title: tabTitle,
-        description: video.description,
-        path,
-        thumbnailUrl: video.thumbnailUrl,
-      });
-    }
-  }
+  const { collection } = result;
 
   const path = `/video/collections/${slug}`;
   const desc = collection.description?.trim() || undefined;
@@ -154,24 +144,13 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   };
 }
 
-export default async function CollectionPage({ params, searchParams }: Props) {
+export default async function CollectionPage({ params }: Props) {
   const { slug } = await params;
-  const poemSlug = poemParamFromSearchParams(await searchParams);
 
   const result = await getCollectionWithItems(slug);
   if (!result) notFound();
 
   const { collection, items } = result;
-
-  // Redirect to first video if none selected
-  if (!poemSlug && items.length > 0) {
-    const first = items.find((i) => i.slug?.trim());
-    if (first?.slug?.trim()) {
-      redirect(
-        `/video/collections/${encodeURIComponent(slug)}?poem=${encodeURIComponent(first.slug)}`
-      );
-    }
-  }
 
   const breadcrumbs = breadcrumbJsonLd([
     { name: "Home", url: absoluteUrl("/") },
@@ -188,7 +167,6 @@ export default async function CollectionPage({ params, searchParams }: Props) {
       <CollectionReader
         collection={{ title: collection.title, introHtml: collection.introHtml ?? "" }}
         items={items}
-        activeSlug={poemSlug ?? null}
       />
     </>
   );
