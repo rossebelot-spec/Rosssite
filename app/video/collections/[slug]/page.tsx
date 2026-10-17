@@ -13,7 +13,8 @@ import { absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 // generateStaticParams; poem selection (?poem=) is handled client-side in
 // CollectionReader, so the page stays statically cached and regenerates only on publish.
 export const dynamic = "force-static";
-export const revalidate = false;
+// 1 year, not `false`: Vercel sends browsers max-age=14400 for never-expiring prerenders.
+export const revalidate = 31536000;
 
 interface Props {
   params: Promise<{ slug: string }>;

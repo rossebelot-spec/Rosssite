@@ -11,9 +11,10 @@ import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
 import { absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
 // Static — every published slug is pre-rendered via generateStaticParams and
-// regenerated only on publish via server-action revalidatePath (no ISR timer).
+// regenerated only on publish via server-action revalidatePath.
 export const dynamic = "force-static";
-export const revalidate = false;
+// 1 year, not `false`: Vercel sends browsers max-age=14400 for never-expiring prerenders.
+export const revalidate = 31536000;
 
 interface Props {
   params: Promise<{ slug: string }>;

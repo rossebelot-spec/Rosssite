@@ -8,8 +8,9 @@ import { formatPublishedDate } from "@/lib/format-published-date";
 import { blobImageUrl } from "@/lib/blob";
 import { absoluteUrl } from "@/lib/seo";
 
-// Static — no ISR timer; regenerated only on publish via server-action revalidatePath.
-export const revalidate = false;
+// Static — regenerated on publish via server-action revalidatePath.
+// 1 year, not `false`: Vercel sends browsers max-age=14400 for never-expiring prerenders.
+export const revalidate = 31536000;
 
 export async function generateMetadata(): Promise<Metadata> {
   const db = getDb();

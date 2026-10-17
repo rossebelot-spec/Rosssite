@@ -13,8 +13,9 @@ import { OpEdMastheadImg } from "@/components/op-ed-masthead-img";
 import { resolveOpEdCollectionMastheadUrl } from "@/lib/op-ed-masthead";
 import { absoluteUrl } from "@/lib/seo";
 
-// Static — no ISR timer; regenerated only on publish via server-action revalidatePath.
-export const revalidate = false;
+// Static — regenerated on publish via server-action revalidatePath.
+// 1 year, not `false`: Vercel sends browsers max-age=14400 for never-expiring prerenders.
+export const revalidate = 31536000;
 export const metadata: Metadata = {
   title: "Commentary and Analysis",
   description:

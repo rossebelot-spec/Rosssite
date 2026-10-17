@@ -6,8 +6,9 @@ import { asc, eq, desc } from "drizzle-orm";
 import { absoluteUrl } from "@/lib/seo";
 import { SectionHeader } from "@/components/section-header";
 
-// Static — no ISR timer; regenerated only on publish via server-action revalidatePath.
-export const revalidate = false;
+// Static — regenerated on publish via server-action revalidatePath.
+// 1 year, not `false`: Vercel sends browsers max-age=14400 for never-expiring prerenders.
+export const revalidate = 31536000;
 
 const literaryDesc =
   "Poetry collections, journal appearances, anthology inclusions, and prize shortlists.";

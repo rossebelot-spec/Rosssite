@@ -10,8 +10,9 @@ import { HomeFeaturedVideoCopy } from "@/components/home-featured-video";
 import { websiteJsonLd, absoluteUrl } from "@/lib/seo";
 import { blobImageUrl } from "@/lib/blob";
 
-// Static — no ISR timer; regenerated only on publish via server-action revalidatePath.
-export const revalidate = false;
+// Static — regenerated on publish via server-action revalidatePath.
+// 1 year, not `false`: Vercel sends browsers max-age=14400 for never-expiring prerenders.
+export const revalidate = 31536000;
 
 const siteDesc =
   "Poet, journalist, and environmental writer. Essays, commentary and analysis, photography, and more.";
