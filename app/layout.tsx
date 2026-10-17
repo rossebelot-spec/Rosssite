@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, JetBrains_Mono, Lora, Inter } from "next/font/google";
+import { Cormorant_Garamond, Lora, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/react";
@@ -17,10 +18,12 @@ const cormorant = Cormorant_Garamond({
   style: ["normal", "italic"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
+// Self-hosted: next/font/google fails on Vercel for JetBrains Mono ("queries have exactly one entry").
+const jetbrainsMono = localFont({
+  src: "./fonts/JetBrainsMono-latin-var.woff2",
   variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: "300 500",
+  display: "swap",
 });
 
 const lora = Lora({
