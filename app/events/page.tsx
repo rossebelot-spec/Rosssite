@@ -21,9 +21,8 @@ export const metadata: Metadata = {
   },
 };
 
-// Static — regenerated on publish via server-action revalidatePath.
-// 1 year, not `false`: Vercel sends browsers max-age=14400 for never-expiring prerenders.
-export const revalidate = 31536000;
+// Static — no ISR timer; regenerated only on publish via server-action revalidatePath.
+export const revalidate = false;
 
 export default async function EventsPage() {
   return (

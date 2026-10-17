@@ -9,8 +9,7 @@ import { absoluteUrl } from "@/lib/seo";
 // Static — all three streams are rendered into the cached HTML; the active tab
 // (?tab=) is toggled client-side, so the page never renders per request.
 export const dynamic = "force-static";
-// 1 year, not `false`: Vercel sends browsers max-age=14400 for never-expiring prerenders.
-export const revalidate = 31536000;
+export const revalidate = false;
 
 const description =
   "News and appearances by Ross Belot — coverage, events, and video readings.";
